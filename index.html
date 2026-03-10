@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8" />
-    <title>PAINEL DE RECEBIMENTO - MÓVEIS SIMONETTI</title>
+    <title>SISTEMA SIMONETTI - MONITORAMENTO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -16,99 +16,100 @@
     <style>
         :root { --blue-ms: #1E90FF; --dark-blue: #104E8B; --bg: #000; --text: #fff; }
         
-        body { 
-            background: var(--bg); 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; /* O scroll será controlado via JS */
-            color: var(--text);
-        }
+        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; margin: 0; color: var(--text); overflow: hidden; }
         
-        /* Cabeçalho Gigante */
+        /* Cabeçalho com a cor solicitada */
         header { 
             background: var(--dark-blue); 
-            padding: 20px; 
-            text-align: center; 
-            border-bottom: 4px solid var(--blue-ms);
+            padding: 15px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 5px solid var(--blue-ms);
         }
-        h1 { margin: 0; font-size: 3.5rem; text-transform: uppercase; letter-spacing: 3px; }
+        h1 { margin: 0; font-size: 2.8rem; text-transform: uppercase; font-weight: 800; }
 
-        /* Layout Split: Tabela (Esquerda) e Dash (Direita) */
-        .main-container { display: flex; height: calc(100vh - 120px); padding: 10px; gap: 15px; }
+        .btn-fullscreen {
+            background: var(--blue-ms);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-fullscreen:hover { background: #00BFFF; transform: scale(1.05); }
 
-        /* Lado da Tabela */
-        .table-section { flex: 2; background: #111; border-radius: 10px; padding: 10px; overflow: hidden; }
+        .main-container { display: flex; height: calc(100vh - 110px); padding: 10px; gap: 15px; }
+
+        /* Tabela Esquerda */
+        .table-section { flex: 2.5; background: #0a0a0a; border-radius: 12px; padding: 15px; overflow-y: auto; scrollbar-width: none; }
+        .table-section::-webkit-scrollbar { display: none; }
         
-        /* Lado do Gráfico e Contadores */
-        .dash-section { flex: 0.8; display: flex; flex-direction: column; gap: 15px; }
+        /* Dash Direita */
+        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; }
 
         .kpi-card { 
-            background: #222; 
-            border: 2px solid var(--blue-ms); 
-            border-radius: 15px; 
-            padding: 20px; 
+            background: #111; 
+            border-left: 10px solid var(--blue-ms); 
+            padding: 25px; 
             text-align: center;
+            border-radius: 10px;
         }
-        .kpi-value { font-size: 5rem; font-weight: bold; color: #00FF00; display: block; }
-        .kpi-label { font-size: 1.5rem; text-transform: uppercase; color: #aaa; }
+        .kpi-value { font-size: 6rem; font-weight: 900; color: #00FF00; display: block; line-height: 1; }
+        .kpi-label { font-size: 1.6rem; text-transform: uppercase; color: #ccc; letter-spacing: 2px; }
 
-        .chart-container { 
-            background: #fff; /* Fundo branco para o gráfico ter contraste */
-            padding: 15px; 
+        .chart-box { 
+            background: #fff; 
+            padding: 20px; 
             border-radius: 15px; 
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-grow: 1; 
+            min-height: 400px;
         }
 
-        /* Estilização da Tabela para TV */
-        table.dataTable { width: 100% !important; border-collapse: collapse !important; border: none !important; color: #fff !important; }
+        /* Tabela Estilo TV */
+        table.dataTable { width: 100% !important; color: #fff !important; border: none !important; }
         table.dataTable thead th { 
-            background: #333 !important; 
-            color: #FFD700 !important; 
+            background: #222 !important; 
+            color: var(--blue-ms) !important; 
             font-size: 1.8rem !important; 
-            padding: 20px !important; 
-            border: 1px solid #444 !important;
+            padding: 25px !important; 
+            text-align: center !important;
+            border-bottom: 3px solid #444 !important;
         }
         table.dataTable tbody td { 
-            font-size: 1.6rem !important; 
-            padding: 18px !important; 
-            border: 1px solid #333 !important; 
-            font-weight: 500;
+            font-size: 1.7rem !important; 
+            padding: 20px !important; 
+            border-bottom: 1px solid #222 !important; 
+            text-align: center !important;
         }
         
-        .zebra-even { background-color: #1a1a1a; }
-        .zebra-odd { background-color: #000; }
+        .row-even { background-color: #0f0f0f; }
+        .row-odd { background-color: #050505; }
 
-        /* Status Pill Gigante */
         .pill { 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            font-size: 1.4rem; 
+            padding: 12px; 
+            border-radius: 10px; 
+            font-size: 1.5rem; 
             font-weight: bold; 
-            display: inline-block; 
-            color: #fff;
-            width: 100%;
+            display: block; 
             text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
-
-        /* Ocultar elementos desnecessários do DataTable */
-        .dataTables_wrapper .dataTables_filter, 
-        .dataTables_wrapper .dataTables_info, 
-        .dataTables_wrapper .dataTables_paginate { display: none; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>PAINEL DE RECEBIMENTO - MÓVEIS SIMONETTI</h1>
+    <h1>RECEBIMENTO - MÓVEIS SIMONETTI</h1>
+    <button class="btn-fullscreen" onclick="toggleFullScreen()">📺 EXIBIR EM TELA CHEIA</button>
 </header>
 
-<div class="main-container">
-    <div class="table-section">
-        <table id="tabelaTV" class="display nowrap" style="width:100%">
+<div class="main-container" id="painelPrincipal">
+    <div class="table-section" id="scrollContainer">
+        <table id="tabelaTV" class="display nowrap">
             <thead>
                 <tr>
                     <th>DATA</th>
@@ -125,14 +126,14 @@
 
     <div class="dash-section">
         <div class="kpi-card">
-            <span class="kpi-label">Total de Carros</span>
+            <span class="kpi-label">CARROS</span>
             <span id="countCarros" class="kpi-value">0</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-label">Agendas Hoje</span>
+            <span class="kpi-label">AGENDAS</span>
             <span id="countAgendas" class="kpi-value">0</span>
         </div>
-        <div class="chart-container">
+        <div class="chart-box">
             <canvas id="statusChart"></canvas>
         </div>
     </div>
@@ -144,118 +145,112 @@ Chart.register(ChartDataLabels);
 const csvUrl = "https://docs.google.com/spreadsheets/d/1Ore02M4GARvE6hldNDZmiVNDrABb4dgaZO7wlMY-fjs/export?format=csv&gid=2090543957";
 
 const coresStatus = {
-    "CARGA RECEBIDA": '#4CAF50', "NO PATIO - FICOU P/ AMANHÃ": '#3ACFB9', "CANCELADA": '#FF0000',    
-    "SOB AJUSTE": '#8B27F5', "NO PATIO - SOB ENCAIXE": '#ff7625', "NO PATIO - FICOU DE ONTEM": '#B249BF',
-    "EM RECEBIMENTO": '#FFC107', "NO PATIO": '#03A9F4', "EM ATRASO": '#F44336', "REAGENDA": '#9B591B'
+    "CARGA RECEBIDA": '#2E7D32', "NO PATIO - FICOU P/ AMANHÃ": '#00ACC1', "CANCELADA": '#D32F2F',    
+    "SOB AJUSTE": '#7B1FA2', "NO PATIO - SOB ENCAIXE": '#E65100', "NO PATIO - FICOU DE ONTEM": '#C2185B',
+    "EM RECEBIMENTO": '#FBC02D', "NO PATIO": '#1976D2', "EM ATRASO": '#FF5252', "REAGENDA": '#5D4037'
 };
 
-function getColorTipoProduto(text) {
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        $(".btn-fullscreen").text("✖ SAIR DA TELA CHEIA");
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+            $(".btn-fullscreen").text("📺 EXIBIR EM TELA CHEIA");
+        }
+    }
+}
+
+function getColorTipo(text) {
     const tp = (text || "").toUpperCase();
-    if (['ROUPEIRO', 'ARMARIO', 'COZINHA', 'PAINEL', 'MODULO', 'MULTIUSO', 'BALCAO', 'COMODA'].some(x => tp.includes(x))) return '#FFFF00';
-    if (['CELULAR', 'TABLET', 'RELOGIO', 'ROBO', 'NOTEBOOK'].some(x => tp.includes(x))) return '#00BFFF';
-    if (tp.includes('MESA')) return '#4CAF50';
+    if (['ROUPEIRO', 'ARMARIO', 'COZINHA', 'PAINEL', 'MODULO'].some(x => tp.includes(x))) return '#FFFF00';
+    if (['CELULAR', 'TABLET', 'NOTEBOOK'].some(x => tp.includes(x))) return '#00BFFF';
     return null;
 }
 
 let table, chartStatus;
 
-$(document).ready(function() {
-    carregarDados();
-    // Atualiza os dados a cada 5 minutos
-    setInterval(carregarDados, 300000);
+$(document).ready(() => {
+    carregar();
+    setInterval(carregar, 180000); // 3 min refresh
+    iniciarAutoScroll();
 });
 
-function carregarDados() {
+function carregar() {
     Papa.parse(csvUrl, { 
-        download: true, 
-        header: true, 
-        skipEmptyLines: true, 
-        complete: res => processarDados(res.data) 
+        download: true, header: true, skipEmptyLines: true, 
+        complete: res => renderizar(res.data) 
     });
 }
 
-function processarDados(dados) {
-    if ($.fn.DataTable.isDataTable('#tabelaTV')) {
-        $('#tabelaTV').DataTable().destroy();
-    }
-
+function renderizar(dados) {
+    if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
+    
     const body = $("#tabelaTV tbody").empty();
     const stats = {};
     const idsCarros = new Set();
 
-    dados.forEach((r, index) => {
+    dados.forEach((r, i) => {
         const st = (r["STATUS"] || "").trim().toUpperCase();
         const tp = (r["TIPO DE PRODUTO"] || "").trim().toUpperCase();
-        const prod = (r["PRODUTO"] || "").trim(); // Coluna Produto solicitada
-        const cod = r["CODIGO"] || r["CARGAS"] || index;
-        const tpColor = getColorTipoProduto(tp);
-
-        idsCarros.add(cod);
+        const tpColor = getColorTipo(tp);
+        
+        idsCarros.add(r["CARGAS"] || i);
         stats[st] = (stats[st] || 0) + 1;
 
         body.append(`<tr>
-            <td>${(r["DATA"] || "").replace(/\*/g, "")}</td>
-            <td><span class="pill" style="background:${coresStatus[st] || '#4682B4'}">${st}</span></td>
-            <td style="color: #FFD700">${r["FORNECEDOR"] || ""}</td>
-            <td style="${tpColor ? 'color:'+tpColor+'; font-weight:bold;' : ''}">${tp}</td>
-            <td>${prod}</td>
-            <td style="font-size: 2.2rem !important; color: #00FF00;">${r["BOX"] || "-"}</td>
+            <td style="color:#aaa">${(r["DATA"] || "").replace(/\*/g, "")}</td>
+            <td><span class="pill" style="background:${coresStatus[st] || '#444'}">${st}</span></td>
+            <td style="color:#FFD700; font-weight:bold">${r["FORNECEDOR"] || ""}</td>
+            <td style="color:${tpColor || '#fff'}">${tp}</td>
+            <td>${r["PRODUTO"] || ""}</td>
+            <td style="font-size: 2.5rem !important; color:#00FF00; font-weight:bold">${r["BOX"] || "-"}</td>
         </tr>`);
     });
 
     table = $('#tabelaTV').DataTable({ 
-        paging: false, 
-        info: false, 
-        ordering: false,
-        stripeClasses: ['zebra-odd', 'zebra-even']
+        paging: false, info: false, ordering: false,
+        stripeClasses: ['row-odd', 'row-even']
     });
 
     $("#countCarros").text(idsCarros.size);
     $("#countAgendas").text(dados.length);
-
-    gerarGrafico(stats, dados.length);
-    iniciarAutoScroll();
+    atualizarGrafico(stats, dados.length);
 }
 
-function gerarGrafico(stats, total) {
+function atualizarGrafico(stats, total) {
     if(chartStatus) chartStatus.destroy();
-    
     chartStatus = new Chart(document.getElementById('statusChart'), {
-        type: 'doughnut',
+        type: 'pie',
         data: { 
             labels: Object.keys(stats), 
             datasets: [{ 
                 data: Object.values(stats), 
-                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc"),
-                borderWidth: 0
+                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#444") 
             }] 
         },
         options: { 
-            maintainAspectRatio: false, 
+            maintainAspectRatio: false,
             plugins: { 
-                legend: { position: 'bottom', labels: { font: { size: 16, weight: 'bold' }, color: '#333' } },
-                datalabels: {
-                    color: '#000',
-                    font: { weight: 'bold', size: 18 },
-                    formatter: (val) => { return ((val/total)*100).toFixed(0) + "%"; }
-                }
+                legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' } } },
+                datalabels: { color: '#fff', font: { size: 16, weight: 'bold' }, formatter: v => ((v/total)*100).toFixed(0)+"%" }
             } 
         }
     });
 }
 
 function iniciarAutoScroll() {
-    const container = $('.table-section');
-    function scroll() {
-        const curr = container.scrollTop();
-        const max = container[0].scrollHeight - container.height();
-        if (curr >= max) {
-            setTimeout(() => container.animate({ scrollTop: 0 }, 2000), 5000);
-        } else {
-            container.animate({ scrollTop: curr + 300 }, 1500, 'linear');
+    const el = document.getElementById('scrollContainer');
+    let speed = 1.5; 
+    function step() {
+        el.scrollTop += speed;
+        if (el.scrollTop >= (el.scrollHeight - el.offsetHeight)) {
+            setTimeout(() => { el.scrollTop = 0; }, 3000);
         }
+        requestAnimationFrame(step);
     }
-    setInterval(scroll, 4000);
+    requestAnimationFrame(step);
 }
 </script>
 </body>
