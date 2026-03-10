@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8" />
-    <title>SISTEMA SIMONETTI - MONITORAMENTO</title>
+    <title>MONITORAMENTO RECEBIMENTO - SIMONETTI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -14,97 +14,128 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
 
     <style>
-        :root { --blue-ms: #1E90FF; --dark-blue: #104E8B; --bg: #000; --text: #fff; }
+        :root { 
+            --simonetti-red: #E30613; 
+            --simonetti-pink: #FF4D6D; /* Rosa puxado pro vermelho */
+            --bg-light: #F4F4F9; 
+            --text-dark: #222; 
+        }
         
-        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; margin: 0; color: var(--text); overflow: hidden; }
+        body { 
+            background: var(--bg-light); 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            color: var(--text-dark); 
+            overflow: hidden; 
+        }
         
-        /* Cabeçalho com a cor solicitada */
         header { 
-            background: var(--dark-blue); 
-            padding: 15px 30px; 
+            background: var(--simonetti-red); 
+            padding: 20px 40px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            border-bottom: 5px solid var(--blue-ms);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-bottom: 6px solid var(--simonetti-pink);
         }
-        h1 { margin: 0; font-size: 2.8rem; text-transform: uppercase; font-weight: 800; }
+
+        h1 { margin: 0; font-size: 3rem; text-transform: uppercase; font-weight: 900; color: #fff; letter-spacing: -1px; }
 
         .btn-fullscreen {
-            background: var(--blue-ms);
-            color: white;
+            background: #fff;
+            color: var(--simonetti-red);
             border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 8px;
+            padding: 15px 35px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            border-radius: 50px;
             cursor: pointer;
             transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .btn-fullscreen:hover { background: #00BFFF; transform: scale(1.05); }
+        .btn-fullscreen:hover { transform: scale(1.05); background: var(--simonetti-pink); color: #fff; }
 
-        .main-container { display: flex; height: calc(100vh - 110px); padding: 10px; gap: 15px; }
+        .main-container { display: flex; height: calc(100vh - 120px); padding: 20px; gap: 20px; }
 
-        /* Tabela Esquerda */
-        .table-section { flex: 2.5; background: #0a0a0a; border-radius: 12px; padding: 15px; overflow-y: auto; scrollbar-width: none; }
+        /* Tabela Central */
+        .table-section { 
+            flex: 3; 
+            background: #fff; 
+            border-radius: 20px; 
+            padding: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow-y: auto; 
+            scrollbar-width: none; 
+        }
         .table-section::-webkit-scrollbar { display: none; }
         
-        /* Dash Direita */
-        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        /* Dash Lateral */
+        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        .kpi-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
         .kpi-card { 
-            background: #111; 
-            border-left: 10px solid var(--blue-ms); 
-            padding: 25px; 
+            background: #fff; 
+            padding: 20px; 
             text-align: center;
-            border-radius: 10px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            border-bottom: 8px solid var(--simonetti-red);
         }
-        .kpi-value { font-size: 6rem; font-weight: 900; color: #00FF00; display: block; line-height: 1; }
-        .kpi-label { font-size: 1.6rem; text-transform: uppercase; color: #ccc; letter-spacing: 2px; }
+        .kpi-value { font-size: 5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
+        .kpi-label { font-size: 1.4rem; font-weight: 700; color: #666; text-transform: uppercase; }
 
         .chart-box { 
             background: #fff; 
-            padding: 20px; 
-            border-radius: 15px; 
+            padding: 25px; 
+            border-radius: 20px; 
             flex-grow: 1; 
-            min-height: 400px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* Tabela Estilo TV */
-        table.dataTable { width: 100% !important; color: #fff !important; border: none !important; }
+        /* Estilo Tabela - Otimizada para TV */
+        table.dataTable { width: 100% !important; border-collapse: collapse !important; }
         table.dataTable thead th { 
-            background: #222 !important; 
-            color: var(--blue-ms) !important; 
-            font-size: 1.8rem !important; 
+            background: #f8f9fa !important; 
+            color: #333 !important; 
+            font-size: 1.6rem !important; 
             padding: 25px !important; 
             text-align: center !important;
-            border-bottom: 3px solid #444 !important;
+            border-bottom: 4px solid var(--simonetti-red) !important;
         }
         table.dataTable tbody td { 
-            font-size: 1.7rem !important; 
-            padding: 20px !important; 
-            border-bottom: 1px solid #222 !important; 
+            font-size: 1.8rem !important; 
+            padding: 22px !important; 
+            font-weight: 600;
+            border-bottom: 1px solid #eee !important; 
             text-align: center !important;
         }
         
-        .row-even { background-color: #0f0f0f; }
-        .row-odd { background-color: #050505; }
+        .row-even { background-color: #ffffff; }
+        .row-odd { background-color: #fdfdfd; }
 
         .pill { 
-            padding: 12px; 
-            border-radius: 10px; 
-            font-size: 1.5rem; 
-            font-weight: bold; 
-            display: block; 
-            text-align: center;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            padding: 10px 15px; 
+            border-radius: 12px; 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            color: #fff;
+            display: inline-block;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
+
+        /* Ocultar elementos do DataTables que você não quer */
+        .dataTables_filter, .dataTables_length { display: none; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>RECEBIMENTO - MÓVEIS SIMONETTI</h1>
-    <button class="btn-fullscreen" onclick="toggleFullScreen()">📺 EXIBIR EM TELA CHEIA</button>
+    <h1>LOGÍSTICA - MÓVEIS SIMONETTI</h1>
+    <button class="btn-fullscreen" onclick="toggleFullScreen()">📺 TELA CHEIA</button>
 </header>
 
 <div class="main-container" id="painelPrincipal">
@@ -112,11 +143,11 @@
         <table id="tabelaTV" class="display nowrap">
             <thead>
                 <tr>
+                    <th>CÓDIGO</th>
                     <th>DATA</th>
                     <th>STATUS</th>
                     <th>FORNECEDOR</th>
                     <th>TIPO</th>
-                    <th>PRODUTO</th>
                     <th>BOX</th>
                 </tr>
             </thead>
@@ -125,15 +156,18 @@
     </div>
 
     <div class="dash-section">
-        <div class="kpi-card">
-            <span class="kpi-label">CARROS</span>
-            <span id="countCarros" class="kpi-value">0</span>
-        </div>
-        <div class="kpi-card">
-            <span class="kpi-label">AGENDAS</span>
-            <span id="countAgendas" class="kpi-value">0</span>
+        <div class="kpi-group">
+            <div class="kpi-card">
+                <span class="kpi-label">CARROS</span>
+                <span id="countCarros" class="kpi-value">0</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">AGENDAS</span>
+                <span id="countAgendas" class="kpi-value">0</span>
+            </div>
         </div>
         <div class="chart-box">
+            <h3 style="margin-top:0; color:#444">RESUMO DE STATUS</h3>
             <canvas id="statusChart"></canvas>
         </div>
     </div>
@@ -144,36 +178,33 @@ Chart.register(ChartDataLabels);
 
 const csvUrl = "https://docs.google.com/spreadsheets/d/1Ore02M4GARvE6hldNDZmiVNDrABb4dgaZO7wlMY-fjs/export?format=csv&gid=2090543957";
 
+// Cores vibrantes para os status
 const coresStatus = {
-    "CARGA RECEBIDA": '#2E7D32', "NO PATIO - FICOU P/ AMANHÃ": '#00ACC1', "CANCELADA": '#D32F2F',    
-    "SOB AJUSTE": '#7B1FA2', "NO PATIO - SOB ENCAIXE": '#E65100', "NO PATIO - FICOU DE ONTEM": '#C2185B',
-    "EM RECEBIMENTO": '#FBC02D', "NO PATIO": '#1976D2', "EM ATRASO": '#FF5252', "REAGENDA": '#5D4037'
+    "CARGA RECEBIDA": '#2ECC71', 
+    "NO PATIO - FICOU P/ AMANHÃ": '#3498DB', 
+    "CANCELADA": '#E74C3C',    
+    "SOB AJUSTE": '#9B59B6', 
+    "NO PATIO - SOB ENCAIXE": '#E67E22', 
+    "NO PATIO - FICOU DE ONTEM": '#F06292',
+    "EM RECEBIMENTO": '#F1C40F', 
+    "NO PATIO": '#34495E', 
+    "EM ATRASO": '#FF1744', 
+    "REAGENDA": '#795548'
 };
 
 function toggleFullScreen() {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
-        $(".btn-fullscreen").text("✖ SAIR DA TELA CHEIA");
     } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-            $(".btn-fullscreen").text("📺 EXIBIR EM TELA CHEIA");
-        }
+        if (document.exitFullscreen) document.exitFullscreen();
     }
-}
-
-function getColorTipo(text) {
-    const tp = (text || "").toUpperCase();
-    if (['ROUPEIRO', 'ARMARIO', 'COZINHA', 'PAINEL', 'MODULO'].some(x => tp.includes(x))) return '#FFFF00';
-    if (['CELULAR', 'TABLET', 'NOTEBOOK'].some(x => tp.includes(x))) return '#00BFFF';
-    return null;
 }
 
 let table, chartStatus;
 
 $(document).ready(() => {
     carregar();
-    setInterval(carregar, 180000); // 3 min refresh
+    setInterval(carregar, 60000); // Atualiza a cada 1 minuto
     iniciarAutoScroll();
 });
 
@@ -191,21 +222,21 @@ function renderizar(dados) {
     const stats = {};
     const idsCarros = new Set();
 
-    dados.forEach((r, i) => {
+    dados.forEach((r) => {
         const st = (r["STATUS"] || "").trim().toUpperCase();
-        const tp = (r["TIPO DE PRODUTO"] || "").trim().toUpperCase();
-        const tpColor = getColorTipo(tp);
+        const cod = (r["CARGAS"] || "---").trim();
         
-        idsCarros.add(r["CARGAS"] || i);
+        // Lógica de contagem
+        if(cod !== "---") idsCarros.add(cod);
         stats[st] = (stats[st] || 0) + 1;
 
         body.append(`<tr>
-            <td style="color:#aaa">${(r["DATA"] || "").replace(/\*/g, "")}</td>
-            <td><span class="pill" style="background:${coresStatus[st] || '#444'}">${st}</span></td>
-            <td style="color:#FFD700; font-weight:bold">${r["FORNECEDOR"] || ""}</td>
-            <td style="color:${tpColor || '#fff'}">${tp}</td>
-            <td>${r["PRODUTO"] || ""}</td>
-            <td style="font-size: 2.5rem !important; color:#00FF00; font-weight:bold">${r["BOX"] || "-"}</td>
+            <td style="color:#777">#${cod}</td>
+            <td style="color:#444">${(r["DATA"] || "").replace(/\*/g, "")}</td>
+            <td><span class="pill" style="background:${coresStatus[st] || '#999'}">${st}</span></td>
+            <td style="color:var(--simonetti-red); font-weight:bold">${r["FORNECEDOR"] || ""}</td>
+            <td>${r["TIPO DE PRODUTO"] || ""}</td>
+            <td style="font-size: 2.2rem !important; color:#27ae60; font-weight:900">${r["BOX"] || "-"}</td>
         </tr>`);
     });
 
@@ -222,19 +253,32 @@ function renderizar(dados) {
 function atualizarGrafico(stats, total) {
     if(chartStatus) chartStatus.destroy();
     chartStatus = new Chart(document.getElementById('statusChart'), {
-        type: 'pie',
+        type: 'doughnut', // Doughnut fica mais moderno para TVs
         data: { 
             labels: Object.keys(stats), 
             datasets: [{ 
                 data: Object.values(stats), 
-                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#444") 
+                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc"),
+                borderWidth: 5,
+                borderColor: '#fff'
             }] 
         },
         options: { 
             maintainAspectRatio: false,
             plugins: { 
-                legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' } } },
-                datalabels: { color: '#fff', font: { size: 16, weight: 'bold' }, formatter: v => ((v/total)*100).toFixed(0)+"%" }
+                legend: { 
+                    position: 'bottom', 
+                    labels: { font: { size: 18, weight: 'bold' }, color: '#333', padding: 20 } 
+                },
+                datalabels: { 
+                    color: '#fff', 
+                    font: { size: 20, weight: '900' }, 
+                    formatter: (v) => {
+                        let pct = ((v/total)*100).toFixed(0) + "%";
+                        return v + "\n(" + pct + ")"; // Exibe quantidade e percentual
+                    },
+                    textAlign: 'center'
+                }
             } 
         }
     });
@@ -242,11 +286,11 @@ function atualizarGrafico(stats, total) {
 
 function iniciarAutoScroll() {
     const el = document.getElementById('scrollContainer');
-    let speed = 1.5; 
+    let speed = 1.2; 
     function step() {
         el.scrollTop += speed;
         if (el.scrollTop >= (el.scrollHeight - el.offsetHeight)) {
-            setTimeout(() => { el.scrollTop = 0; }, 3000);
+            setTimeout(() => { el.scrollTop = 0; }, 4000); // Pausa no fim
         }
         requestAnimationFrame(step);
     }
