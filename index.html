@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8" />
-    <title>MONITORAMENTO RECEBIMENTO - SIMONETTI</title>
+    <title>MONITORAMENTO SIMONETTI - LOGÍSTICA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -10,144 +10,76 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
 
     <style>
         :root { 
             --simonetti-red: #E30613; 
-            --simonetti-pink: #FF4D6D; /* Rosa puxado pro vermelho */
+            --simonetti-pink: #FF4D6D; 
             --bg-light: #F4F4F9; 
-            --text-dark: #222; 
         }
         
-        body { 
-            background: var(--bg-light); 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            color: var(--text-dark); 
-            overflow: hidden; 
-        }
+        body { background: var(--bg-light); font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
         
         header { 
-            background: var(--simonetti-red); 
-            padding: 20px 40px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            background: var(--simonetti-red); padding: 15px 40px; 
+            display: flex; justify-content: space-between; align-items: center;
             border-bottom: 6px solid var(--simonetti-pink);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
-        h1 { margin: 0; font-size: 3rem; text-transform: uppercase; font-weight: 900; color: #fff; letter-spacing: -1px; }
+        h1 { margin: 0; font-size: 2.8rem; color: #fff; font-weight: 900; }
 
-        .btn-fullscreen {
-            background: #fff;
-            color: var(--simonetti-red);
-            border: none;
-            padding: 15px 35px;
-            font-size: 1.4rem;
-            font-weight: 800;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .btn-fullscreen:hover { transform: scale(1.05); background: var(--simonetti-pink); color: #fff; }
+        .main-container { display: flex; height: calc(100vh - 110px); padding: 20px; gap: 20px; }
 
-        .main-container { display: flex; height: calc(100vh - 120px); padding: 20px; gap: 20px; }
-
-        /* Tabela Central */
-        .table-section { 
-            flex: 3; 
-            background: #fff; 
-            border-radius: 20px; 
-            padding: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            overflow-y: auto; 
-            scrollbar-width: none; 
-        }
+        /* Tabela */
+        .table-section { flex: 3; background: #fff; border-radius: 15px; padding: 15px; overflow-y: auto; scrollbar-width: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .table-section::-webkit-scrollbar { display: none; }
         
-        /* Dash Lateral */
-        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        /* Dashboard lateral */
+        .dash-section { flex: 1.2; display: flex; flex-direction: column; gap: 15px; }
 
-        .kpi-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
         .kpi-card { 
-            background: #fff; 
-            padding: 20px; 
-            text-align: center;
-            border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            border-bottom: 8px solid var(--simonetti-red);
+            background: #fff; padding: 20px; text-align: center; border-radius: 15px;
+            border-bottom: 8px solid var(--simonetti-red); box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
-        .kpi-value { font-size: 5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
-        .kpi-label { font-size: 1.4rem; font-weight: 700; color: #666; text-transform: uppercase; }
+        .kpi-value { font-size: 5rem; font-weight: 900; color: var(--simonetti-red); display: block; }
+        .kpi-label { font-size: 1.2rem; font-weight: 700; color: #666; text-transform: uppercase; }
 
-        .chart-box { 
-            background: #fff; 
-            padding: 25px; 
-            border-radius: 20px; 
-            flex-grow: 1; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .chart-box { background: #fff; padding: 20px; border-radius: 15px; flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; }
 
-        /* Estilo Tabela - Otimizada para TV */
-        table.dataTable { width: 100% !important; border-collapse: collapse !important; }
-        table.dataTable thead th { 
-            background: #f8f9fa !important; 
-            color: #333 !important; 
-            font-size: 1.6rem !important; 
-            padding: 25px !important; 
-            text-align: center !important;
-            border-bottom: 4px solid var(--simonetti-red) !important;
-        }
-        table.dataTable tbody td { 
-            font-size: 1.8rem !important; 
-            padding: 22px !important; 
-            font-weight: 600;
-            border-bottom: 1px solid #eee !important; 
-            text-align: center !important;
-        }
+        /* Estilo da Tabela para TV */
+        table.dataTable thead th { background: #fdfdfd !important; font-size: 1.5rem !important; padding: 20px !important; border-bottom: 3px solid var(--simonetti-red) !important; color: #333 !important; }
+        table.dataTable tbody td { font-size: 1.7rem !important; padding: 18px !important; text-align: center !important; font-weight: 600; border-bottom: 1px solid #eee !important; }
+
+        .pill { padding: 8px 12px; border-radius: 10px; color: #fff; font-size: 1.3rem; font-weight: 800; display: inline-block; }
         
-        .row-even { background-color: #ffffff; }
-        .row-odd { background-color: #fdfdfd; }
+        /* Cores das células do Tipo de Produto baseadas no seu print */
+        .bg-armario { background-color: #FFFF00; color: #000; }
+        .bg-mesa { background-color: #00B050; color: #fff; }
 
-        .pill { 
-            padding: 10px 15px; 
-            border-radius: 12px; 
-            font-size: 1.4rem; 
-            font-weight: 800; 
-            color: #fff;
-            display: inline-block;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-        }
-
-        /* Ocultar elementos do DataTables que você não quer */
-        .dataTables_filter, .dataTables_length { display: none; }
+        .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: none; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>LOGÍSTICA - MÓVEIS SIMONETTI</h1>
-    <button class="btn-fullscreen" onclick="toggleFullScreen()">📺 TELA CHEIA</button>
+    <h1>RECEBIMENTO SIMONETTI</h1>
+    <button class="btn-fullscreen" onclick="document.documentElement.requestFullscreen()">📺 FULLSCREEN</button>
 </header>
 
-<div class="main-container" id="painelPrincipal">
+<div class="main-container">
     <div class="table-section" id="scrollContainer">
-        <table id="tabelaTV" class="display nowrap">
+        <table id="tabelaTV" class="display nowrap" style="width:100%">
             <thead>
                 <tr>
-                    <th>CÓDIGO</th>
+                    <th>CÓD.</th>
                     <th>DATA</th>
-                    <th>STATUS</th>
                     <th>FORNECEDOR</th>
                     <th>TIPO</th>
+                    <th>STATUS</th>
                     <th>BOX</th>
                 </tr>
             </thead>
@@ -156,18 +88,18 @@
     </div>
 
     <div class="dash-section">
-        <div class="kpi-group">
+        <div class="kpi-row">
             <div class="kpi-card">
-                <span class="kpi-label">CARROS</span>
+                <span class="kpi-label">CARROS (ÚNICOS)</span>
                 <span id="countCarros" class="kpi-value">0</span>
             </div>
             <div class="kpi-card">
-                <span class="kpi-label">AGENDAS</span>
+                <span class="kpi-label">AGENDAS (TOTAL)</span>
                 <span id="countAgendas" class="kpi-value">0</span>
             </div>
         </div>
         <div class="chart-box">
-            <h3 style="margin-top:0; color:#444">RESUMO DE STATUS</h3>
+            <h3 style="margin:0 0 10px 0; color:#444">STATUS DAS CARGAS</h3>
             <canvas id="statusChart"></canvas>
         </div>
     </div>
@@ -178,40 +110,29 @@ Chart.register(ChartDataLabels);
 
 const csvUrl = "https://docs.google.com/spreadsheets/d/1Ore02M4GARvE6hldNDZmiVNDrABb4dgaZO7wlMY-fjs/export?format=csv&gid=2090543957";
 
-// Cores vibrantes para os status
 const coresStatus = {
-    "CARGA RECEBIDA": '#2ECC71', 
-    "NO PATIO - FICOU P/ AMANHÃ": '#3498DB', 
-    "CANCELADA": '#E74C3C',    
-    "SOB AJUSTE": '#9B59B6', 
-    "NO PATIO - SOB ENCAIXE": '#E67E22', 
-    "NO PATIO - FICOU DE ONTEM": '#F06292',
-    "EM RECEBIMENTO": '#F1C40F', 
-    "NO PATIO": '#34495E', 
-    "EM ATRASO": '#FF1744', 
-    "REAGENDA": '#795548'
+    "CARGA RECEBIDA": '#2ECC71', "CANCELADA": '#E74C3C', "EM RECEBIMENTO": '#F1C40F', 
+    "NO PATIO": '#34495E', "EM ATRASO": '#FF1744'
 };
 
-function toggleFullScreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-    }
-}
-
-let table, chartStatus;
+let chartStatus;
 
 $(document).ready(() => {
-    carregar();
-    setInterval(carregar, 60000); // Atualiza a cada 1 minuto
+    carregarDados();
+    // ATUALIZAÇÃO AUTOMÁTICA: 60.000ms = 1 minuto
+    setInterval(carregarDados, 60000); 
     iniciarAutoScroll();
 });
 
-function carregar() {
-    Papa.parse(csvUrl, { 
-        download: true, header: true, skipEmptyLines: true, 
-        complete: res => renderizar(res.data) 
+function carregarDados() {
+    console.log("Atualizando dados...");
+    Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            renderizar(results.data);
+        }
     });
 }
 
@@ -220,66 +141,66 @@ function renderizar(dados) {
     
     const body = $("#tabelaTV tbody").empty();
     const stats = {};
-    const idsCarros = new Set();
+    const codigosUnicos = new Set(); // Aqui acontece a mágica dos carros únicos
 
-    dados.forEach((r) => {
-        const st = (r["STATUS"] || "").trim().toUpperCase();
-        const cod = (r["CARGAS"] || "---").trim();
-        
-        // Lógica de contagem
-        if(cod !== "---") idsCarros.add(cod);
-        stats[st] = (stats[st] || 0) + 1;
+    dados.forEach(r => {
+        const codigo = (r["CODIGO"] || "").trim();
+        const status = (r["STATUS"] || "PENDENTE").toUpperCase();
+        const tipo = (r["TIPO DE PRODUTO"] || "").toUpperCase();
+
+        // Lógica de Carros vs Agendas
+        if (codigo) codigosUnicos.add(codigo);
+        stats[status] = (stats[status] || 0) + 1;
+
+        // Estilo de cores para o tipo (igual ao seu print)
+        let classeTipo = "";
+        if(tipo.includes("ARMARIO") || tipo.includes("COZINHA")) classeTipo = "bg-armario";
+        if(tipo.includes("MESA")) classeTipo = "bg-mesa";
 
         body.append(`<tr>
-            <td style="color:#777">#${cod}</td>
-            <td style="color:#444">${(r["DATA"] || "").replace(/\*/g, "")}</td>
-            <td><span class="pill" style="background:${coresStatus[st] || '#999'}">${st}</span></td>
-            <td style="color:var(--simonetti-red); font-weight:bold">${r["FORNECEDOR"] || ""}</td>
-            <td>${r["TIPO DE PRODUTO"] || ""}</td>
-            <td style="font-size: 2.2rem !important; color:#27ae60; font-weight:900">${r["BOX"] || "-"}</td>
+            <td style="color:#888">#${codigo}</td>
+            <td>${r["DATA"] || ""}</td>
+            <td style="color:var(--simonetti-red)">${r["FORNECEDOR"] || ""}</td>
+            <td class="${classeTipo}">${tipo}</td>
+            <td><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
+            <td style="font-size: 2.2rem!important; color:#27ae60">${r["BOX"] || "-"}</td>
         </tr>`);
     });
 
-    table = $('#tabelaTV').DataTable({ 
-        paging: false, info: false, ordering: false,
-        stripeClasses: ['row-odd', 'row-even']
-    });
+    $('#tabelaTV').DataTable({ paging: false, info: false, ordering: false, searching: false });
 
-    $("#countCarros").text(idsCarros.size);
+    // Atualiza KPIs
+    $("#countCarros").text(codigosUnicos.size);
     $("#countAgendas").text(dados.length);
+    
     atualizarGrafico(stats, dados.length);
 }
 
 function atualizarGrafico(stats, total) {
     if(chartStatus) chartStatus.destroy();
-    chartStatus = new Chart(document.getElementById('statusChart'), {
-        type: 'doughnut', // Doughnut fica mais moderno para TVs
-        data: { 
-            labels: Object.keys(stats), 
-            datasets: [{ 
-                data: Object.values(stats), 
-                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc"),
-                borderWidth: 5,
-                borderColor: '#fff'
-            }] 
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    chartStatus = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(stats),
+            datasets: [{
+                data: Object.values(stats),
+                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc")
+            }]
         },
-        options: { 
+        options: {
             maintainAspectRatio: false,
-            plugins: { 
-                legend: { 
-                    position: 'bottom', 
-                    labels: { font: { size: 18, weight: 'bold' }, color: '#333', padding: 20 } 
-                },
-                datalabels: { 
-                    color: '#fff', 
-                    font: { size: 20, weight: '900' }, 
-                    formatter: (v) => {
-                        let pct = ((v/total)*100).toFixed(0) + "%";
-                        return v + "\n(" + pct + ")"; // Exibe quantidade e percentual
-                    },
-                    textAlign: 'center'
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 16, weight: 'bold' } } },
+                datalabels: {
+                    color: '#fff',
+                    font: { size: 18, weight: 'bold' },
+                    formatter: (value) => {
+                        let p = ((value/total)*100).toFixed(0) + "%";
+                        return value + " (" + p + ")"; // Exibe quantidade e porcentagem
+                    }
                 }
-            } 
+            }
         }
     });
 }
@@ -290,7 +211,7 @@ function iniciarAutoScroll() {
     function step() {
         el.scrollTop += speed;
         if (el.scrollTop >= (el.scrollHeight - el.offsetHeight)) {
-            setTimeout(() => { el.scrollTop = 0; }, 4000); // Pausa no fim
+            setTimeout(() => { el.scrollTop = 0; }, 3000); 
         }
         requestAnimationFrame(step);
     }
