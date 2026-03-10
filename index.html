@@ -17,6 +17,7 @@
             --simonetti-red: #E30613; 
             --simonetti-pink: #FF4D6D; 
             --bg-light: #F4F4F9; 
+            --border-color: #ddd;
         }
         
         body { background: var(--bg-light); font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
@@ -30,44 +31,57 @@
 
         h1 { margin: 0; font-size: 2.8rem; color: #fff; font-weight: 900; }
 
-        .main-container { display: flex; height: calc(100vh - 110px); padding: 20px; gap: 20px; }
+        .main-container { display: flex; height: calc(100vh - 125px); padding: 20px; gap: 20px; }
 
-        /* Tabela */
-        .table-section { flex: 3; background: #fff; border-radius: 15px; padding: 15px; overflow-y: auto; scrollbar-width: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        /* Ajuste para quando estiver em Fullscreen */
+        :fullscreen .main-container { height: calc(100vh - 110px); }
+
+        /* Tabela com Bordas */
+        .table-section { flex: 3.2; background: #fff; border-radius: 15px; padding: 10px; overflow-y: auto; scrollbar-width: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
         .table-section::-webkit-scrollbar { display: none; }
         
         /* Dashboard lateral */
-        .dash-section { flex: 1.2; display: flex; flex-direction: column; gap: 15px; }
+        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; }
 
-        .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .kpi-column { display: flex; flex-direction: column; gap: 15px; }
 
         .kpi-card { 
-            background: #fff; padding: 20px; text-align: center; border-radius: 15px;
+            background: #fff; padding: 15px; text-align: center; border-radius: 15px;
             border-bottom: 8px solid var(--simonetti-red); box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
-        .kpi-value { font-size: 5rem; font-weight: 900; color: var(--simonetti-red); display: block; }
-        .kpi-label { font-size: 1.2rem; font-weight: 700; color: #666; text-transform: uppercase; }
+        .kpi-value { font-size: 4.5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1.1; }
+        .kpi-label { font-size: 1.1rem; font-weight: 700; color: #666; text-transform: uppercase; }
 
-        .chart-box { background: #fff; padding: 20px; border-radius: 15px; flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; }
+        .chart-box { background: #fff; padding: 20px; border-radius: 15px; flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 1px solid var(--border-color); }
 
-        /* Estilo da Tabela para TV */
-        table.dataTable thead th { background: #fdfdfd !important; font-size: 1.5rem !important; padding: 20px !important; border-bottom: 3px solid var(--simonetti-red) !important; color: #333 !important; }
-        table.dataTable tbody td { font-size: 1.7rem !important; padding: 18px !important; text-align: center !important; font-weight: 600; border-bottom: 1px solid #eee !important; }
+        /* Estilo da Tabela com Linhas Verticais e Horizontais */
+        table.dataTable { border-collapse: collapse !important; border: 1px solid var(--border-color) !important; }
+        table.dataTable thead th { 
+            background: #fdfdfd !important; font-size: 1.5rem !important; padding: 20px !important; 
+            border: 1px solid var(--border-color) !important; border-bottom: 4px solid var(--simonetti-red) !important; color: #333 !important; 
+        }
+        table.dataTable tbody td { 
+            font-size: 1.7rem !important; padding: 15px !important; text-align: center !important; 
+            font-weight: 700; border: 1px solid var(--border-color) !important; 
+        }
 
-        .pill { padding: 8px 12px; border-radius: 10px; color: #fff; font-size: 1.3rem; font-weight: 800; display: inline-block; }
+        .pill { padding: 8px 12px; border-radius: 10px; color: #fff; font-size: 1.2rem; font-weight: 800; display: inline-block; width: 90%; }
         
-        /* Cores das células do Tipo de Produto baseadas no seu print */
         .bg-armario { background-color: #FFFF00; color: #000; }
         .bg-mesa { background-color: #00B050; color: #fff; }
 
-        .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: none; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .box-green { color: #27ae60 !important; font-size: 3rem !important; }
+        .box-red { color: #E74C3C !important; font-size: 3rem !important; }
+
+        .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: none; padding: 12px 25px; font-weight: 900; border-radius: 8px; cursor: pointer; font-size: 1.1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.3s; }
+        .btn-fullscreen:hover { background: var(--simonetti-pink); color: white; }
     </style>
 </head>
 <body>
 
 <header>
     <h1>RECEBIMENTO SIMONETTI</h1>
-    <button class="btn-fullscreen" onclick="document.documentElement.requestFullscreen()">📺 FULLSCREEN</button>
+    <button class="btn-fullscreen" id="fsBtn" onclick="toggleFullScreen()">📺 TELA CHEIA</button>
 </header>
 
 <div class="main-container">
@@ -75,10 +89,9 @@
         <table id="tabelaTV" class="display nowrap" style="width:100%">
             <thead>
                 <tr>
-                    <th>CÓD.</th>
                     <th>DATA</th>
                     <th>FORNECEDOR</th>
-                    <th>TIPO</th>
+                    <th>TIPO DE PRODUTO</th>
                     <th>STATUS</th>
                     <th>BOX</th>
                 </tr>
@@ -88,7 +101,7 @@
     </div>
 
     <div class="dash-section">
-        <div class="kpi-row">
+        <div class="kpi-column">
             <div class="kpi-card">
                 <span class="kpi-label">CARROS (ÚNICOS)</span>
                 <span id="countCarros" class="kpi-value">0</span>
@@ -99,7 +112,7 @@
             </div>
         </div>
         <div class="chart-box">
-            <h3 style="margin:0 0 10px 0; color:#444">STATUS DAS CARGAS</h3>
+            <h3 style="margin:0 0 10px 0; color:#444; font-size: 1.5rem;">STATUS DAS CARGAS</h3>
             <canvas id="statusChart"></canvas>
         </div>
     </div>
@@ -119,13 +132,23 @@ let chartStatus;
 
 $(document).ready(() => {
     carregarDados();
-    // ATUALIZAÇÃO AUTOMÁTICA: 60.000ms = 1 minuto
     setInterval(carregarDados, 60000); 
     iniciarAutoScroll();
 });
 
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        document.getElementById('fsBtn').innerText = "✖ SAIR DA TELA CHEIA";
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+            document.getElementById('fsBtn').innerText = "📺 TELA CHEIA";
+        }
+    }
+}
+
 function carregarDados() {
-    console.log("Atualizando dados...");
     Papa.parse(csvUrl, {
         download: true,
         header: true,
@@ -141,35 +164,36 @@ function renderizar(dados) {
     
     const body = $("#tabelaTV tbody").empty();
     const stats = {};
-    const codigosUnicos = new Set(); // Aqui acontece a mágica dos carros únicos
+    const codigosUnicos = new Set();
 
     dados.forEach(r => {
         const codigo = (r["CODIGO"] || "").trim();
-        const status = (r["STATUS"] || "PENDENTE").toUpperCase();
+        const rawStatus = (r["STATUS"] || "PENDENTE");
+        const status = rawStatus.toUpperCase();
         const tipo = (r["TIPO DE PRODUTO"] || "").toUpperCase();
+        const box = r["BOX"] || "-";
 
-        // Lógica de Carros vs Agendas
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
-        // Estilo de cores para o tipo (igual ao seu print)
         let classeTipo = "";
         if(tipo.includes("ARMARIO") || tipo.includes("COZINHA")) classeTipo = "bg-armario";
         if(tipo.includes("MESA")) classeTipo = "bg-mesa";
 
+        // Lógica de Cor do BOX
+        const boxClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
+
         body.append(`<tr>
-            <td style="color:#888">#${codigo}</td>
             <td>${r["DATA"] || ""}</td>
             <td style="color:var(--simonetti-red)">${r["FORNECEDOR"] || ""}</td>
             <td class="${classeTipo}">${tipo}</td>
             <td><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
-            <td style="font-size: 2.2rem!important; color:#27ae60">${r["BOX"] || "-"}</td>
+            <td class="${boxClass}">${box}</td>
         </tr>`);
     });
 
     $('#tabelaTV').DataTable({ paging: false, info: false, ordering: false, searching: false });
 
-    // Atualiza KPIs
     $("#countCarros").text(codigosUnicos.size);
     $("#countAgendas").text(dados.length);
     
@@ -191,13 +215,13 @@ function atualizarGrafico(stats, total) {
         options: {
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 16, weight: 'bold' } } },
+                legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' }, padding: 10 } },
                 datalabels: {
                     color: '#fff',
-                    font: { size: 18, weight: 'bold' },
+                    font: { size: 16, weight: 'bold' },
                     formatter: (value) => {
                         let p = ((value/total)*100).toFixed(0) + "%";
-                        return value + " (" + p + ")"; // Exibe quantidade e porcentagem
+                        return value + "\n(" + p + ")";
                     }
                 }
             }
@@ -207,11 +231,11 @@ function atualizarGrafico(stats, total) {
 
 function iniciarAutoScroll() {
     const el = document.getElementById('scrollContainer');
-    let speed = 1.2; 
+    let speed = 1.0; 
     function step() {
         el.scrollTop += speed;
         if (el.scrollTop >= (el.scrollHeight - el.offsetHeight)) {
-            setTimeout(() => { el.scrollTop = 0; }, 3000); 
+            setTimeout(() => { el.scrollTop = 0; }, 4000); 
         }
         requestAnimationFrame(step);
     }
