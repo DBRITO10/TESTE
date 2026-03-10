@@ -33,15 +33,14 @@
 
         .main-container { display: flex; height: calc(100vh - 125px); padding: 20px; gap: 20px; }
 
-        /* Ajuste para quando estiver em Fullscreen */
         :fullscreen .main-container { height: calc(100vh - 110px); }
 
-        /* Tabela com Bordas */
+        /* Tabela */
         .table-section { flex: 3.2; background: #fff; border-radius: 15px; padding: 10px; overflow-y: auto; scrollbar-width: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
         .table-section::-webkit-scrollbar { display: none; }
         
-        /* Dashboard lateral */
-        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        /* Lateral */
+        .dash-section { flex: 1.2; display: flex; flex-direction: column; gap: 15px; min-width: 350px; }
 
         .kpi-column { display: flex; flex-direction: column; gap: 15px; }
 
@@ -52,26 +51,33 @@
         .kpi-value { font-size: 4.5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1.1; }
         .kpi-label { font-size: 1.1rem; font-weight: 700; color: #666; text-transform: uppercase; }
 
-        .chart-box { background: #fff; padding: 20px; border-radius: 15px; flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 1px solid var(--border-color); }
+        /* Container do Gráfico */
+        .chart-box { 
+            background: #fff; padding: 20px; border-radius: 15px; flex-grow: 1; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center;
+            position: relative;
+        }
+        .chart-container { position: relative; width: 100%; height: 100%; min-height: 300px; }
 
-        /* Estilo da Tabela com Linhas Verticais e Horizontais */
+        /* Tabela com Bordas */
         table.dataTable { border-collapse: collapse !important; border: 1px solid var(--border-color) !important; }
         table.dataTable thead th { 
-            background: #fdfdfd !important; font-size: 1.5rem !important; padding: 20px !important; 
+            background: #fdfdfd !important; font-size: 1.4rem !important; padding: 15px !important; 
             border: 1px solid var(--border-color) !important; border-bottom: 4px solid var(--simonetti-red) !important; color: #333 !important; 
         }
         table.dataTable tbody td { 
-            font-size: 1.7rem !important; padding: 15px !important; text-align: center !important; 
+            font-size: 1.6rem !important; padding: 12px !important; text-align: center !important; 
             font-weight: 700; border: 1px solid var(--border-color) !important; 
         }
 
-        .pill { padding: 8px 12px; border-radius: 10px; color: #fff; font-size: 1.2rem; font-weight: 800; display: inline-block; width: 90%; }
+        .pill { padding: 8px 12px; border-radius: 10px; color: #fff; font-size: 1.1rem; font-weight: 800; display: inline-block; width: 90%; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
         
         .bg-armario { background-color: #FFFF00; color: #000; }
         .bg-mesa { background-color: #00B050; color: #fff; }
 
-        .box-green { color: #27ae60 !important; font-size: 3rem !important; }
-        .box-red { color: #E74C3C !important; font-size: 3rem !important; }
+        .box-green { color: #27ae60 !important; font-size: 3.5rem !important; }
+        .box-red { color: #E74C3C !important; font-size: 3.5rem !important; }
 
         .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: none; padding: 12px 25px; font-weight: 900; border-radius: 8px; cursor: pointer; font-size: 1.1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.3s; }
         .btn-fullscreen:hover { background: var(--simonetti-pink); color: white; }
@@ -112,8 +118,10 @@
             </div>
         </div>
         <div class="chart-box">
-            <h3 style="margin:0 0 10px 0; color:#444; font-size: 1.5rem;">STATUS DAS CARGAS</h3>
-            <canvas id="statusChart"></canvas>
+            <h3 style="margin:0 0 15px 0; color:#444; font-size: 1.4rem; font-weight: 800;">STATUS DAS CARGAS</h3>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -124,15 +132,19 @@ Chart.register(ChartDataLabels);
 const csvUrl = "https://docs.google.com/spreadsheets/d/1Ore02M4GARvE6hldNDZmiVNDrABb4dgaZO7wlMY-fjs/export?format=csv&gid=2090543957";
 
 const coresStatus = {
-    "CARGA RECEBIDA": '#2ECC71', "CANCELADA": '#E74C3C', "EM RECEBIMENTO": '#F1C40F', 
-    "NO PATIO": '#34495E', "EM ATRASO": '#FF1744'
+    "CARGA RECEBIDA": '#2ECC71', 
+    "CANCELADA": '#E74C3C', 
+    "EM RECEBIMENTO": '#F1C40F', 
+    "NO PATIO": '#34495E', 
+    "EM ATRASO": '#FF1744'
 };
 
 let chartStatus;
 
 $(document).ready(() => {
     carregarDados();
-    setInterval(carregarDados, 60000); 
+    // ATUALIZAÇÃO AUTOMÁTICA: 120.000ms = 2 minutos
+    setInterval(carregarDados, 120000); 
     iniciarAutoScroll();
 });
 
@@ -180,7 +192,6 @@ function renderizar(dados) {
         if(tipo.includes("ARMARIO") || tipo.includes("COZINHA")) classeTipo = "bg-armario";
         if(tipo.includes("MESA")) classeTipo = "bg-mesa";
 
-        // Lógica de Cor do BOX
         const boxClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
         body.append(`<tr>
@@ -201,27 +212,46 @@ function renderizar(dados) {
 }
 
 function atualizarGrafico(stats, total) {
+    // Destruir o gráfico anterior para evitar sobreposição
     if(chartStatus) chartStatus.destroy();
+    
     const ctx = document.getElementById('statusChart').getContext('2d');
+    
     chartStatus = new Chart(ctx, {
         type: 'pie',
         data: {
             labels: Object.keys(stats),
             datasets: [{
                 data: Object.values(stats),
-                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc")
+                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc"),
+                borderWidth: 2,
+                borderColor: '#fff'
             }]
         },
         options: {
             maintainAspectRatio: false,
+            responsive: true,
+            layout: {
+                padding: { top: 10, bottom: 10 }
+            },
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' }, padding: 10 } },
+                legend: { 
+                    position: 'bottom', 
+                    labels: { 
+                        font: { size: 14, weight: 'bold' },
+                        color: '#333',
+                        padding: 15
+                    } 
+                },
                 datalabels: {
                     color: '#fff',
-                    font: { size: 16, weight: 'bold' },
+                    font: { size: 18, weight: 'bold' },
+                    textAlign: 'center',
+                    textShadowBlur: 4,
+                    textShadowColor: 'rgba(0,0,0,0.5)',
                     formatter: (value) => {
                         let p = ((value/total)*100).toFixed(0) + "%";
-                        return value + "\n(" + p + ")";
+                        return value + "\n(" + p + ")"; 
                     }
                 }
             }
