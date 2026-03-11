@@ -40,28 +40,26 @@
             box-sizing: border-box;
         }
 
-        /* Container da Tabela com Scroll */
         .table-section { 
             flex: 3; 
             background: #fff; 
             border-radius: 15px; 
-            padding: 0; /* Removido padding para o header encostar nas bordas */
+            padding: 0; 
             overflow-y: hidden; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
             border: 2px solid var(--border-color);
             position: relative;
         }
         
-        /* ESTILO DO CABEÇALHO CONGELADO */
         table.dataTable thead th { 
             position: sticky;
             top: 0;
             z-index: 10;
-            background: var(--simonetti-red) !important; /* Fundo Vermelho */
-            color: #ffffff !important; /* Texto Branco */
+            background: var(--simonetti-red) !important; 
+            color: #ffffff !important; 
             font-size: 1.3rem !important;
             padding: 18px !important; 
-            text-align: center !important; /* Centralizado */
+            text-align: center !important; 
             border: 1px solid rgba(255,255,255,0.3) !important;
             text-transform: uppercase;
         }
@@ -108,11 +106,15 @@
         .bg-mesa { background-color: #00B050 !important; color: #fff; }
         .bg-tecnologia { background-color: #ADD8E6 !important; color: #000; }
 
-        /* Destaque de Carga */
-        .carga-par { background-color: #ffffff; }
-        .carga-impar { background-color: #f9f9f9; }
+        /* Estilo da "Barra Lateral" para agrupar cargas/carros */
+        .carro-destaque {
+            border-left: 8px solid #000000 !important; /* Destaque Preto lateral */
+        }
 
-        .pill { padding: 8px 12px; border-radius: 8px; color: #fff; font-size: 1.1rem; font-weight: 800; display: inline-block; width: 90%; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+        .carga-par { background-color: #ffffff; }
+        .carga-impar { background-color: #f2f2f2; }
+
+        .pill { padding: 8px 12px; border-radius: 8px; color: #fff; font-size: 1.1rem; font-weight: 800; display: inline-block; width: 92%; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
         .box-green { color: #27ae60 !important; font-size: 2.8rem !important; }
         .box-red { color: #E74C3C !important; font-size: 2.8rem !important; }
 
@@ -145,7 +147,7 @@
 
     <div class="dash-section">
         <div class="kpi-card">
-            <span class="kpi-label">TOTAL DE CARGAS</span>
+            <span class="kpi-label">TOTAL DE CARROS</span>
             <span id="countCarros" class="kpi-value">0</span>
         </div>
         <div class="kpi-card">
@@ -182,10 +184,14 @@ const coresStatus = {
 
 let chartStatus;
 let isScrolling = false;
+let waitingAtTop = true; // Inicia esperando no topo
 
 $(document).ready(() => {
     carregarDados();
-    setInterval(carregarDados, 60000); // Atualiza a cada 1 minuto
+    setInterval(carregarDados, 60000); 
+    
+    // Timer inicial de 3 segundos para a primeira rolagem
+    setTimeout(() => { waitingAtTop = false; }, 3000);
 });
 
 function toggleFullScreen() {
@@ -214,7 +220,7 @@ function carregarDados() {
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
-    // Ordenar por CÓDIGO para agrupar as cargas
+    // Ordenar por CÓDIGO para garantir o agrupamento visual
     dados.sort((a, b) => (a["CODIGO"] || "").localeCompare(b["CODIGO"] || ""));
 
     const body = $("#tabelaTV tbody").empty();
@@ -236,25 +242,22 @@ function renderizar(dados) {
 
         let classeTipo = "";
         const produtosAzul = ["CELULAR", "ROBO ASPIRADOR", "TABLET", "NOTEBOOK", "ROBO"];
-        
-        if(produtosAzul.some(p => tipoProduto.includes(p))) {
-            classeTipo = "bg-tecnologia";
-        } else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) {
-            classeTipo = "bg-armario";
-        } else if(tipoProduto.includes("MESA")) {
-            classeTipo = "bg-mesa";
-        }
+        if(produtosAzul.some(p => tipoProduto.includes(p))) classeTipo = "bg-tecnologia";
+        else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) classeTipo = "bg-armario";
+        else if(tipoProduto.includes("MESA")) classeTipo = "bg-mesa";
 
         if (codigo !== ultimoCodigo) {
             cargaAlternada = !cargaAlternada;
             ultimoCodigo = codigo;
         }
+        
         const classeCarga = cargaAlternada ? "carga-par" : "carga-impar";
         const boxClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
+        // Adicionamos a classe 'carro-destaque' em todas as células da primeira coluna ou na linha
         body.append(`<tr class="${classeCarga}">
-            <td>${r["DATA"] || ""}</td>
-            <td style="color:var(--simonetti-red)">${r["FORNECEDOR"] || ""}</td>
+            <td class="carro-destaque">${r["DATA"] || ""}</td>
+            <td>${r["FORNECEDOR"] || ""}</td>
             <td class="${classeTipo}">${tipoProduto}</td>
             <td>${produto}</td> 
             <td><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
@@ -273,17 +276,14 @@ function renderizar(dados) {
 
     $("#countCarros").text(codigosUnicos.size);
     $("#countAgendas").text(dados.length);
-    
     atualizarGrafico(stats, dados.length);
     
-    // Inicia o scroll apenas se não estiver rodando
     if(!isScrolling) iniciarAutoScroll();
 }
 
 function atualizarGrafico(stats, total) {
     if(chartStatus) chartStatus.destroy();
     const ctx = document.getElementById('statusChart').getContext('2d');
-    
     chartStatus = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -299,10 +299,7 @@ function atualizarGrafico(stats, total) {
             maintainAspectRatio: false,
             responsive: true,
             plugins: {
-                legend: { 
-                    position: 'bottom', 
-                    labels: { font: { size: 11, weight: 'bold' }, padding: 8 } 
-                },
+                legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' }, padding: 8 } },
                 datalabels: {
                     color: '#fff',
                     font: { size: 14, weight: 'bold' },
@@ -320,20 +317,21 @@ function atualizarGrafico(stats, total) {
 function iniciarAutoScroll() {
     isScrolling = true;
     const el = document.getElementById('scrollContainer');
-    let speed = 0.8; // Velocidade suave para TVs
+    let speed = 0.8; 
     let delayRestart = false;
 
     function step() {
-        if (!delayRestart) {
+        if (!delayRestart && !waitingAtTop) {
             el.scrollTop += speed;
             
-            // Se chegou ao fim (scrollHeight - altura do container)
             if (el.scrollTop >= (el.scrollHeight - el.offsetHeight - 1)) {
                 delayRestart = true;
                 setTimeout(() => {
-                    el.scrollTop = 0; // Volta para o topo
+                    el.scrollTop = 0;
+                    waitingAtTop = true; // Ativa a espera no topo
                     delayRestart = false;
-                }, 4000); // Pausa de 4 segundos antes de reiniciar
+                    setTimeout(() => { waitingAtTop = false; }, 3000); // Espera 3s no topo
+                }, 4000); // Espera 4s no fim
             }
         }
         requestAnimationFrame(step);
