@@ -40,20 +40,16 @@
             box-sizing: border-box;
         }
 
-        /* Tabela Adaptável */
         .table-section { 
             flex: 3; 
             background: #fff; 
             border-radius: 15px; 
             padding: 10px; 
-            overflow-y: auto; 
-            scrollbar-width: none; 
+            overflow-y: hidden; /* Scroll controlado pelo JS */
             box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
             border: 2px solid var(--border-color);
         }
-        .table-section::-webkit-scrollbar { display: none; }
         
-        /* Lateral Adaptável */
         .dash-section { 
             flex: 1; 
             display: flex; 
@@ -71,7 +67,6 @@
         .kpi-value { font-size: 3.5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
         .kpi-label { font-size: 1rem; font-weight: 700; color: #666; text-transform: uppercase; }
 
-        /* Container do Gráfico - Ajuste para TV Grande */
         .chart-box { 
             background: #fff; padding: 15px; border-radius: 15px; 
             flex-grow: 1; 
@@ -79,7 +74,7 @@
             border: 2px solid var(--border-color);
             display: flex; flex-direction: column; 
             position: relative;
-            min-height: 0; /* Importante para flexbox não estourar */
+            min-height: 0;
         }
         .chart-container { 
             flex-grow: 1;
@@ -87,22 +82,26 @@
             width: 100%;
         }
 
-        /* Estilo da Tabela com Linhas Fortes para TV */
         table.dataTable { border-collapse: collapse !important; width: 100% !important; }
         table.dataTable thead th { 
             background: #f8f9fa !important; font-size: 1.2rem !important; padding: 15px !important; 
             border: 1px solid var(--border-color) !important; border-bottom: 4px solid var(--simonetti-red) !important; color: #333 !important; 
         }
         table.dataTable tbody td { 
-            font-size: 1.4rem !important; padding: 12px !important; text-align: center !important; 
+            font-size: 1.3rem !important; padding: 12px !important; text-align: center !important; 
             font-weight: 700; border: 1px solid var(--border-color) !important; 
         }
 
-        .pill { padding: 6px 10px; border-radius: 8px; color: #fff; font-size: 1rem; font-weight: 800; display: inline-block; width: 95%; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
-        
-        .bg-armario { background-color: #FFFF00; color: #000; }
-        .bg-mesa { background-color: #00B050; color: #fff; }
+        /* Cores de Fundo por Produto */
+        .bg-armario { background-color: #FFFF00 !important; color: #000; }
+        .bg-mesa { background-color: #00B050 !important; color: #fff; }
+        .bg-tecnologia { background-color: #ADD8E6 !important; color: #000; } /* Azul Claro */
 
+        /* Destaque de Carga (Alternância de Cinza Sutil) */
+        .carga-par { background-color: #ffffff; }
+        .carga-impar { background-color: #f2f2f2; }
+
+        .pill { padding: 6px 10px; border-radius: 8px; color: #fff; font-size: 1rem; font-weight: 800; display: inline-block; width: 95%; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
         .box-green { color: #27ae60 !important; font-size: 2.8rem !important; }
         .box-red { color: #E74C3C !important; font-size: 2.8rem !important; }
 
@@ -135,11 +134,11 @@
 
     <div class="dash-section">
         <div class="kpi-card">
-            <span class="kpi-label">TOTAL DE CARROS</span>
+            <span class="kpi-label">TOTAL DE CARGAS</span>
             <span id="countCarros" class="kpi-value">0</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-label">AGENDAS</span>
+            <span class="kpi-label">TOTAL AGENDAS</span>
             <span id="countAgendas" class="kpi-value">0</span>
         </div>
         
@@ -171,11 +170,12 @@ const coresStatus = {
 };
 
 let chartStatus;
+let scrollInterval;
+let isScrolling = false;
 
 $(document).ready(() => {
     carregarDados();
-    setInterval(carregarDados, 120000); // 2 minutos
-    iniciarAutoScroll();
+    setInterval(carregarDados, 60000); // 1 minuto
 });
 
 function toggleFullScreen() {
@@ -204,15 +204,21 @@ function carregarDados() {
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
+    // ORDENAR POR CÓDIGO (Coloca agendas iguais juntas)
+    dados.sort((a, b) => (a["CODIGO"] || "").localeCompare(b["CODIGO"] || ""));
+
     const body = $("#tabelaTV tbody").empty();
     const stats = {};
     const codigosUnicos = new Set();
+    
+    let ultimoCodigo = null;
+    let cargaAlternada = true; // Para mudar a cor do fundo da linha
 
     dados.forEach(r => {
         const codigo = (r["CODIGO"] || "").trim();
         const status = (r["STATUS"] || "PENDENTE").toUpperCase();
-        const tipoProduto = (r["TIPO DE PRODUTO"] || "").toUpperCase(); // Mudei o nome
-        const produto = (r["PRODUTO"] || "").toUpperCase();             // Nova variável
+        const tipoProduto = (r["TIPO DE PRODUTO"] || "").toUpperCase();
+        const produto = (r["PRODUTO"] || "").toUpperCase();
         const box = r["BOX"] || "-";
 
         if (codigo) codigosUnicos.add(codigo);
@@ -220,13 +226,25 @@ function renderizar(dados) {
 
         // Lógica de cores baseada no TIPO DE PRODUTO
         let classeTipo = "";
-        if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) classeTipo = "bg-armario";
-        if(tipoProduto.includes("MESA")) classeTipo = "bg-mesa";
+        const produtosAzul = ["CELULAR", "ROBO ASPIRADOR", "TABLET", "NOTEBOOK", "ROBO"];
+        
+        if(produtosAzul.some(p => tipoProduto.includes(p))) {
+            classeTipo = "bg-tecnologia";
+        } else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) {
+            classeTipo = "bg-armario";
+        } else if(tipoProduto.includes("MESA")) {
+            classeTipo = "bg-mesa";
+        }
 
+        // Lógica de destaque de carga (cor de fundo da linha)
+        if (codigo !== ultimoCodigo) {
+            cargaAlternada = !cargaAlternada;
+            ultimoCodigo = codigo;
+        }
+        const classeCarga = cargaAlternada ? "carga-par" : "carga-impar";
         const boxClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
-        // AGORA COM TODAS AS COLUNAS NA ORDEM CERTA (6 colunas no total)
-        body.append(`<tr>
+        body.append(`<tr class="${classeCarga}">
             <td>${r["DATA"] || ""}</td>
             <td style="color:var(--simonetti-red)">${r["FORNECEDOR"] || ""}</td>
             <td class="${classeTipo}">${tipoProduto}</td>
@@ -236,12 +254,21 @@ function renderizar(dados) {
         </tr>`);
     });
 
-    $('#tabelaTV').DataTable({ paging: false, info: false, ordering: false, searching: false, responsive: true });
+    $('#tabelaTV').DataTable({ 
+        paging: false, 
+        info: false, 
+        ordering: false, 
+        searching: false, 
+        responsive: true,
+        autoWidth: false
+    });
 
     $("#countCarros").text(codigosUnicos.size);
     $("#countAgendas").text(dados.length);
     
     atualizarGrafico(stats, dados.length);
+    
+    if(!isScrolling) iniciarAutoScroll();
 }
 
 function atualizarGrafico(stats, total) {
@@ -265,15 +292,15 @@ function atualizarGrafico(stats, total) {
             plugins: {
                 legend: { 
                     position: 'bottom', 
-                    labels: { font: { size: 12, weight: 'bold' }, padding: 10 } 
+                    labels: { font: { size: 11, weight: 'bold' }, padding: 10 } 
                 },
                 datalabels: {
                     color: '#fff',
-                    font: { size: 16, weight: 'bold' },
+                    font: { size: 14, weight: 'bold' },
                     textAlign: 'center',
                     formatter: (value) => {
                         let p = ((value/total)*100).toFixed(0) + "%";
-                        return value + "\n(" + p + ")"; 
+                        return value + " (" + p + ")"; 
                     }
                 }
             }
@@ -282,12 +309,23 @@ function atualizarGrafico(stats, total) {
 }
 
 function iniciarAutoScroll() {
+    isScrolling = true;
     const el = document.getElementById('scrollContainer');
     let speed = 1.0; 
+    let delayRestart = false;
+
     function step() {
-        el.scrollTop += speed;
-        if (el.scrollTop >= (el.scrollHeight - el.offsetHeight)) {
-            setTimeout(() => { el.scrollTop = 0; }, 4000); 
+        if (!delayRestart) {
+            el.scrollTop += speed;
+            
+            // Verifica se chegou no fim
+            if (el.scrollTop >= (el.scrollHeight - el.offsetHeight - 1)) {
+                delayRestart = true;
+                setTimeout(() => {
+                    el.scrollTop = 0;
+                    delayRestart = false;
+                }, 5000); // Espera 5 segundos no fim antes de voltar ao topo
+            }
         }
         requestAnimationFrame(step);
     }
