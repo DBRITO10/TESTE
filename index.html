@@ -248,10 +248,21 @@ function renderizar(dados) {
         if (codigo !== anterior) rowClasses += " group-start";
         if (codigo !== proximo) rowClasses += " group-end";
 
+        // Cores de tipo
         let tipoCorClass = "";
-        if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) tipoCorClass = "bg-tecnologia";
-        else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) tipoCorClass = "bg-armario";
-        else if(tipoProduto.includes("MESA")) tipoCorClass = "bg-mesa";
+        
+        // Esta lista define quem ganha o fundo amarelo
+        const itensAmarelos = ["PAINEL", "ROUPEIRO", "COMODA", "MULTIUSO", "MODULO", "COZINHA", "ARMARIO"];
+        
+        if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) {
+            tipoCorClass = "bg-tecnologia";
+        } 
+        else if(itensAmarelos.some(p => tipoProduto.includes(p))) {
+            tipoCorClass = "bg-armario"; // Chama o CSS que já tem o amarelo
+        } 
+        else if(tipoProduto.includes("MESA")) {
+            tipoCorClass = "bg-mesa";
+        }
 
         const boxColorClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
