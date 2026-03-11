@@ -206,23 +206,26 @@ function renderizar(dados) {
     dados.forEach(r => {
         const codigo = (r["CODIGO"] || "").trim();
         const status = (r["STATUS"] || "PENDENTE").toUpperCase();
-        const tipo = (r["TIPO DE PRODUTO"] || "").toUpperCase();
-        const tipo = (r["PRODUTO"] || "").toUpperCase();        
+        const tipoProduto = (r["TIPO DE PRODUTO"] || "").toUpperCase(); // Mudei o nome
+        const produto = (r["PRODUTO"] || "").toUpperCase();             // Nova variável
         const box = r["BOX"] || "-";
 
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
+        // Lógica de cores baseada no TIPO DE PRODUTO
         let classeTipo = "";
-        if(tipo.includes("ARMARIO") || tipo.includes("COZINHA")) classeTipo = "bg-armario";
-        if(tipo.includes("MESA")) classeTipo = "bg-mesa";
+        if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) classeTipo = "bg-armario";
+        if(tipoProduto.includes("MESA")) classeTipo = "bg-mesa";
 
         const boxClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
+        // AGORA COM TODAS AS COLUNAS NA ORDEM CERTA (6 colunas no total)
         body.append(`<tr>
             <td>${r["DATA"] || ""}</td>
             <td style="color:var(--simonetti-red)">${r["FORNECEDOR"] || ""}</td>
-            <td class="${classeTipo}">${tipo}</td>
+            <td class="${classeTipo}">${tipoProduto}</td>
+            <td>${produto}</td> 
             <td><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
             <td class="${boxClass}">${box}</td>
         </tr>`);
