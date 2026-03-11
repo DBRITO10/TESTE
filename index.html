@@ -124,6 +124,7 @@
                     <th>DATA</th>
                     <th>FORNECEDOR</th>
                     <th>TIPO DE PRODUTO</th>
+                    <th>PRODUTO</th>                    
                     <th>STATUS</th>
                     <th>BOX</th>
                 </tr>
@@ -206,6 +207,7 @@ function renderizar(dados) {
         const codigo = (r["CODIGO"] || "").trim();
         const status = (r["STATUS"] || "PENDENTE").toUpperCase();
         const tipo = (r["TIPO DE PRODUTO"] || "").toUpperCase();
+        const tipo = (r["PRODUTO"] || "").toUpperCase();        
         const box = r["BOX"] || "-";
 
         if (codigo) codigosUnicos.add(codigo);
