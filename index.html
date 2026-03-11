@@ -18,10 +18,10 @@
             --simonetti-pink: #FF4D6D; 
             --bg-light: #F4F4F9; 
             --border-color: #ddd;
-            --group-border: 4px solid #000000; /* Cor da borda do "Carro" */
+            --group-border: 6px solid #000000; /* Borda preta de destaque */
         }
         
-        body { background: var(--bg-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        body { background: var(--bg-light); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; overflow: hidden; height: 100vh; }
         
         header { 
             background: var(--simonetti-red); padding: 0 2vw; 
@@ -29,6 +29,8 @@
             border-bottom: 0.6vh solid var(--simonetti-pink);
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             height: 8vh;
+            position: relative;
+            z-index: 100;
         }
 
         h1 { margin: 0; font-size: 2.2rem; color: #fff; font-weight: 900; letter-spacing: 1px; }
@@ -41,24 +43,33 @@
             box-sizing: border-box;
         }
 
-        /* Container da Tabela - Ajustado para ocupar espaço sem scroll horizontal */
+        /* Seção da Tabela */
         .table-section { 
             flex: 3; 
             background: #fff; 
             border-radius: 15px; 
             overflow: hidden; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
             border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         #scrollContainer {
-            overflow-y: hidden; /* Scroll vertical controlado pelo JS */
-            overflow-x: hidden; /* Mata o scroll horizontal */
+            overflow-y: hidden;
+            overflow-x: hidden;
             flex-grow: 1;
+            position: relative;
         }
-        
+
+        /* Cabeçalho Congelado */
+        table.dataTable thead {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
         table.dataTable thead th { 
             background: var(--simonetti-red) !important; 
             color: #ffffff !important; 
@@ -69,58 +80,69 @@
             text-transform: uppercase;
         }
 
-        .dash-section { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            min-width: 350px;
+        /* Estrutura da Tabela */
+        table.dataTable { 
+            width: 100% !important; 
+            border-collapse: separate !important; 
+            border-spacing: 0 !important; 
+            table-layout: fixed;
+            margin: 0 !important;
         }
-
-        .kpi-card { 
-            background: #fff; padding: 1.5vh; text-align: center; border-radius: 15px;
-            border-bottom: 0.8vh solid var(--simonetti-red); 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
-        }
-        .kpi-value { font-size: 3.8rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
-        .kpi-label { font-size: 1.1rem; font-weight: 700; color: #555; text-transform: uppercase; }
-
-        .chart-box { 
-            background: #fff; padding: 15px; border-radius: 15px; 
-            flex-grow: 1; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
-            border: 1px solid var(--border-color);
-            display: flex; flex-direction: column;
-        }
-
-        table.dataTable { width: 100% !important; border-collapse: collapse !important; table-layout: fixed; }
         
         table.dataTable tbody td { 
             font-size: 1.3rem !important; 
             padding: 12px 8px !important; 
             text-align: center !important; 
             font-weight: 700; 
-            border: 1px solid #eee !important;
+            border: 0.5px solid #eee !important;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* LÓGICA DAS BORDAS DO GRUPO (CARRO) */
-        .group-start { border-top: var(--group-border) !important; }
-        .group-end { border-bottom: var(--group-border) !important; }
-        .group-middle { border-top: none !important; border-bottom: none !important; }
-        .group-side { border-left: var(--group-border) !important; border-right: var(--group-border) !important; }
+        /* LÓGICA DAS BORDAS TIPO CAIXA (CARRO) */
+        .group-start td { border-top: var(--group-border) !important; }
+        .group-end td { border-bottom: var(--group-border) !important; }
+        .group-side-left { border-left: var(--group-border) !important; }
+        .group-side-right { border-right: var(--group-border) !important; }
 
-        /* Cores de Fundo por Produto */
-        .bg-armario { background-color: #FFFF00 !important; color: #000; }
-        .bg-mesa { background-color: #00B050 !important; color: #fff; }
-        .bg-tecnologia { background-color: #ADD8E6 !important; color: #000; }
+        /* Estilização de colunas específicas */
+        .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
+        .bg-mesa { background-color: #00B050 !important; color: #fff !important; }
+        .bg-tecnologia { background-color: #ADD8E6 !important; color: #000 !important; }
 
-        .pill { padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 1rem; font-weight: 800; display: inline-block; width: 90%; }
-        .box-green { color: #27ae60 !important; font-size: 2.5rem !important; }
-        .box-red { color: #E74C3C !important; font-size: 2.5rem !important; }
+        .pill { 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            color: #fff; 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            display: inline-block; 
+            width: 90%; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .box-num { font-size: 2.2rem !important; }
+        .box-green { color: #27ae60 !important; }
+        .box-red { color: #E74C3C !important; }
+
+        /* Dashboards Laterais */
+        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 350px; }
+        .kpi-card { 
+            background: #fff; padding: 1.5vh; text-align: center; border-radius: 15px;
+            border-bottom: 0.8vh solid var(--simonetti-red); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+        .kpi-value { font-size: 4rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
+        .kpi-label { font-size: 1.1rem; font-weight: 700; color: #555; text-transform: uppercase; }
+
+        .chart-box { 
+            background: #fff; padding: 15px; border-radius: 15px; 
+            flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+        }
 
         .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 1px solid var(--simonetti-red); padding: 8px 15px; font-weight: 900; border-radius: 8px; cursor: pointer; }
     </style>
@@ -138,11 +160,11 @@
             <table id="tabelaTV" class="display nowrap">
                 <thead>
                     <tr>
-                        <th style="width: 15%;">DATA</th>
-                        <th style="width: 25%;">FORNECEDOR</th>
+                        <th style="width: 14%;">DATA</th>
+                        <th style="width: 26%;">FORNECEDOR</th>
                         <th style="width: 15%;">TIPO</th>
-                        <th style="width: 20%;">PRODUTO</th>                    
-                        <th style="width: 15%;">STATUS</th>
+                        <th style="width: 18%;">PRODUTO</th>                    
+                        <th style="width: 17%;">STATUS</th>
                         <th style="width: 10%;">BOX</th>
                     </tr>
                 </thead>
@@ -157,7 +179,7 @@
             <span id="countCarros" class="kpi-value">0</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-label">TOTAL DE AGENDAS</span>
+            <span class="kpi-label">TOTAL AGENDAS</span>
             <span id="countAgendas" class="kpi-value">0</span>
         </div>
         
@@ -179,7 +201,7 @@ const coresStatus = {
     "CARGA RECEBIDA": '#2ECC71', "CANCELADA": '#E74C3C', "EM RECEBIMENTO": '#F1C40F', 
     "NO PATIO - FICOU P/ AMANHÃ": '#34495E', "SOB AJUSTE": '#8B27F5', "REAGENDA": '#9B591B',
     "NO PATIO - FICOU DE ONTEM": '#B249BF', "NO PATIO - SOB ENCAIXE": '#ff7625',         
-    "NO PATIO": '#1A9EF0', "EM ATRASO": '#FF1744'
+    "NO PATIO": '#1A9EF0', "EM ATRASO": '#FF1744', "PENDENTE": '#95A5A6'
 };
 
 let chartStatus;
@@ -212,7 +234,7 @@ function carregarDados() {
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
-    // Ordenar por CÓDIGO (Essencial para o agrupamento visual)
+    // Ordenar por CÓDIGO para garantir o agrupamento visual correto
     dados.sort((a, b) => (a["CODIGO"] || "").localeCompare(b["CODIGO"] || ""));
 
     const body = $("#tabelaTV tbody").empty();
@@ -221,8 +243,8 @@ function renderizar(dados) {
 
     dados.forEach((r, index) => {
         const codigo = (r["CODIGO"] || "").trim();
-        const proximoCodigo = dados[index + 1] ? (dados[index + 1]["CODIGO"] || "").trim() : null;
-        const codigoAnterior = dados[index - 1] ? (dados[index - 1]["CODIGO"] || "").trim() : null;
+        const proximo = dados[index + 1] ? (dados[index + 1]["CODIGO"] || "").trim() : null;
+        const anterior = dados[index - 1] ? (dados[index - 1]["CODIGO"] || "").trim() : null;
 
         const status = (r["STATUS"] || "PENDENTE").toUpperCase();
         const tipoProduto = (r["TIPO DE PRODUTO"] || "").toUpperCase();
@@ -231,27 +253,30 @@ function renderizar(dados) {
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
-        // Lógica de Classes de Borda para o Carro
-        let groupClass = "group-side ";
-        if (codigo !== codigoAnterior) groupClass += "group-start ";
-        if (codigo !== proximoCodigo) groupClass += "group-end ";
-        if (codigo === codigoAnterior && codigo === proximoCodigo) groupClass += "group-middle ";
+        // Classes de borda
+        let rowClasses = "";
+        if (codigo !== anterior) rowClasses += " group-start";
+        if (codigo !== proximo) rowClasses += " group-end";
 
-        let classeTipo = "";
-        if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) classeTipo = "bg-tecnologia";
-        else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) classeTipo = "bg-armario";
-        else if(tipoProduto.includes("MESA")) classeTipo = "bg-mesa";
+        // Cores por tipo
+        let tipoCorClass = "";
+        if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) tipoCorClass = "bg-tecnologia";
+        else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) tipoCorClass = "bg-armario";
+        else if(tipoProduto.includes("MESA")) tipoCorClass = "bg-mesa";
 
-        const boxClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
+        const boxColorClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
-        body.append(`<tr>
-            <td class="${groupClass}">${r["DATA"] || ""}</td>
-            <td class="${groupClass}" style="color:var(--simonetti-red)">${r["FORNECEDOR"] || ""}</td>
-            <td class="${groupClass} ${classeTipo}">${tipoProduto}</td>
-            <td class="${groupClass}">${r["PRODUTO"] || ""}</td> 
-            <td class="${groupClass}"><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
-            <td class="${groupClass} ${boxClass}">${box}</td>
-        </tr>`);
+        const linhaHtml = `
+            <tr class="${rowClasses}">
+                <td class="group-side-left">${r["DATA"] || ""}</td>
+                <td>${r["FORNECEDOR"] || ""}</td>
+                <td class="${tipoCorClass}">${tipoProduto}</td>
+                <td>${r["PRODUTO"] || ""}</td> 
+                <td><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
+                <td class="group-side-right box-num ${boxColorClass}">${box}</td>
+            </tr>`;
+        
+        body.append(linhaHtml);
     });
 
     $('#tabelaTV').DataTable({ paging: false, info: false, ordering: false, searching: false, autoWidth: false });
@@ -277,7 +302,7 @@ function atualizarGrafico(stats, total) {
         options: {
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } },
+                legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' }, padding: 10 } },
                 datalabels: {
                     color: '#fff', font: { size: 14, weight: 'bold' },
                     formatter: (val) => `${val} (${((val/total)*100).toFixed(0)}%)`
