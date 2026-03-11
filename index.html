@@ -17,50 +17,55 @@
             --simonetti-red: #E30613; 
             --simonetti-pink: #FF4D6D; 
             --bg-light: #F4F4F9; 
-            --border-color: #ccc;
+            --border-color: #ddd;
+            --group-border: 4px solid #000000; /* Cor da borda do "Carro" */
         }
         
-        body { background: var(--bg-light); font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        body { background: var(--bg-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; overflow: hidden; height: 100vh; }
         
         header { 
-            background: var(--simonetti-red); padding: 1vh 2vw; 
+            background: var(--simonetti-red); padding: 0 2vw; 
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 0.6vh solid var(--simonetti-pink);
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             height: 8vh;
         }
 
-        h1 { margin: 0; font-size: 2.2rem; color: #fff; font-weight: 900; }
+        h1 { margin: 0; font-size: 2.2rem; color: #fff; font-weight: 900; letter-spacing: 1px; }
 
         .main-container { 
             display: flex; 
-            height: 88vh; 
+            height: 92vh; 
             padding: 15px; 
             gap: 15px; 
             box-sizing: border-box;
         }
 
+        /* Container da Tabela - Ajustado para ocupar espaço sem scroll horizontal */
         .table-section { 
             flex: 3; 
             background: #fff; 
             border-radius: 15px; 
-            padding: 0; 
-            overflow-y: hidden; 
+            overflow: hidden; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
-            border: 2px solid var(--border-color);
-            position: relative;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #scrollContainer {
+            overflow-y: hidden; /* Scroll vertical controlado pelo JS */
+            overflow-x: hidden; /* Mata o scroll horizontal */
+            flex-grow: 1;
         }
         
         table.dataTable thead th { 
-            position: sticky;
-            top: 0;
-            z-index: 10;
             background: var(--simonetti-red) !important; 
             color: #ffffff !important; 
-            font-size: 1.3rem !important;
-            padding: 18px !important; 
+            font-size: 1.2rem !important;
+            padding: 15px !important; 
             text-align: center !important; 
-            border: 1px solid rgba(255,255,255,0.3) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
             text-transform: uppercase;
         }
 
@@ -69,7 +74,7 @@
             display: flex; 
             flex-direction: column; 
             gap: 15px; 
-            min-width: 320px;
+            min-width: 350px;
         }
 
         .kpi-card { 
@@ -78,47 +83,46 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             border: 1px solid var(--border-color);
         }
-        .kpi-value { font-size: 3.5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
-        .kpi-label { font-size: 1rem; font-weight: 700; color: #666; text-transform: uppercase; }
+        .kpi-value { font-size: 3.8rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
+        .kpi-label { font-size: 1.1rem; font-weight: 700; color: #555; text-transform: uppercase; }
 
         .chart-box { 
             background: #fff; padding: 15px; border-radius: 15px; 
             flex-grow: 1; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
-            border: 2px solid var(--border-color);
-            display: flex; flex-direction: column; 
-            position: relative;
-            min-height: 0;
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
         }
 
-        table.dataTable { border-collapse: collapse !important; width: 100% !important; margin: 0 !important; }
+        table.dataTable { width: 100% !important; border-collapse: collapse !important; table-layout: fixed; }
         
         table.dataTable tbody td { 
-            font-size: 1.4rem !important; 
-            padding: 15px !important; 
+            font-size: 1.3rem !important; 
+            padding: 12px 8px !important; 
             text-align: center !important; 
             font-weight: 700; 
-            border: 1px solid var(--border-color) !important; 
+            border: 1px solid #eee !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        /* LÓGICA DAS BORDAS DO GRUPO (CARRO) */
+        .group-start { border-top: var(--group-border) !important; }
+        .group-end { border-bottom: var(--group-border) !important; }
+        .group-middle { border-top: none !important; border-bottom: none !important; }
+        .group-side { border-left: var(--group-border) !important; border-right: var(--group-border) !important; }
 
         /* Cores de Fundo por Produto */
         .bg-armario { background-color: #FFFF00 !important; color: #000; }
         .bg-mesa { background-color: #00B050 !important; color: #fff; }
         .bg-tecnologia { background-color: #ADD8E6 !important; color: #000; }
 
-        /* Estilo da "Barra Lateral" para agrupar cargas/carros */
-        .carro-destaque {
-            border-left: 8px solid #000000 !important; /* Destaque Preto lateral */
-        }
+        .pill { padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 1rem; font-weight: 800; display: inline-block; width: 90%; }
+        .box-green { color: #27ae60 !important; font-size: 2.5rem !important; }
+        .box-red { color: #E74C3C !important; font-size: 2.5rem !important; }
 
-        .carga-par { background-color: #ffffff; }
-        .carga-impar { background-color: #f2f2f2; }
-
-        .pill { padding: 8px 12px; border-radius: 8px; color: #fff; font-size: 1.1rem; font-weight: 800; display: inline-block; width: 92%; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
-        .box-green { color: #27ae60 !important; font-size: 2.8rem !important; }
-        .box-red { color: #E74C3C !important; font-size: 2.8rem !important; }
-
-        .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: none; padding: 10px 20px; font-weight: 900; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+        .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 1px solid var(--simonetti-red); padding: 8px 15px; font-weight: 900; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -129,20 +133,22 @@
 </header>
 
 <div class="main-container">
-    <div class="table-section" id="scrollContainer">
-        <table id="tabelaTV" class="display nowrap" style="width:100%">
-            <thead>
-                <tr>
-                    <th>DATA</th>
-                    <th>FORNECEDOR</th>
-                    <th>TIPO DE PRODUTO</th>
-                    <th>PRODUTO</th>                    
-                    <th>STATUS</th>
-                    <th>BOX</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div class="table-section">
+        <div id="scrollContainer">
+            <table id="tabelaTV" class="display nowrap">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">DATA</th>
+                        <th style="width: 25%;">FORNECEDOR</th>
+                        <th style="width: 15%;">TIPO</th>
+                        <th style="width: 20%;">PRODUTO</th>                    
+                        <th style="width: 15%;">STATUS</th>
+                        <th style="width: 10%;">BOX</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <div class="dash-section">
@@ -151,13 +157,13 @@
             <span id="countCarros" class="kpi-value">0</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-label">TOTAL AGENDAS</span>
+            <span class="kpi-label">TOTAL DE AGENDAS</span>
             <span id="countAgendas" class="kpi-value">0</span>
         </div>
         
         <div class="chart-box">
-            <h3 style="margin: 0 0 10px 0; color:#444; font-size: 1.2rem; text-align: center;">STATUS DAS CARGAS</h3>
-            <div class="chart-container" style="flex-grow: 1; position: relative;">
+            <h3 style="margin: 0 0 10px 0; color:#444; font-size: 1.1rem; text-align: center; font-weight: 800;">STATUS DAS AGENDAS</h3>
+            <div style="flex-grow: 1; position: relative;">
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
@@ -170,27 +176,19 @@ Chart.register(ChartDataLabels);
 const csvUrl = "https://docs.google.com/spreadsheets/d/1Ore02M4GARvE6hldNDZmiVNDrABb4dgaZO7wlMY-fjs/export?format=csv&gid=2090543957";
 
 const coresStatus = {
-    "CARGA RECEBIDA": '#2ECC71', 
-    "CANCELADA": '#E74C3C', 
-    "EM RECEBIMENTO": '#F1C40F', 
-    "NO PATIO - FICOU P/ AMANHÃ": '#34495E', 
-    "SOB AJUSTE": '#8B27F5', 
-    "REAGENDA": '#9B591B',
-    "NO PATIO - FICOU DE ONTEM": '#B249BF',    
-    "NO PATIO - SOB ENCAIXE": '#ff7625',         
-    "NO PATIO": '#1A9EF0', 
-    "EM ATRASO": '#FF1744'
+    "CARGA RECEBIDA": '#2ECC71', "CANCELADA": '#E74C3C', "EM RECEBIMENTO": '#F1C40F', 
+    "NO PATIO - FICOU P/ AMANHÃ": '#34495E', "SOB AJUSTE": '#8B27F5', "REAGENDA": '#9B591B',
+    "NO PATIO - FICOU DE ONTEM": '#B249BF', "NO PATIO - SOB ENCAIXE": '#ff7625',         
+    "NO PATIO": '#1A9EF0', "EM ATRASO": '#FF1744'
 };
 
 let chartStatus;
 let isScrolling = false;
-let waitingAtTop = true; // Inicia esperando no topo
+let waitingAtTop = true;
 
 $(document).ready(() => {
     carregarDados();
     setInterval(carregarDados, 60000); 
-    
-    // Timer inicial de 3 segundos para a primeira rolagem
     setTimeout(() => { waitingAtTop = false; }, 3000);
 });
 
@@ -199,85 +197,67 @@ function toggleFullScreen() {
         document.documentElement.requestFullscreen();
         document.getElementById('fsBtn').innerText = "✖ SAIR";
     } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-            document.getElementById('fsBtn').innerText = "📺 TELA CHEIA";
-        }
+        if (document.exitFullscreen) document.exitFullscreen();
+        document.getElementById('fsBtn').innerText = "📺 TELA CHEIA";
     }
 }
 
 function carregarDados() {
     Papa.parse(csvUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            renderizar(results.data);
-        }
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) { renderizar(results.data); }
     });
 }
 
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
-    // Ordenar por CÓDIGO para garantir o agrupamento visual
+    // Ordenar por CÓDIGO (Essencial para o agrupamento visual)
     dados.sort((a, b) => (a["CODIGO"] || "").localeCompare(b["CODIGO"] || ""));
 
     const body = $("#tabelaTV tbody").empty();
     const stats = {};
     const codigosUnicos = new Set();
-    
-    let ultimoCodigo = null;
-    let cargaAlternada = true;
 
-    dados.forEach(r => {
+    dados.forEach((r, index) => {
         const codigo = (r["CODIGO"] || "").trim();
+        const proximoCodigo = dados[index + 1] ? (dados[index + 1]["CODIGO"] || "").trim() : null;
+        const codigoAnterior = dados[index - 1] ? (dados[index - 1]["CODIGO"] || "").trim() : null;
+
         const status = (r["STATUS"] || "PENDENTE").toUpperCase();
         const tipoProduto = (r["TIPO DE PRODUTO"] || "").toUpperCase();
-        const produto = (r["PRODUTO"] || "").toUpperCase();
         const box = r["BOX"] || "-";
 
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
+        // Lógica de Classes de Borda para o Carro
+        let groupClass = "group-side ";
+        if (codigo !== codigoAnterior) groupClass += "group-start ";
+        if (codigo !== proximoCodigo) groupClass += "group-end ";
+        if (codigo === codigoAnterior && codigo === proximoCodigo) groupClass += "group-middle ";
+
         let classeTipo = "";
-        const produtosAzul = ["CELULAR", "ROBO ASPIRADOR", "TABLET", "NOTEBOOK", "ROBO"];
-        if(produtosAzul.some(p => tipoProduto.includes(p))) classeTipo = "bg-tecnologia";
+        if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) classeTipo = "bg-tecnologia";
         else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) classeTipo = "bg-armario";
         else if(tipoProduto.includes("MESA")) classeTipo = "bg-mesa";
 
-        if (codigo !== ultimoCodigo) {
-            cargaAlternada = !cargaAlternada;
-            ultimoCodigo = codigo;
-        }
-        
-        const classeCarga = cargaAlternada ? "carga-par" : "carga-impar";
         const boxClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
-        // Adicionamos a classe 'carro-destaque' em todas as células da primeira coluna ou na linha
-        body.append(`<tr class="${classeCarga}">
-            <td class="carro-destaque">${r["DATA"] || ""}</td>
-            <td>${r["FORNECEDOR"] || ""}</td>
-            <td class="${classeTipo}">${tipoProduto}</td>
-            <td>${produto}</td> 
-            <td><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
-            <td class="${boxClass}">${box}</td>
+        body.append(`<tr>
+            <td class="${groupClass}">${r["DATA"] || ""}</td>
+            <td class="${groupClass}" style="color:var(--simonetti-red)">${r["FORNECEDOR"] || ""}</td>
+            <td class="${groupClass} ${classeTipo}">${tipoProduto}</td>
+            <td class="${groupClass}">${r["PRODUTO"] || ""}</td> 
+            <td class="${groupClass}"><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
+            <td class="${groupClass} ${boxClass}">${box}</td>
         </tr>`);
     });
 
-    $('#tabelaTV').DataTable({ 
-        paging: false, 
-        info: false, 
-        ordering: false, 
-        searching: false, 
-        responsive: true,
-        autoWidth: false
-    });
-
+    $('#tabelaTV').DataTable({ paging: false, info: false, ordering: false, searching: false, autoWidth: false });
     $("#countCarros").text(codigosUnicos.size);
     $("#countAgendas").text(dados.length);
     atualizarGrafico(stats, dados.length);
-    
     if(!isScrolling) iniciarAutoScroll();
 }
 
@@ -291,23 +271,16 @@ function atualizarGrafico(stats, total) {
             datasets: [{
                 data: Object.values(stats),
                 backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc"),
-                borderWidth: 2,
-                borderColor: '#fff'
+                borderWidth: 2, borderColor: '#fff'
             }]
         },
         options: {
             maintainAspectRatio: false,
-            responsive: true,
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' }, padding: 8 } },
+                legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } },
                 datalabels: {
-                    color: '#fff',
-                    font: { size: 14, weight: 'bold' },
-                    textAlign: 'center',
-                    formatter: (value) => {
-                        let p = ((value/total)*100).toFixed(0) + "%";
-                        return value + " (" + p + ")"; 
-                    }
+                    color: '#fff', font: { size: 14, weight: 'bold' },
+                    formatter: (val) => `${val} (${((val/total)*100).toFixed(0)}%)`
                 }
             }
         }
@@ -323,15 +296,14 @@ function iniciarAutoScroll() {
     function step() {
         if (!delayRestart && !waitingAtTop) {
             el.scrollTop += speed;
-            
             if (el.scrollTop >= (el.scrollHeight - el.offsetHeight - 1)) {
                 delayRestart = true;
                 setTimeout(() => {
                     el.scrollTop = 0;
-                    waitingAtTop = true; // Ativa a espera no topo
+                    waitingAtTop = true;
                     delayRestart = false;
-                    setTimeout(() => { waitingAtTop = false; }, 3000); // Espera 3s no topo
-                }, 4000); // Espera 4s no fim
+                    setTimeout(() => { waitingAtTop = false; }, 3000);
+                }, 4000);
             }
         }
         requestAnimationFrame(step);
