@@ -63,12 +63,7 @@
             position: relative;
         }
 
-        /* Cabeçalho Fixo */
-        table.dataTable thead {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
+        table.dataTable thead { position: sticky; top: 0; z-index: 50; }
 
         table.dataTable thead th { 
             background: var(--simonetti-red) !important; 
@@ -80,40 +75,31 @@
             text-transform: uppercase;
         }
 
-        /* Tabela */
+        /* AJUSTE PARA NÃO CORTAR DADOS EM TV */
         table.dataTable { 
             width: 100% !important; 
-            border-collapse: collapse !important; /* Mudado para collapse para as bordas funcionarem melhor */
-            table-layout: fixed;
+            border-collapse: collapse !important; 
             margin: 0 !important;
+            table-layout: auto !important; 
         }
         
         table.dataTable tbody td { 
-            font-size: 1.35rem !important; 
-            padding: 12px 8px !important; 
+            font-size: 1.2rem !important; 
+            padding: 10px 5px !important; 
             text-align: center !important; 
             font-weight: 700; 
             border: 0.5px solid #eee;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal !important; 
+            word-wrap: break-word; 
+            vertical-align: middle;
         }
 
-        /* --- LÓGICA DE BORDAS DO GRUPO (CARRO) --- */
-        
-        /* Borda Superior da primeira linha do grupo */
+        /* LÓGICA DE BORDAS DO GRUPO */
         .group-start td { border-top: var(--group-border-width) solid var(--group-border-color) !important; }
-        
-        /* Borda Inferior da última linha do grupo */
         .group-end td { border-bottom: var(--group-border-width) solid var(--group-border-color) !important; }
-        
-        /* Borda Lateral Esquerda da primeira coluna */
         .group-side-left { border-left: var(--group-border-width) solid var(--group-border-color) !important; }
-        
-        /* Borda Lateral Direita da última coluna */
         .group-side-right { border-right: var(--group-border-width) solid var(--group-border-color) !important; }
 
-        /* Estilos de Cores */
         .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
         .bg-mesa { background-color: #00B050 !important; color: #fff !important; }
         .bg-tecnologia { background-color: #ADD8E6 !important; color: #000 !important; }
@@ -133,7 +119,6 @@
         .box-green { color: #27ae60 !important; }
         .box-red { color: #E74C3C !important; }
 
-        /* KPI e Gráfico */
         .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 350px; }
         .kpi-card { 
             background: #fff; padding: 1.5vh; text-align: center; border-radius: 15px;
@@ -241,7 +226,6 @@ function carregarDados() {
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
-    // Agrupamento por código
     dados.sort((a, b) => (a["CODIGO"] || "").localeCompare(b["CODIGO"] || ""));
 
     const body = $("#tabelaTV tbody").empty();
@@ -260,12 +244,10 @@ function renderizar(dados) {
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
-        // Identificação de bordas do bloco
         let rowClasses = "";
         if (codigo !== anterior) rowClasses += " group-start";
         if (codigo !== proximo) rowClasses += " group-end";
 
-        // Cores de tipo
         let tipoCorClass = "";
         if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) tipoCorClass = "bg-tecnologia";
         else if(tipoProduto.includes("ARMARIO") || tipoProduto.includes("COZINHA")) tipoCorClass = "bg-armario";
@@ -273,7 +255,6 @@ function renderizar(dados) {
 
         const boxColorClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
 
-        // Montagem da linha com bordas laterais fixas nas pontas
         const linhaHtml = `
             <tr class="${rowClasses}">
                 <td class="group-side-left">${r["DATA"] || ""}</td>
