@@ -12,190 +12,132 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
 
-<style>
-    :root { 
-        --simonetti-red: #E30613; 
-        --simonetti-pink: #FF4D6D; 
-        --bg-light: #F4F4F9; 
-        --border-color: #ccc;
-        --group-border-color: #000000; /* Borda preta bem visível */
-        --group-border-width: 6px;     /* Espessura para TV */
-    }
-    
-    /* Configuração base para tela cheia */
-    body { 
-        background: var(--bg-light); 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        margin: 0; 
-        overflow: hidden; 
-        height: 100vh; 
-        width: 100vw;
-    }
-    
-    /* Header compacto para sobrar espaço para os dados */
-    header { 
-        background: var(--simonetti-red); 
-        padding: 0 2vw; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center;
-        border-bottom: 0.6vh solid var(--simonetti-pink);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        height: 7vh;
-        position: relative;
-        z-index: 100;
-    }
+    <style>
+        :root { 
+            --simonetti-red: #E30613; 
+            --simonetti-pink: #FF4D6D; 
+            --bg-light: #F4F4F9; 
+            --border-color: #ddd;
+            --group-border-color: #000000;
+            --group-border-width: 6px;
+        }
+        
+        body { background: var(--bg-light); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        
+        header { 
+            background: var(--simonetti-red); padding: 0 2vw; 
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 0.6vh solid var(--simonetti-pink);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            height: 8vh;
+            position: relative;
+            z-index: 100;
+        }
 
-    h1 { margin: 0; font-size: 2rem; color: #fff; font-weight: 900; letter-spacing: 1px; }
+        h1 { margin: 0; font-size: 2.2rem; color: #fff; font-weight: 900; letter-spacing: 1px; }
 
-    /* Layout principal */
-    .main-container { 
-        display: flex; 
-        height: 93vh; 
-        padding: 12px; 
-        gap: 15px; 
-        box-sizing: border-box;
-    }
+        .main-container { 
+            display: flex; 
+            height: 92vh; 
+            padding: 15px; 
+            gap: 15px; 
+            box-sizing: border-box;
+        }
 
-    /* Seção da Tabela */
-    .table-section { 
-        flex: 2.8; 
-        background: #fff; 
-        border-radius: 15px; 
-        overflow: hidden; 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-        border: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-    }
+        .table-section { 
+            flex: 3; 
+            background: #fff; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
 
-    #scrollContainer {
-        overflow: hidden; /* Oculta barras de rolagem para o auto-scroll */
-        flex-grow: 1;
-    }
+        #scrollContainer {
+            overflow-y: hidden;
+            overflow-x: hidden;
+            flex-grow: 1;
+            position: relative;
+        }
 
-    /* Estilo da Tabela - Foco em TV 55" */
-    table.dataTable { 
-        width: 100% !important; 
-        border-collapse: collapse !important; 
-        margin: 0 !important;
-        table-layout: fixed !important; /* Mantém as larguras fixas */
-    }
+        table.dataTable thead { position: sticky; top: 0; z-index: 50; }
 
-    table.dataTable thead th { 
-        background: var(--simonetti-red) !important; 
-        color: #ffffff !important; 
-        font-size: 1.4rem !important; 
-        padding: 1.5vh 5px !important; 
-        text-align: center !important; 
-        border: 1px solid rgba(255,255,255,0.3) !important;
-        text-transform: uppercase;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-    
-    table.dataTable tbody td { 
-        font-size: 1.5rem !important; /* Fonte grande para leitura à distância */
-        padding: 12px 6px !important; 
-        text-align: center !important; 
-        font-weight: 800; 
-        border: 0.5px solid #ddd;
-        white-space: normal !important; 
-        word-wrap: break-word; 
-        vertical-align: middle;
-        color: #222;
-    }
+        table.dataTable thead th { 
+            background: var(--simonetti-red) !important; 
+            color: #ffffff !important; 
+            font-size: 1.2rem !important;
+            padding: 15px !important; 
+            text-align: center !important; 
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            text-transform: uppercase;
+        }
 
-    /* LÓGICA DE BORDAS DO GRUPO (AQUI É O SEGREDO) */
-    .group-start td { border-top: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-end td { border-bottom: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-side-left { border-left: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-side-right { border-right: var(--group-border-width) solid var(--group-border-color) !important; }
+        /* AJUSTE PARA NÃO CORTAR DADOS EM TV */
+        table.dataTable { 
+            width: 100% !important; 
+            border-collapse: collapse !important; 
+            margin: 0 !important;
+            table-layout: auto !important; 
+        }
+        
+        table.dataTable tbody td { 
+            font-size: 1.2rem !important; 
+            padding: 10px 5px !important; 
+            text-align: center !important; 
+            font-weight: 700; 
+            border: 0.5px solid #eee;
+            white-space: normal !important; 
+            word-wrap: break-word; 
+            vertical-align: middle;
+        }
 
-    /* Cores de Categoria */
-    .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
-    .bg-mesa { background-color: #00B050 !important; color: #fff !important; }
-    .bg-tecnologia { background-color: #ADD8E6 !important; color: #000 !important; }
+        /* LÓGICA DE BORDAS DO GRUPO */
+        .group-start td { border-top: var(--group-border-width) solid var(--group-border-color) !important; }
+        .group-end td { border-bottom: var(--group-border-width) solid var(--group-border-color) !important; }
+        .group-side-left { border-left: var(--group-border-width) solid var(--group-border-color) !important; }
+        .group-side-right { border-right: var(--group-border-width) solid var(--group-border-color) !important; }
 
-    /* Status Pill */
-    .pill { 
-        padding: 8px 10px; 
-        border-radius: 10px; 
-        color: #fff; 
-        font-size: 1.2rem; 
-        font-weight: 900; 
-        display: inline-block; 
-        width: 90%; 
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
+        .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
+        .bg-mesa { background-color: #00B050 !important; color: #fff !important; }
+        .bg-tecnologia { background-color: #ADD8E6 !important; color: #000 !important; }
 
-    /* Box e Números */
-    .box-num { font-size: 2.8rem !important; line-height: 1; }
-    .box-green { color: #1e8449 !important; }
-    .box-red { color: #cb4335 !important; }
+        .pill { 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            color: #fff; 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            display: inline-block; 
+            width: 90%; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
 
-    /* Seção Lateral (Dashboard) */
-    .dash-section { 
-        flex: 1; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 15px; 
-        min-width: 380px; 
-    }
+        .box-num { font-size: 2.3rem !important; }
+        .box-green { color: #27ae60 !important; }
+        .box-red { color: #E74C3C !important; }
 
-    .kpi-card { 
-        background: #fff; 
-        padding: 2vh 1vh; 
-        text-align: center; 
-        border-radius: 15px;
-        border-bottom: 1vh solid var(--simonetti-red); 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        border: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
+        .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 350px; }
+        .kpi-card { 
+            background: #fff; padding: 1.5vh; text-align: center; border-radius: 15px;
+            border-bottom: 0.8vh solid var(--simonetti-red); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+        .kpi-value { font-size: 4rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
+        .kpi-label { font-size: 1.1rem; font-weight: 700; color: #555; text-transform: uppercase; }
 
-    .kpi-value { font-size: 5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
-    .kpi-label { font-size: 1.3rem; font-weight: 800; color: #444; text-transform: uppercase; margin-top: 5px; }
+        .chart-box { 
+            background: #fff; padding: 15px; border-radius: 15px; 
+            flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+        }
 
-    /* Container do Gráfico */
-    .chart-box { 
-        background: #fff; 
-        padding: 15px; 
-        border-radius: 15px; 
-        flex-grow: 1; 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-        border: 1px solid var(--border-color);
-        display: flex; 
-        flex-direction: column;
-        justify-content: space-between;
-    }
-
-    .chart-box h3 {
-        margin: 0 0 10px 0; 
-        color:#333; 
-        font-size: 1.3rem; 
-        text-align: center; 
-        font-weight: 900;
-        text-transform: uppercase;
-    }
-
-    .btn-fullscreen { 
-        background: #fff; 
-        color: var(--simonetti-red); 
-        border: 2px solid #fff; 
-        padding: 5px 15px; 
-        font-weight: 900; 
-        border-radius: 8px; 
-        cursor: pointer;
-        transition: 0.3s;
-    }
-    
-    .btn-fullscreen:hover { background: var(--simonetti-pink); color: #fff; }
-</style>
+        .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 1px solid var(--simonetti-red); padding: 8px 15px; font-weight: 900; border-radius: 8px; cursor: pointer; }
+    </style>
 </head>
 <body>
 
