@@ -220,9 +220,12 @@ function carregarDados() {
     Papa.parse(csvUrl, {
         download: true, header: true, skipEmptyLines: true,
         complete: function(results) { 
-            // Filtra para garantir que só pegamos linhas que tenham dados reais na planilha
-            const dadosVisiveis = results.data.filter(row => row["FORNECEDOR"] && row["FORNECEDOR"].trim() !== "");
-            renderizar(dadosVisiveis); 
+            // FILTRO: Só aceita linhas que tenham DATA e FORNECEDOR preenchidos (evita lixo de linhas ocultas)
+            const dadosFiltrados = results.data.filter(row => {
+                return row["DATA"] && row["DATA"].trim() !== "" && 
+                       row["FORNECEDOR"] && row["FORNECEDOR"].trim() !== "";
+            });
+            renderizar(dadosFiltrados); 
         }
     });
 }
@@ -230,12 +233,18 @@ function carregarDados() {
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
-    // NOVA ORDENAÇÃO: Primeiro por STATUS, depois por BOX (ambos de A-Z)
+    // ORDENAÇÃO EM CASCATA:
+    // 1º Status (A-Z)
+    // 2º Código (Para manter agendas do mesmo carro juntas)
+    // 3º Box (A-Z)
     dados.sort((a, b) => {
         const statusA = (a["STATUS"] || "").toUpperCase();
         const statusB = (b["STATUS"] || "").toUpperCase();
-        if (statusA < statusB) return -1;
-        if (statusA > statusB) return 1;
+        if (statusA !== statusB) return statusA.localeCompare(statusB);
+
+        const codA = (a["CODIGO"] || "").toUpperCase();
+        const codB = (b["CODIGO"] || "").toUpperCase();
+        if (codA !== codB) return codA.localeCompare(codB);
 
         const boxA = (a["BOX"] || "").toString().toUpperCase();
         const boxB = (b["BOX"] || "").toString().toUpperCase();
@@ -258,8 +267,8 @@ function renderizar(dados) {
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
+        // Lógica de bordas pretas grossas para agrupar o mesmo código
         let rowClasses = "";
-        // Mantém a lógica visual de bordas por código
         if (codigo !== anterior) rowClasses += " group-start";
         if (codigo !== proximo) rowClasses += " group-end";
 
