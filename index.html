@@ -219,14 +219,28 @@ function toggleFullScreen() {
 function carregarDados() {
     Papa.parse(csvUrl, {
         download: true, header: true, skipEmptyLines: true,
-        complete: function(results) { renderizar(results.data); }
+        complete: function(results) { 
+            // Filtra para garantir que só pegamos linhas que tenham dados reais na planilha
+            const dadosVisiveis = results.data.filter(row => row["FORNECEDOR"] && row["FORNECEDOR"].trim() !== "");
+            renderizar(dadosVisiveis); 
+        }
     });
 }
 
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
-    dados.sort((a, b) => (a["CODIGO"] || "").localeCompare(b["CODIGO"] || ""));
+    // NOVA ORDENAÇÃO: Primeiro por STATUS, depois por BOX (ambos de A-Z)
+    dados.sort((a, b) => {
+        const statusA = (a["STATUS"] || "").toUpperCase();
+        const statusB = (b["STATUS"] || "").toUpperCase();
+        if (statusA < statusB) return -1;
+        if (statusA > statusB) return 1;
+
+        const boxA = (a["BOX"] || "").toString().toUpperCase();
+        const boxB = (b["BOX"] || "").toString().toUpperCase();
+        return boxA.localeCompare(boxB);
+    });
 
     const body = $("#tabelaTV tbody").empty();
     const stats = {};
@@ -245,20 +259,18 @@ function renderizar(dados) {
         stats[status] = (stats[status] || 0) + 1;
 
         let rowClasses = "";
+        // Mantém a lógica visual de bordas por código
         if (codigo !== anterior) rowClasses += " group-start";
         if (codigo !== proximo) rowClasses += " group-end";
 
-        // Cores de tipo
         let tipoCorClass = "";
-        
-        // Esta lista define quem ganha o fundo amarelo
         const itensAmarelos = ["PAINEL", "ROUPEIRO", "COMODA", "MULTIUSO", "MODULO", "COZINHA", "ARMARIO"];
         
         if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) {
             tipoCorClass = "bg-tecnologia";
         } 
         else if(itensAmarelos.some(p => tipoProduto.includes(p))) {
-            tipoCorClass = "bg-armario"; // Chama o CSS que já tem o amarelo
+            tipoCorClass = "bg-armario";
         } 
         else if(tipoProduto.includes("MESA")) {
             tipoCorClass = "bg-mesa";
