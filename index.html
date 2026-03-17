@@ -44,6 +44,21 @@
             box-sizing: border-box;
         }
 
+        /* Melhora a estabilidade visual em telas grandes */
+        #tabelaTV {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            perspective: 1000;
+            will-change: transform;
+        }
+
+       /* Garante que o cabeçalho fique fixo sem vibrar */
+       table.dataTable thead th {
+           position: sticky !important;
+           top: 0 !important;
+           z-index: 100 !important;
+       }
+        
         .table-section { 
             flex: 3; 
             background: #fff; 
