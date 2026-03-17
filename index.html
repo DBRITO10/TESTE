@@ -112,11 +112,22 @@
         z-index: 10; /* Z-index baixo para passar atrás do cabeçalho */
     }
 
-    /* BORDAS DO GRUPO */
-    .group-start td { border-top: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-end td { border-bottom: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-side-left { border-left: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-side-right { border-right: var(--group-border-width) solid var(--group-border-color) !important; }
+    /* LÓGICA DE BORDAS DO GRUPO (AO REDOR DOS DADOS) */
+    .group-start td { 
+        border-top: 6px solid #000000 !important; 
+    }
+    
+    .group-end td {
+        border-bottom: 6px solid #000000 !important;
+    }    
+    
+    .group-side-left {
+        border-left: 6px solid #000000 !important; 
+    }
+    
+    .group-side-right {
+        border-right: 6px solid #000000 !important; 
+    }
 
     /* ESTILOS DE APOIO */
     .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
