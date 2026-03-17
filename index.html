@@ -243,27 +243,32 @@ function renderizar(dados) {
         "EM ATRASO": 3
     };
 
-    // ORDENAÇÃO CUSTOMIZADA
+    // ORDENAÇÃO CUSTOMIZADA: STATUS -> BOX -> CÓDIGO
     dados.sort((a, b) => {
         const statusA = (a["STATUS"] || "").toUpperCase();
         const statusB = (b["STATUS"] || "").toUpperCase();
 
-        // Obtém o peso do status (se não estiver no mapa, o peso é 99 para ir para o fim)
+        // 1. PESO DO STATUS
         const pesoA = prioridadeStatus[statusA] || 99;
         const pesoB = prioridadeStatus[statusB] || 99;
 
-        // 1º Critério: Prioridade de Status definida acima
         if (pesoA !== pesoB) {
             return pesoA - pesoB;
         }
 
-        // 2º Critério: Se o peso for igual (ex: dois "EM ATRASO" ou dois status não mapeados),
-        // ordena em ordem alfabética entre eles
-        if (statusA !== statusB) {
-            return statusA.localeCompare(statusB);
+        // Se o Status for o mesmo, desempata pelo BOX
+        if (statusA === statusB) {
+            // 2. ORDENAÇÃO POR BOX (Menor para o Maior)
+            // Tratamos como número para evitar que "10" venha antes de "2"
+            const boxA = parseInt(a["BOX"]) || 999;
+            const boxB = parseInt(b["BOX"]) || 999;
+
+            if (boxA !== boxB) {
+                return boxA - boxB;
+            }
         }
 
-        // 3º Critério: Se o status for idêntico, ordena pelo Código/Agrupamento
+        // 3. SE O STATUS E O BOX FOREM IGUAIS, ORDENA PELO CÓDIGO
         const codA = (a["CODIGO"] || "").toString().toUpperCase();
         const codB = (b["CODIGO"] || "").toString().toUpperCase();
         return codA.localeCompare(codB);
@@ -274,7 +279,6 @@ function renderizar(dados) {
     const codigosUnicos = new Set();
 
     dados.forEach((r, index) => {
-        // ... O restante do seu código de montagem da linha (TR) continua exatamente igual ...
         const codigo = (r["CODIGO"] || "").trim();
         const proximo = dados[index + 1] ? (dados[index + 1]["CODIGO"] || "").trim() : null;
         const anterior = dados[index - 1] ? (dados[index - 1]["CODIGO"] || "").trim() : null;
@@ -286,7 +290,8 @@ function renderizar(dados) {
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
-        // BORDAS DE AGRUPAMENTO (Mantidas conforme seu original)
+        // BORDAS DE AGRUPAMENTO
+        // IMPORTANTE: Agora as bordas pretas vão circular o CÓDIGO dentro da nova ordem de BOX
         let rowClasses = "";
         if (codigo !== anterior) rowClasses += " group-start";
         if (codigo !== proximo) rowClasses += " group-end";
