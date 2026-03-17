@@ -362,16 +362,21 @@ function atualizarGrafico(stats, total) {
 function iniciarAutoScroll() {
     isScrolling = true;
     const el = document.getElementById('scrollContainer');
-    let speed = 0.8; 
-    let delayRestart = false;
+    let speed = 0.015; // Velocidade ajustada para fluidez em telas grandes
+    let currentScroll = 0;
 
     function step() {
         if (!delayRestart && !waitingAtTop) {
-            el.scrollTop += speed;
+            // Usamos um multiplicador menor e acumulamos o valor para evitar saltos de pixel
+            currentScroll += 0.8; 
+            el.scrollTop = Math.floor(currentScroll);
+
+            // Verifica se chegou no fim
             if (el.scrollTop >= (el.scrollHeight - el.offsetHeight - 1)) {
                 delayRestart = true;
                 setTimeout(() => {
                     el.scrollTop = 0;
+                    currentScroll = 0;
                     waitingAtTop = true;
                     delayRestart = false;
                     setTimeout(() => { waitingAtTop = false; }, 3000);
@@ -380,6 +385,8 @@ function iniciarAutoScroll() {
         }
         requestAnimationFrame(step);
     }
+    
+    let delayRestart = false;
     requestAnimationFrame(step);
 }
 </script>
