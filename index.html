@@ -236,19 +236,37 @@ function carregarDados() {
 function renderizar(dados) {
     if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
     
-    // ORDENAÇÃO: 1º CÓDIGO (Agrupamento) -> 2º STATUS (A-Z) -> 3º BOX (A-Z)
-    dados.sort((a, b) => {
-        const codA = (a["CODIGO"] || "").toString().toUpperCase();
-        const codB = (b["CODIGO"] || "").toString().toUpperCase();
-        if (codA !== codB) return codA.localeCompare(codB);
+    // DEFINIÇÃO DA PRIORIDADE DE STATUS
+    const prioridadeStatus = {
+        "EM RECEBIMENTO": 1,
+        "CARGA RECEBIDA": 2,
+        "EM ATRASO": 3
+    };
 
+    // ORDENAÇÃO CUSTOMIZADA
+    dados.sort((a, b) => {
         const statusA = (a["STATUS"] || "").toUpperCase();
         const statusB = (b["STATUS"] || "").toUpperCase();
-        if (statusA !== statusB) return statusA.localeCompare(statusB);
 
-        const boxA = (a["BOX"] || "").toString().toUpperCase();
-        const boxB = (b["BOX"] || "").toString().toUpperCase();
-        return boxA.localeCompare(boxB);
+        // Obtém o peso do status (se não estiver no mapa, o peso é 99 para ir para o fim)
+        const pesoA = prioridadeStatus[statusA] || 99;
+        const pesoB = prioridadeStatus[statusB] || 99;
+
+        // 1º Critério: Prioridade de Status definida acima
+        if (pesoA !== pesoB) {
+            return pesoA - pesoB;
+        }
+
+        // 2º Critério: Se o peso for igual (ex: dois "EM ATRASO" ou dois status não mapeados),
+        // ordena em ordem alfabética entre eles
+        if (statusA !== statusB) {
+            return statusA.localeCompare(statusB);
+        }
+
+        // 3º Critério: Se o status for idêntico, ordena pelo Código/Agrupamento
+        const codA = (a["CODIGO"] || "").toString().toUpperCase();
+        const codB = (b["CODIGO"] || "").toString().toUpperCase();
+        return codA.localeCompare(codB);
     });
 
     const body = $("#tabelaTV tbody").empty();
@@ -256,6 +274,7 @@ function renderizar(dados) {
     const codigosUnicos = new Set();
 
     dados.forEach((r, index) => {
+        // ... O restante do seu código de montagem da linha (TR) continua exatamente igual ...
         const codigo = (r["CODIGO"] || "").trim();
         const proximo = dados[index + 1] ? (dados[index + 1]["CODIGO"] || "").trim() : null;
         const anterior = dados[index - 1] ? (dados[index - 1]["CODIGO"] || "").trim() : null;
@@ -267,7 +286,7 @@ function renderizar(dados) {
         if (codigo) codigosUnicos.add(codigo);
         stats[status] = (stats[status] || 0) + 1;
 
-        // BORDAS DE AGRUPAMENTO (Baseadas no CÓDIGO agora que ele é o primeiro critério)
+        // BORDAS DE AGRUPAMENTO (Mantidas conforme seu original)
         let rowClasses = "";
         if (codigo !== anterior) rowClasses += " group-start";
         if (codigo !== proximo) rowClasses += " group-end";
@@ -302,7 +321,6 @@ function renderizar(dados) {
 
     $('#tabelaTV').DataTable({ paging: false, info: false, ordering: false, searching: false, autoWidth: false });
     
-    // Contagem baseada nos dados filtrados/visíveis
     $("#countCarros").text(codigosUnicos.size);
     $("#countAgendas").text(dados.length);
     
