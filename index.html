@@ -19,7 +19,7 @@
         --bg-light: #F4F4F9; 
         --border-color: #ddd;
         --group-border-color: #000000;
-        --group-border-width: 6px;
+        --group-border-width: 3px; /* Reduzido de 6px para 3px para leveza */
     }
     
     body { background: var(--bg-light); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; overflow: hidden; height: 100vh; }
@@ -31,7 +31,7 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         height: 8vh;
         position: relative;
-        z-index: 1000; /* Garante que o header do site fique acima de tudo */
+        z-index: 1000;
     }
 
     h1 { margin: 0; font-size: 2.2rem; color: #fff; font-weight: 900; letter-spacing: 1px; }
@@ -44,14 +44,13 @@
         box-sizing: border-box;
     }
 
-    /* CONTAINER DA TABELA */
     .table-section { 
         flex: 3; 
         background: #fff; 
         border-radius: 15px; 
         overflow: hidden; 
         box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-        border: 2px solid #333;
+        border: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
         position: relative;
@@ -64,104 +63,89 @@
         position: relative;
     }
 
-    /* O SEGREDO DO CABEÇALHO OPACIFICADO */
     table.dataTable thead {
         position: sticky;
         top: 0;
-        z-index: 500; /* Camada alta para bloquear os dados */
-        background-color: var(--simonetti-red) !important; /* Fundo sólido */
+        z-index: 500;
+        background-color: var(--simonetti-red) !important;
     }
 
     table.dataTable thead th { 
         background: var(--simonetti-red) !important; 
         color: #ffffff !important; 
-        font-size: 1.4rem !important; /* Impacto visual */
-        padding: 20px 10px !important; 
+        font-size: 1.3rem !important; 
+        padding: 15px 10px !important; 
         text-align: center !important; 
         text-transform: uppercase;
         font-weight: 900 !important;
-        
-        /* LINHA PRETA DIVISORA IMPACTANTE */
+        /* Linha preta sob o cabeçalho mantida em 6px para o "corte" dos dados */
         border-bottom: 6px solid #000000 !important; 
-        
-        /* Bordas laterais para fechar qualquer buraco visual */
-        border-left: 1px solid rgba(255,255,255,0.1) !important;
-        border-right: 1px solid rgba(255,255,255,0.1) !important;
-        
-        /* Sombra forte para esconder o movimento por baixo */
-        box-shadow: 0 10px 15px -5px rgba(0,0,0,0.4);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
-    /* AJUSTE DOS DADOS PARA NÃO VAZAREM */
     table.dataTable { 
         width: 100% !important; 
-        border-collapse: separate !important; /* Alterado para evitar bugs de z-index */
+        border-collapse: separate !important; 
         border-spacing: 0;
         margin: 0 !important;
         table-layout: fixed !important;
     }
     
     table.dataTable tbody td { 
-        font-size: 1.25rem !important; 
-        padding: 14px 5px !important; 
+        font-size: 1.2rem !important; 
+        padding: 12px 5px !important; 
         text-align: center !important; 
         font-weight: 700; 
         border-bottom: 1px solid #eee;
-        background-color: #ffffff; /* Fundo branco sólido em cada célula */
-        position: relative;
-        z-index: 10; /* Z-index baixo para passar atrás do cabeçalho */
+        background-color: #ffffff;
     }
 
-    /* LÓGICA DE BORDAS DO GRUPO (AO REDOR DOS DADOS) */
-    .group-start td { 
-        border-top: 6px solid #000000 !important; 
-    }
-    
-    .group-end td {
-        border-bottom: 6px solid #000000 !important;
-    }    
-    
-    .group-side-left {
-        border-left: 6px solid #000000 !important; 
-    }
-    
-    .group-side-right {
-        border-right: 6px solid #000000 !important; 
-    }
+    /* BORDAS DO GRUPO - AGORA COM 3PX */
+    .group-start td { border-top: var(--group-border-width) solid var(--group-border-color) !important; }
+    .group-end td { border-bottom: var(--group-border-width) solid var(--group-border-color) !important; }
+    .group-side-left { border-left: var(--group-border-width) solid var(--group-border-color) !important; }
+    .group-side-right { border-right: var(--group-border-width) solid var(--group-border-color) !important; }
 
-    /* ESTILOS DE APOIO */
     .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
     .bg-mesa { background-color: #00B050 !important; color: #000 !important; }
     .bg-tecnologia { background-color: #00B0FF !important; color: #000 !important; }
 
     .pill { 
-        padding: 8px; border-radius: 8px; color: #fff; font-size: 1.1rem; 
+        padding: 6px; border-radius: 8px; color: #fff; font-size: 1.1rem; 
         font-weight: 800; display: inline-block; width: 95%; 
         text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
 
-    .box-num { font-size: 2.5rem !important; }
+    .box-num { font-size: 2.3rem !important; }
     .box-green { color: #27ae60 !important; }
     .box-red { color: #E74C3C !important; }
 
-    /* DASHBOARD */
-    .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 350px; }
+    .dash-section { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 320px; }
+    
     .kpi-card { 
-        background: #fff; padding: 1.5vh; text-align: center; border-radius: 15px;
-        border-bottom: 10px solid var(--simonetti-red); 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        background: #fff; padding: 1vh; text-align: center; border-radius: 15px;
+        border-bottom: 8px solid var(--simonetti-red); 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
         border: 1px solid var(--border-color);
     }
-    .kpi-value { font-size: 4.5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
-    .kpi-label { font-size: 1.2rem; font-weight: 800; color: #333; }
+    .kpi-value { font-size: 3.8rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
+    .kpi-label { font-size: 1rem; font-weight: 800; color: #333; }
 
+    /* GRÁFICO MAIOR */
     .chart-box { 
-        background: #fff; padding: 15px; border-radius: 15px; 
-        flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+        background: #fff; padding: 20px; border-radius: 15px; 
+        flex-grow: 1; box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
         border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centraliza o gráfico no box */
     }
 
-    .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 2px solid var(--simonetti-red); padding: 10px 20px; font-weight: 900; border-radius: 10px; cursor: pointer; }
+    #statusChart {
+        max-height: 45vh !important; /* Força o gráfico a ocupar mais altura */
+    }
+
+    .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 2px solid var(--simonetti-red); padding: 8px 15px; font-weight: 900; border-radius: 8px; cursor: pointer; }
 </style>
 </head>
 <body>
