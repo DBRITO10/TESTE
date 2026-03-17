@@ -31,7 +31,7 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         height: 8vh;
         position: relative;
-        z-index: 200; /* Acima de tudo */
+        z-index: 1000; /* Garante que o header do site fique acima de tudo */
     }
 
     h1 { margin: 0; font-size: 2.2rem; color: #fff; font-weight: 900; letter-spacing: 1px; }
@@ -44,14 +44,14 @@
         box-sizing: border-box;
     }
 
-    /* SEÇÃO DA TABELA */
+    /* CONTAINER DA TABELA */
     .table-section { 
         flex: 3; 
         background: #fff; 
         border-radius: 15px; 
         overflow: hidden; 
         box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-        border: 2px solid #333; /* Borda externa mais forte */
+        border: 2px solid #333;
         display: flex;
         flex-direction: column;
         position: relative;
@@ -62,99 +62,95 @@
         overflow-x: hidden;
         flex-grow: 1;
         position: relative;
-        /* Garante que o scroll comece exatamente abaixo do cabeçalho */
-        display: block;
     }
 
-    /* CABEÇALHO IMPACTANTE */
+    /* O SEGREDO DO CABEÇALHO OPACIFICADO */
     table.dataTable thead {
         position: sticky;
         top: 0;
-        z-index: 150; /* Garante que os dados fiquem atrás */
-        background-color: var(--simonetti-red);
+        z-index: 500; /* Camada alta para bloquear os dados */
+        background-color: var(--simonetti-red) !important; /* Fundo sólido */
     }
 
     table.dataTable thead th { 
         background: var(--simonetti-red) !important; 
         color: #ffffff !important; 
-        font-size: 1.3rem !important; /* Aumentado para impacto */
-        padding: 18px 10px !important; 
+        font-size: 1.4rem !important; /* Impacto visual */
+        padding: 20px 10px !important; 
         text-align: center !important; 
         text-transform: uppercase;
         font-weight: 900 !important;
-        /* LINHA ESCURA DIVISORA */
-        border-bottom: 6px solid #000000 !important; 
+        
+        /* LINHA PRETA DIVISORA IMPACTANTE */
+        border-bottom: 8px solid #000000 !important; 
+        
+        /* Bordas laterais para fechar qualquer buraco visual */
+        border-left: 1px solid rgba(255,255,255,0.1) !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
-        box-shadow: 0 4px 5px rgba(0,0,0,0.2); /* Sombra para profundidade */
+        
+        /* Sombra forte para esconder o movimento por baixo */
+        box-shadow: 0 10px 15px -5px rgba(0,0,0,0.4);
     }
 
-    /* DADOS DA TABELA */
+    /* AJUSTE DOS DADOS PARA NÃO VAZAREM */
     table.dataTable { 
         width: 100% !important; 
-        border-collapse: collapse !important; 
+        border-collapse: separate !important; /* Alterado para evitar bugs de z-index */
+        border-spacing: 0;
         margin: 0 !important;
-        table-layout: fixed !important; /* Melhor estabilidade em telas grandes */
-        transform: translateZ(0); /* Aceleração de hardware para TVs */
+        table-layout: fixed !important;
     }
     
     table.dataTable tbody td { 
-        font-size: 1.2rem !important; 
-        padding: 12px 5px !important; 
+        font-size: 1.25rem !important; 
+        padding: 14px 5px !important; 
         text-align: center !important; 
         font-weight: 700; 
-        border: 0.5px solid #eee;
-        white-space: normal !important; 
-        word-wrap: break-word; 
-        vertical-align: middle;
-        background-color: #fff; /* Garante que o fundo não seja transparente */
+        border-bottom: 1px solid #eee;
+        background-color: #ffffff; /* Fundo branco sólido em cada célula */
+        position: relative;
+        z-index: 10; /* Z-index baixo para passar atrás do cabeçalho */
     }
 
-    /* LÓGICA DE BORDAS DO GRUPO */
+    /* BORDAS DO GRUPO */
     .group-start td { border-top: var(--group-border-width) solid var(--group-border-color) !important; }
     .group-end td { border-bottom: var(--group-border-width) solid var(--group-border-color) !important; }
     .group-side-left { border-left: var(--group-border-width) solid var(--group-border-color) !important; }
     .group-side-right { border-right: var(--group-border-width) solid var(--group-border-color) !important; }
 
-    /* CORES DE PRODUTOS */
+    /* ESTILOS DE APOIO */
     .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
     .bg-mesa { background-color: #00B050 !important; color: #000 !important; }
     .bg-tecnologia { background-color: #00B0FF !important; color: #000 !important; }
 
-    /* STATUS PILLS */
     .pill { 
-        padding: 6px 12px; 
-        border-radius: 8px; 
-        color: #fff; 
-        font-size: 1.1rem; 
-        font-weight: 800; 
-        display: inline-block; 
-        width: 95%; 
+        padding: 8px; border-radius: 8px; color: #fff; font-size: 1.1rem; 
+        font-weight: 800; display: inline-block; width: 95%; 
         text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
 
-    .box-num { font-size: 2.3rem !important; }
+    .box-num { font-size: 2.5rem !important; }
     .box-green { color: #27ae60 !important; }
     .box-red { color: #E74C3C !important; }
 
-    /* DASHBOARD LATERAL */
+    /* DASHBOARD */
     .dash-section { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 350px; }
     .kpi-card { 
         background: #fff; padding: 1.5vh; text-align: center; border-radius: 15px;
-        border-bottom: 0.8vh solid var(--simonetti-red); 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border-bottom: 10px solid var(--simonetti-red); 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         border: 1px solid var(--border-color);
     }
-    .kpi-value { font-size: 4rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
-    .kpi-label { font-size: 1.1rem; font-weight: 700; color: #555; text-transform: uppercase; }
+    .kpi-value { font-size: 4.5rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
+    .kpi-label { font-size: 1.2rem; font-weight: 800; color: #333; }
 
     .chart-box { 
         background: #fff; padding: 15px; border-radius: 15px; 
-        flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+        flex-grow: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
         border: 1px solid var(--border-color);
-        display: flex; flex-direction: column;
     }
 
-    .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 1px solid var(--simonetti-red); padding: 8px 15px; font-weight: 900; border-radius: 8px; cursor: pointer; }
+    .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 2px solid var(--simonetti-red); padding: 10px 20px; font-weight: 900; border-radius: 10px; cursor: pointer; }
 </style>
 </head>
 <body>
