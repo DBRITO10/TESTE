@@ -57,6 +57,7 @@
     <div class="card">
         <h3>📦 Gerenciar Lista de Produtos</h3>
         <p style="font-size: 12px; color: #666;">Cadastre ou edite produtos para que apareçam na conferência.</p>
+        <input type="text" id="prodFornecedor" placeholder="Nome do Fornecedor (Ex: Electrolux)">
         <input type="text" id="prodCodigo" placeholder="Código do Produto (Ex: 1010)">
         <input type="text" id="prodNome" placeholder="Descrição / Nome do Produto">
         <button class="btn-add" id="btnSalvar">SALVAR PRODUTO</button>
@@ -68,6 +69,7 @@
             <table id="tabelaProdutos">
                 <thead>
                     <tr>
+                        <th>Fornecedor</th>
                         <th>Código</th>
                         <th>Descrição</th>
                         <th style="text-align: center;">Ações</th>
@@ -134,11 +136,12 @@
     }
 
     document.getElementById('btnSalvar').onclick = async () => {
+        const cod = document.getElementById('prodFornecedor').value.trim();
         const cod = document.getElementById('prodCodigo').value.trim();
         const nome = document.getElementById('prodNome').value.trim();
         const btn = document.getElementById('btnSalvar');
 
-        if(!cod || !nome) return alert("Por favor, preencha o código e o nome do produto.");
+        if(!cod || !nome) return alert("Por favor, preencha o campo.");
 
         btn.disabled = true;
         btn.innerText = "PROCESSANDO...";
@@ -160,7 +163,8 @@
                 });
                 await registrarHistorico(`CADASTROU PRODUTO: ${cod}`);
             }
-            
+
+            document.getElementById('prodFornecedor').value = "";
             document.getElementById('prodCodigo').value = "";
             document.getElementById('prodNome').value = "";
             carregarProdutos();
@@ -182,6 +186,7 @@
     };
 
     window.editarProduto = (id, cod, nome) => {
+        document.getElementById('prodFornecedor').value = nome;
         document.getElementById('prodCodigo').value = cod;
         document.getElementById('prodNome').value = nome;
         editandoId = id;
