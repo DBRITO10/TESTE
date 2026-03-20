@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Produtos - Simonetti</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --text: #333; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
         
-        /* Cabeçalho Padronizado */
         header { 
             background: var(--primary); color: white; padding: 10px 20px; 
             display: flex; justify-content: space-between; align-items: center; 
@@ -18,28 +18,33 @@
         .btn-back { color: white; text-decoration: none; font-size: 20px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px; }
         .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .container { padding: 20px; max-width: 900px; margin: auto; }
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        h2, h3 { color: var(--primary); margin-top: 0; font-size: 18px; }
+        h3 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
-        input { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .full-width { grid-column: span 2; }
+
         .btn-add { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; transition: 0.3s; }
         .btn-add:hover { background: #b71c1c; }
 
-        /* Tabela Responsiva */
-        .table-wrapper { overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
-        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
+        /* Estilo Importação */
+        .import-section { border: 2px dashed #ccc; padding: 15px; text-align: center; border-radius: 8px; margin-top: 10px; background: #fafafa; }
+        .btn-import { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+
+        .table-wrapper { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #eee; }
 
         .btn-edit { color: #fbc02d; cursor: pointer; margin-right: 15px; font-size: 18px; }
         .btn-del { color: #f44336; cursor: pointer; font-size: 18px; }
 
         @media (max-width: 600px) {
-            .container { padding: 10px; }
-            header { padding: 10px; }
-            span { font-size: 12px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
         }
     </style>
 </head>
@@ -55,16 +60,26 @@
 
 <div class="container">
     <div class="card">
-        <h3>📦 Gerenciar Lista de Produtos</h3>
-        <p style="font-size: 12px; color: #666;">Cadastre ou edite produtos para que apareçam na conferência.</p>
-        <input type="text" id="prodFornecedor" placeholder="Nome do Fornecedor (Ex: Electrolux)">
-        <input type="text" id="prodCodigo" placeholder="Código do Produto (Ex: 1010)">
-        <input type="text" id="prodNome" placeholder="Descrição / Nome do Produto">
+        <h3>📦 Cadastro de Produto</h3>
+        <div class="form-grid">
+            <input type="text" id="prodFornecedor" placeholder="Fornecedor (Ex: ELECTROLUX)" class="full-width">
+            <input type="text" id="prodCodigo" placeholder="Código (Ex: 1010)">
+            <input type="text" id="prodNome" placeholder="Descrição do Produto">
+        </div>
         <button class="btn-add" id="btnSalvar">SALVAR PRODUTO</button>
     </div>
 
     <div class="card">
-        <input type="text" id="inputBusca" placeholder="🔍 Buscar por código ou nome..." onkeyup="filtrar()">
+        <h3>📂 Importar Planilha</h3>
+        <p style="font-size: 12px; color: #666;">Colunas esperadas: <b>Fornecedor, Código, Descrição</b></p>
+        <div class="import-section">
+            <input type="file" id="inputPlanilha" accept=".xlsx, .xls, .csv" style="border:none;">
+            <button class="btn-import" id="btnProcessar">🚀 IMPORTAR DADOS</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <input type="text" id="inputBusca" placeholder="🔍 Buscar por fornecedor, código ou nome..." onkeyup="filtrar()">
         <div class="table-wrapper">
             <table id="tabelaProdutos">
                 <thead>
@@ -76,7 +91,7 @@
                     </tr>
                 </thead>
                 <tbody id="listaProdutos">
-                    <tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando lista...</td></tr>
+                    <tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando lista...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -96,7 +111,6 @@
     let produtos = [];
     let editandoId = null;
 
-    // Autenticação e Carregamento de Nome
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
@@ -104,115 +118,126 @@
                 document.getElementById('userName').innerText = userDoc.data().nome.split(' ')[0].toUpperCase();
                 carregarProdutos();
             }
-        } else {
-            window.location.href = "index.html";
-        }
+        } else { window.location.href = "index.html"; }
     });
 
     async function carregarProdutos() {
         const snap = await getDocs(collection(db, "produtos_lista"));
-        produtos = [];
         const tbody = document.getElementById('listaProdutos');
         tbody.innerHTML = "";
         
         if (snap.empty) {
-            tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Nenhum produto cadastrado.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Nenhum produto cadastrado.</td></tr>";
             return;
         }
 
         snap.forEach(d => {
             const p = { id: d.id, ...d.data() };
-            produtos.push(p);
             tbody.innerHTML += `
                 <tr>
+                    <td style="color:#d32f2f; font-weight:bold;">${p.fornecedor || '---'}</td>
                     <td><strong>${p.codigo}</strong></td>
                     <td>${p.nome}</td>
                     <td style="text-align: center;">
-                        <span class="btn-edit" onclick="editarProduto('${p.id}', '${p.codigo}', '${p.nome}')">✏️</span>
+                        <span class="btn-edit" onclick="editarProduto('${p.id}', '${p.codigo}', '${p.nome}', '${p.fornecedor || ''}')">✏️</span>
                         <span class="btn-del" onclick="excluirProduto('${p.id}', '${p.codigo}')">🗑️</span>
                     </td>
                 </tr>`;
         });
     }
 
+    // Salvar Manual
     document.getElementById('btnSalvar').onclick = async () => {
-        const cod = document.getElementById('prodFornecedor').value.trim();
+        const forn = document.getElementById('prodFornecedor').value.trim().toUpperCase();
         const cod = document.getElementById('prodCodigo').value.trim();
-        const nome = document.getElementById('prodNome').value.trim();
+        const nome = document.getElementById('prodNome').value.trim().toUpperCase();
         const btn = document.getElementById('btnSalvar');
 
-        if(!cod || !nome) return alert("Por favor, preencha o campo.");
+        if(!cod || !nome || !forn) return alert("Preencha todos os campos!");
 
         btn.disabled = true;
-        btn.innerText = "PROCESSANDO...";
-
         try {
             if(editandoId) {
-                await updateDoc(doc(db, "produtos_lista", editandoId), { 
-                    codigo: cod, 
-                    nome: nome.toUpperCase() 
-                });
-                await registrarHistorico(`EDITOU PRODUTO: ${cod}`);
+                await updateDoc(doc(db, "produtos_lista", editandoId), { fornecedor: forn, codigo: cod, nome: nome });
                 editandoId = null;
-                btn.style.background = "var(--primary)";
-                btn.innerText = "SALVAR PRODUTO";
             } else {
-                await addDoc(collection(db, "produtos_lista"), { 
-                    codigo: cod, 
-                    nome: nome.toUpperCase() 
-                });
-                await registrarHistorico(`CADASTROU PRODUTO: ${cod}`);
+                await addDoc(collection(db, "produtos_lista"), { fornecedor: forn, codigo: cod, nome: nome });
             }
-
-            document.getElementById('prodFornecedor').value = "";
-            document.getElementById('prodCodigo').value = "";
-            document.getElementById('prodNome').value = "";
+            limparCampos();
             carregarProdutos();
             alert("Sucesso!");
-        } catch (e) {
-            alert("Erro ao salvar.");
-        } finally {
+        } catch (e) { alert("Erro ao salvar."); }
+        btn.disabled = false;
+        btn.innerText = "SALVAR PRODUTO";
+    };
+
+    // Lógica de Importação de Planilha
+    document.getElementById('btnProcessar').onclick = () => {
+        const file = document.getElementById('inputPlanilha').files[0];
+        if (!file) return alert("Selecione um arquivo!");
+
+        const btn = document.getElementById('btnProcessar');
+        btn.disabled = true;
+        btn.innerText = "IMPORTANDO...";
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const lista = XLSX.utils.sheet_to_json(sheet);
+
+            let contador = 0;
+            for (const item of lista) {
+                // Tenta mapear os nomes das colunas (aceita variações)
+                const f = item["Fornecedor"] || item["fornecedor"] || item["FORNECEDOR"];
+                const c = item["Código"] || item["Codigo"] || item["codigo"] || item["CODIGO"];
+                const d_item = item["Descrição"] || item["Descricao"] || item["nome"] || item["NOME"];
+
+                if (c && d_item) {
+                    await addDoc(collection(db, "produtos_lista"), {
+                        fornecedor: (f || "DIVERSOS").toUpperCase(),
+                        codigo: String(c),
+                        nome: String(d_item).toUpperCase()
+                    });
+                    contador++;
+                }
+            }
+            alert(`Importação concluída! ${contador} itens adicionados.`);
+            carregarProdutos();
             btn.disabled = false;
-            btn.innerText = editandoId ? "ATUALIZAR PRODUTO" : "SALVAR PRODUTO";
-        }
+            btn.innerText = "🚀 IMPORTAR DADOS";
+            document.getElementById('inputPlanilha').value = "";
+        };
+        reader.readAsArrayBuffer(file);
     };
 
     window.excluirProduto = async (id, cod) => {
         if(confirm(`Deseja excluir o produto ${cod}?`)) {
             await deleteDoc(doc(db, "produtos_lista", id));
-            await registrarHistorico(`EXCLUIU PRODUTO: ${cod}`);
             carregarProdutos();
         }
     };
 
-    window.editarProduto = (id, cod, nome) => {
-        document.getElementById('prodFornecedor').value = nome;
+    window.editarProduto = (id, cod, nome, forn) => {
+        document.getElementById('prodFornecedor').value = forn;
         document.getElementById('prodCodigo').value = cod;
         document.getElementById('prodNome').value = nome;
         editandoId = id;
-        const btn = document.getElementById('btnSalvar');
-        btn.innerText = "ATUALIZAR PRODUTO";
-        btn.style.background = "#2e7d32"; // Muda para verde para indicar edição
+        document.getElementById('btnSalvar').innerText = "ATUALIZAR PRODUTO";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    async function registrarHistorico(acao) {
-        await addDoc(collection(db, "historico"), {
-            acao: "PRODUTOS",
-            detalhe: acao,
-            usuario: auth.currentUser.email,
-            data: serverTimestamp()
-        });
+    function limparCampos() {
+        document.getElementById('prodFornecedor').value = "";
+        document.getElementById('prodCodigo').value = "";
+        document.getElementById('prodNome').value = "";
     }
 
     window.filtrar = () => {
         const termo = document.getElementById('inputBusca').value.toLowerCase();
         const linhas = document.querySelectorAll('#listaProdutos tr');
-        linhas.forEach(l => {
-            if(l.cells.length > 1) {
-                l.style.display = l.innerText.toLowerCase().includes(termo) ? "" : "none";
-            }
-        });
+        linhas.forEach(l => l.style.display = l.innerText.toLowerCase().includes(termo) ? "" : "none");
     };
 
     document.getElementById('btnSair').onclick = () => signOut(auth);
