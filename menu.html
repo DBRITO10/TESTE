@@ -24,7 +24,6 @@
             min-height: 100vh;
         }
 
-        /* HEADER CENTRALIZADO */
         header {
             background-color: var(--primary);
             color: var(--white);
@@ -47,10 +46,8 @@
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
-            width: auto;
-            white-space: nowrap;
             display: flex;
-            flex-direction: column; /* Coloca o subtítulo embaixo do título */
+            flex-direction: column;
             align-items: center;
         }
 
@@ -59,25 +56,14 @@
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
-            line-height: 1.2;
         }
 
         .header-title .sub-t {
-            font-size: 10px; /* Tamanho menor para o subtítulo */
+            font-size: 10px;
             font-weight: 400;
-            text-transform: none; /* Mantém letras minusculas */
-            letter-spacing: 0.5px;
             opacity: 0.9;
         }
 
-        /* Ajuste para telas pequenas */
-        @media (max-width: 600px) {
-            .header-title .main-t { font-size: 14px; }
-            .header-title .sub-t { font-size: 8px; }
-        }    
-
-        .user-section { z-index: 2; }
-        
         .btn-sair {
             background: rgba(255, 255, 255, 0.2);
             border: 1px solid #ffffff;
@@ -86,17 +72,9 @@
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
             font-size: 12px;
+            z-index: 2;
         }
-        .btn-sair:hover { background: #white; color: var(--primary); }
-
-        .welcome-banner {
-            text-align: center;
-            padding: 30px 20px 10px;
-        }
-        .welcome-banner h1 { margin: 0; color: var(--primary); font-size: 28px; font-weight: 900; text-transform: uppercase; }
-        .welcome-banner p { margin: 5px 0 0; color: #666; font-size: 15px; font-style: italic; }
 
         .container {
             flex: 1;
@@ -117,31 +95,27 @@
             text-align: center;
             cursor: pointer;
             transition: 0.3s;
-            border: 1px solid rgba(0,0,0,0.05);
             box-shadow: var(--shadow);
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            text-decoration: none;
         }
-        .card-main:hover { transform: translateY(-5px); border-color: var(--primary); }
         .card-main i { font-size: 50px; margin-bottom: 15px; }
         .card-main span { font-weight: 800; font-size: 18px; color: var(--text); text-transform: uppercase; }
 
-        /* AJUSTES DO MODAL */
+        /* MODAL COM BOTÃO FECHAR */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: var(--overlay);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
             backdrop-filter: blur(4px);
-            padding: 20px; /* Garante margem para clicar fora no celular */
+            padding: 20px;
             box-sizing: border-box;
         }
 
@@ -149,19 +123,27 @@
             background: var(--white);
             width: 100%;
             max-width: 600px;
-            max-height: 85vh; /* Altura máxima para não sumir o fundo */
+            max-height: 85vh;
             border-radius: 20px;
             padding: 30px;
             position: relative;
             box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-            overflow-y: auto; /* Scroll interno se o conteúdo for grande */
-            animation: slideUp 0.3s ease-out;
+            overflow-y: auto;
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        /* O BOTÃO X */
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+            padding: 5px;
         }
+        .close-modal:hover { color: var(--primary); }
 
         .modal-header {
             border-bottom: 2px solid var(--bg-body);
@@ -191,28 +173,38 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: 0.2s;
             border: 1px solid #eee;
         }
-        .btn-link:hover { background: var(--primary); color: white; }
         .btn-link i { font-size: 30px; margin-bottom: 8px; }
 
         footer { text-align: center; padding: 15px; font-size: 11px; color: #888; background: #fff; border-top: 1px solid #eee; }
 
         /* RESPONSIVIDADE CELULAR */
         @media (max-width: 600px) {
-            .header-title { font-size: 14px; }
-            .welcome-banner { display: none; } /* Oculta banner no celular para subir os cards */
-            .container { padding: 15px; gap: 15px; }
+            /* Título apenas Simonetti e sem subtítulo */
+            .header-title .main-t::after { content: ""; }
+            .header-title .main-t { font-size: 16px; content: "Simonetti"; }
+            .header-title .sub-t { display: none; }
+            
+            /* Ajuste de texto via JS ou CSS para mobile */
+            .header-title .main-t { visibility: hidden; position: relative; }
+            .header-title .main-t::before { 
+                content: "SIMONETTI"; 
+                visibility: visible; 
+                position: absolute; 
+                left: 50%; 
+                transform: translateX(-50%);
+            }
+
+            .container { padding: 15px; }
             .modal-grid { grid-template-columns: 1fr; }
-            .modal-content { padding: 20px; }
         }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="user-info">Bem-vindo, <strong id="userName">...</strong></div>
+    <div class="user-info">Olá, <strong id="userName">...</strong></div>
     <div class="header-title">
         <span class="main-t">Móveis Simonetti</span>
         <span class="sub-t">Transformando logística em vantagem competitiva.</span>
@@ -233,17 +225,18 @@
         <i>📝</i><span>Cadastros</span>
     </div>
     
-    <a href="historico.html" class="card-main" style="text-decoration:none" id="cardAdminHist">
+    <a href="historico.html" class="card-main" id="cardAdminHist">
         <i>📜</i><span>Histórico</span>
     </a>
         
-    <a href="gestao-usuarios.html" class="card-main" style="text-decoration:none" id="cardAdminAcesso">
+    <a href="gestao-usuarios.html" class="card-main" id="cardAdminAcesso">
         <i>⚙️</i><span>Níveis de Acesso</span>
     </a>
 </div>
 
 <div id="modalExpedicao" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
+        <span class="close-modal" onclick="forceClose('modalExpedicao')">&times;</span>
         <div class="modal-header">Expedição</div>
         <div class="modal-grid" id="gridExpedicao">
             <a href="cadastro-expedicao.html" class="btn-link" data-min="colaborador"><i>➕</i>Nova Expedição</a>
@@ -256,6 +249,7 @@
 
 <div id="modalConferencia" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
+        <span class="close-modal" onclick="forceClose('modalConferencia')">&times;</span>
         <div class="modal-header">Recebimento</div>
         <div class="modal-grid">
             <a href="conferencia.html" class="btn-link"><i>📥</i>Validar Situação</a>
@@ -265,6 +259,7 @@
 
 <div id="modalCadastros" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
+        <span class="close-modal" onclick="forceClose('modalCadastros')">&times;</span>
         <div class="modal-header">Cadastros</div>
         <div class="modal-grid">
             <a href="veiculos.html" class="btn-link"><i>🚚</i>Veículos</a>
@@ -279,18 +274,25 @@
 <footer>Móveis Simonetti - Logística - Developed by DB</footer>
 
 <script type="module">
+    // Funções de Modal
     window.openModal = (id) => {
         document.getElementById(id).style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Trava o scroll do fundo
+        document.body.style.overflow = 'hidden';
     };
     
     window.closeModal = (e) => { 
         if(e.target.classList.contains('modal-overlay')) {
             e.target.style.display = 'none';
-            document.body.style.overflow = 'auto'; // Destrava scroll
+            document.body.style.overflow = 'auto';
         }
     };
 
+    window.forceClose = (id) => {
+        document.getElementById(id).style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+
+    // Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -307,19 +309,14 @@
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) { window.location.href = "index.html"; return; }
-
         try {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-            if (!userDoc.exists()) {
-                signOut(auth).then(() => window.location.href = "index.html");
-                return;
-            }
+            if (!userDoc.exists()) { signOut(auth).then(() => window.location.href = "index.html"); return; }
 
             const userData = userDoc.data();
             const nivel = userData.nivel || 'leitor';
             document.getElementById('userName').innerText = (userData.nome || "Usuário").split(' ')[0].toUpperCase();
 
-            // LOGICA DE PERMISSÕES
             if(nivel === 'admin') {
                 document.querySelectorAll('.card-main').forEach(c => c.style.display = 'flex');
             } else if(nivel === 'leitor' || nivel === 'colaborador') {
@@ -334,15 +331,11 @@
                 if(nivel === 'admin') return;
                 if(nivel === 'leitor' && min !== 'leitor') link.style.display = 'none';
             });
-
-        } catch (error) { 
-            console.error("Erro segurança:", error); 
-            window.location.href = "index.html";
-        }
+        } catch (e) { window.location.href = "index.html"; }
     });
 
     document.getElementById('btnSair').onclick = () => {
-        if(confirm("Deseja sair do sistema?")) signOut(auth).then(() => window.location.href = "index.html");
+        if(confirm("Deseja sair?")) signOut(auth).then(() => window.location.href = "index.html");
     };
 </script>
 </body>
