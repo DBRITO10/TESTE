@@ -46,14 +46,35 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 18px; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
             text-align: center;
             width: auto;
             white-space: nowrap;
+            display: flex;
+            flex-direction: column; /* Coloca o subtítulo embaixo do título */
+            align-items: center;
         }
+
+        .header-title .main-t {
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        .header-title .sub-t {
+            font-size: 10px; /* Tamanho menor para o subtítulo */
+            font-weight: 400;
+            text-transform: none; /* Mantém letras minusculas */
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+
+        /* Ajuste para telas pequenas */
+        @media (max-width: 600px) {
+            .header-title .main-t { font-size: 14px; }
+            .header-title .sub-t { font-size: 8px; }
+        }    
 
         .user-section { z-index: 2; }
         
