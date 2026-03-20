@@ -213,7 +213,10 @@
     <div class="card-main" id="cardCadastros" onclick="openModal('modalCadastros')">
         <i>📝</i><span>Cadastros</span>
     </div>
-
+    
+    <a href="historico.html" class="card-main" style="text-decoration:none" id="cardAdmin">
+        <i>📜</i><span>Histórico</span>
+        
     <a href="gestao-usuarios.html" class="card-main" style="text-decoration:none" id="cardAdmin">
         <i>⚙️</i><span>Níveis de Acesso</span>
     </a>
@@ -221,7 +224,7 @@
 
 <div id="modalExpedicao" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Operações de Expedição</div>
+        <div class="modal-header">Expedição de Mercadoria</div>
         <div class="modal-grid" id="gridExpedicao">
             <a href="cadastro-expedicao.html" class="btn-link" data-min="colaborador"><i>➕</i>Nova Expedição</a>
             <a href="relatorio.html" class="btn-link" data-min="leitor"><i>📅</i>Expedição do Dia</a>
@@ -233,23 +236,22 @@
 
 <div id="modalConferencia" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Setor de Conferência</div>
+        <div class="modal-header">Recebimento de Cargas</div>
         <div class="modal-grid">
-            <a href="conferencia.html" class="btn-link"><i>📥</i>Recebimento de Cargas</a>
+            <a href="conferencia.html" class="btn-link"><i>📥</i>Validar Situação</a>
         </div>
     </div>
 </div>
 
 <div id="modalCadastros" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Gerenciamento Geral</div>
+        <div class="modal-header">Administrar Cadastros</div>
         <div class="modal-grid">
             <a href="veiculos.html" class="btn-link"><i>🚚</i>Veículos</a>
             <a href="produtos.html" class="btn-link"><i>📦</i>Produtos</a>
             <a href="gerenciar-destinos.html" class="btn-link"><i>📍</i>Destinos</a>
             <a href="equipe.html" class="btn-link"><i>👷</i>Equipe</a>
             <a href="cadastrar-conferente.html" class="btn-link"><i>👮‍♂️</i>Conferentes</a>
-            <a href="historico.html" class="btn-link"><i>📜</i>Histórico</a>
         </div>
     </div>
 </div>
