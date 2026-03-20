@@ -10,8 +10,8 @@
             --bg-body: #fdf2f2;
             --white: #ffffff;
             --text: #333;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
-            --overlay: rgba(0, 0, 0, 0.5);
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --overlay: rgba(0, 0, 0, 0.6);
         }
 
         body {
@@ -30,14 +30,14 @@
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            box-shadow: var(--shadow);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
 
         .user-info { font-weight: 600; font-size: 14px; }
-        .header-title { font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
+        .header-title { font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
         .user-section { display: flex; justify-content: flex-end; }
         
         .btn-sair {
@@ -52,43 +52,63 @@
         }
         .btn-sair:hover { background: #ffffff; color: var(--primary); }
 
+        /* Banner Institucional */
+        .welcome-banner {
+            text-align: center;
+            padding: 40px 20px 10px;
+        }
+        .welcome-banner h1 { 
+            margin: 0; 
+            color: var(--primary); 
+            font-size: 32px; 
+            font-weight: 900; 
+            text-transform: uppercase;
+        }
+        .welcome-banner p { 
+            margin: 5px 0 0; 
+            color: #666; 
+            font-size: 16px; 
+            font-style: italic;
+        }
+
+        /* Grid de Cards Principais */
         .container {
             flex: 1;
-            padding: 40px 25px;
+            padding: 30px 25px;
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
             box-sizing: border-box;
         }
 
-        /* Cards Principais */
         .card-main {
             background: var(--white);
-            border-radius: 15px;
-            padding: 40px 20px;
+            border-radius: 20px;
+            padding: 50px 20px;
             text-align: center;
             cursor: pointer;
-            transition: 0.3s;
-            border: 2px solid transparent;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(0,0,0,0.05);
             box-shadow: var(--shadow);
-            display: flex;
+            display: none; /* JS controla visibilidade */
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
 
         .card-main:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(211, 47, 47, 0.15);
             border-color: var(--primary);
-            transform: translateY(-5px);
         }
 
-        .card-main i { font-size: 60px; margin-bottom: 20px; }
-        .card-main span { font-weight: 800; font-size: 18px; color: var(--text); text-transform: uppercase; }
+        .card-main i { font-size: 70px; margin-bottom: 25px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
+        .card-main span { font-weight: 800; font-size: 20px; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* MODAL ESTRUTURA */
+        /* MODAIS */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -96,51 +116,50 @@
             width: 100%;
             height: 100%;
             background: var(--overlay);
-            display: none; /* Escondido por padrão */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
         }
 
         .modal-content {
             background: var(--white);
             width: 90%;
-            max-width: 800px;
-            border-radius: 20px;
-            padding: 30px;
+            max-width: 700px;
+            border-radius: 24px;
+            padding: 40px;
             position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            animation: slideUp 0.3s ease-out;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            animation: slideUp 0.4s ease-out;
         }
 
         @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .modal-header {
-            border-bottom: 2px solid var(--bg-body);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: 800;
+            border-bottom: 3px solid var(--bg-body);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            font-size: 22px;
+            font-weight: 900;
             color: var(--primary);
             text-transform: uppercase;
             text-align: center;
         }
 
-        /* Grid de botões dentro do Modal */
         .modal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
         }
 
         .btn-link {
-            background: var(--bg-body);
-            padding: 20px 15px;
-            border-radius: 10px;
+            background: #f9f9f9;
+            padding: 25px 15px;
+            border-radius: 15px;
             text-decoration: none;
             color: var(--text);
             text-align: center;
@@ -148,22 +167,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: 0.2s;
+            transition: 0.3s;
             border: 1px solid #eee;
         }
 
         .btn-link:hover {
             background: var(--primary);
             color: white;
+            transform: scale(1.05);
         }
 
-        .btn-link i { font-size: 30px; margin-bottom: 10px; }
+        .btn-link i { font-size: 35px; margin-bottom: 12px; }
 
-        footer { text-align: center; padding: 15px; font-size: 11px; color: #999; background: #fff; border-top: 1px solid #eee; }
+        footer { text-align: center; padding: 20px; font-size: 12px; color: #888; background: #fff; border-top: 1px solid #eee; }
 
         @media (max-width: 600px) {
-            .header-title { font-size: 18px; }
-            .modal-grid { grid-template-columns: 1fr 1fr; }
+            .welcome-banner h1 { font-size: 24px; }
+            .modal-grid { grid-template-columns: 1fr; }
+            .card-main { padding: 30px 15px; }
         }
     </style>
 </head>
@@ -175,32 +196,37 @@
     <div class="user-section"><button class="btn-sair" id="btnSair">SAIR</button></div>
 </header>
 
-<div class="container">
-    <div class="card-main" onclick="openModal('modalExpedicao')">
+<div class="welcome-banner">
+    <h1>Móveis Simonetti</h1>
+    <p>Transformando logística em vantagem competitiva.</p>
+</div>
+
+<div class="container" id="mainContainer">
+    <div class="card-main" id="cardExpedicao" onclick="openModal('modalExpedicao')">
         <i>🚚</i><span>Expedição</span>
     </div>
 
-    <div class="card-main" onclick="openModal('modalConferencia')">
+    <div class="card-main" id="cardConferencia" onclick="openModal('modalConferencia')">
         <i>✅</i><span>Conferência</span>
     </div>
 
-    <div class="card-main" onclick="openModal('modalCadastros')">
+    <div class="card-main" id="cardCadastros" onclick="openModal('modalCadastros')">
         <i>📝</i><span>Cadastros</span>
     </div>
 
-    <a href="gestao-usuarios.html" class="card-main" style="text-decoration:none" id="cardAdmin" data-level="admin">
+    <a href="gestao-usuarios.html" class="card-main" style="text-decoration:none" id="cardAdmin">
         <i>⚙️</i><span>Níveis de Acesso</span>
     </a>
 </div>
 
 <div id="modalExpedicao" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Setor de Expedição</div>
-        <div class="modal-grid">
-            <a href="cadastro-expedicao.html" class="btn-link"><i>➕</i>Nova Expedição</a>
-            <a href="relatorio.html" class="btn-link"><i>📅</i>Expedição do Dia</a>
-            <a href="atribuir-carregamento.html" class="btn-link"><i>🚛</i>Carregamento</a>
-            <a href="relatorio-produtividade.html" class="btn-link"><i>📊</i>Relatórios</a>
+        <div class="modal-header">Operações de Expedição</div>
+        <div class="modal-grid" id="gridExpedicao">
+            <a href="cadastro-expedicao.html" class="btn-link" data-min="colaborador"><i>➕</i>Nova Expedição</a>
+            <a href="relatorio.html" class="btn-link" data-min="leitor"><i>📅</i>Expedição do Dia</a>
+            <a href="atribuir-carregamento.html" class="btn-link" data-min="colaborador"><i>🚛</i>Carregamento</a>
+            <a href="relatorio-produtividade.html" class="btn-link" data-min="colaborador"><i>📊</i>Relatórios</a>
         </div>
     </div>
 </div>
@@ -216,7 +242,7 @@
 
 <div id="modalCadastros" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Gerenciamento e Cadastros</div>
+        <div class="modal-header">Gerenciamento Geral</div>
         <div class="modal-grid">
             <a href="veiculos.html" class="btn-link"><i>🚚</i>Veículos</a>
             <a href="produtos.html" class="btn-link"><i>📦</i>Produtos</a>
@@ -231,17 +257,8 @@
 <footer>Móveis Simonetti - Logística - Developed by DB</footer>
 
 <script type="module">
-    // Funções do Modal
-    window.openModal = function(id) {
-        document.getElementById(id).style.display = 'flex';
-    }
-
-    window.closeModal = function(event) {
-        // Fecha apenas se clicar no fundo (overlay)
-        if (event.target.classList.contains('modal-overlay')) {
-            event.target.style.display = 'none';
-        }
-    }
+    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+    window.closeModal = (e) => { if(e.target.classList.contains('modal-overlay')) e.target.style.display = 'none'; };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -258,25 +275,52 @@
     const db = getFirestore(app);
 
     onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
-                const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    document.getElementById('userName').innerText = (userData.nome || "Usuário").split(' ')[0].toUpperCase();
-                    
-                    const nivel = userData.nivel || 'leitor';
-                    // Esconde o card de Níveis de Acesso se não for admin
-                    if(nivel !== 'admin') {
-                        document.getElementById('cardAdmin').style.display = 'none';
-                    }
+        if (!user) {
+            window.location.href = "index.html";
+            return;
+        }
+
+        try {
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (!userDoc.exists()) {
+                // Se o usuário está logado no Firebase mas não existe no seu Firestore, expulsa
+                signOut(auth).then(() => window.location.href = "index.html");
+                return;
+            }
+
+            const userData = userDoc.data();
+            const nivel = userData.nivel || 'leitor';
+            document.getElementById('userName').innerText = (userData.nome || "Usuário").split(' ')[0].toUpperCase();
+
+            // LOGICA DE PERMISSÕES DE CARDS PRINCIPAIS
+            if(nivel === 'admin') {
+                document.querySelectorAll('.card-main').forEach(c => c.style.display = 'flex');
+            } else if(nivel === 'leitor' || nivel === 'colaborador') {
+                document.getElementById('cardExpedicao').style.display = 'flex';
+            } else if(nivel === 'usuario') {
+                document.getElementById('cardConferencia').style.display = 'flex';
+            }
+
+            // LÓGICA DE FILTRO DENTRO DO MODAL EXPEDIÇÃO
+            const linksExp = document.querySelectorAll('#gridExpedicao .btn-link');
+            linksExp.forEach(link => {
+                const min = link.getAttribute('data-min');
+                if(nivel === 'admin') return; // Admin vê tudo
+                
+                if(nivel === 'leitor' && min !== 'leitor') {
+                    link.style.display = 'none';
                 }
-            } catch (error) { console.error(error); }
-        } else { window.location.href = "index.html"; }
+                // Colaborador vê o dele e o de leitor, então não precisa de restrição extra aqui
+            });
+
+        } catch (error) { 
+            console.error("Erro segurança:", error); 
+            window.location.href = "index.html";
+        }
     });
 
     document.getElementById('btnSair').onclick = () => {
-        if(confirm("Deseja sair?")) signOut(auth).then(() => window.location.href = "index.html");
+        if(confirm("Deseja sair do sistema?")) signOut(auth).then(() => window.location.href = "index.html");
     };
 </script>
 </body>
