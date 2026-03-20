@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expedição Simonetti - Dashboard Douglas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root { 
+            --primary: #b71c1c; --secondary: #d32f2f; --bg: #fdf2f2;
+            --carreta: #1b5e20; --truck: #03a9f4; --v34: #7b1fa2; --toco: #fbc02d;
+            --finalizado: #1b5e20; --separacao: #e65100; --criado: #0d47a1; 
+            --carregamento: #95e9ae; --viagem: #d123a3; --conf-finalizada: #4a148c;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: #333; }
+        header { background: var(--secondary); color: white; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 50px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-header { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-weight: bold; font-size: 12px; }
+
+        .container { padding: 15px; max-width: 1400px; margin: auto; }
+        .banner-title { background: var(--primary); color: white; text-align: center; padding: 10px; border-radius: 4px; font-weight: bold; margin-bottom: 15px; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .chart-card h3 { font-size: 14px; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        canvas { max-height: 220px !important; }
+
+        .kpi-container { text-align: center; margin-bottom: 20px; }
+        .kpi-badge { border: 2px solid var(--secondary); color: var(--secondary); padding: 8px 25px; border-radius: 30px; font-size: 18px; font-weight: bold; background: white; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .toolbar { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
+        .search-box { padding: 10px 15px; border: 2px solid #ddd; border-radius: 8px; flex-grow: 1; max-width: 400px; outline: none; }
+
+        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { background: var(--primary); color: white; padding: 12px 5px; font-size: 11px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; color: #444; font-weight: 500; }
+
+        .badge { padding: 6px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 10px; display: inline-block; min-width: 100px; text-transform: uppercase; }
+        
+        .st-FINALIZADO { background: var(--finalizado); }
+        .st-EM_SEPARAÇÃO { background: var(--separacao); }
+        .st-CRIADO { background: var(--criado); }
+        .st-EM_CARREGAMENTO { background: var(--carregamento); color: #000; }
+        .st-CARREGADO_EM_VIAGEM { background: var(--viagem); }
+        .st-CONFERÊNCIA_FINALIZADA { background: var(--conf-finalizada); }
+
+        .v-CARRETA { background: var(--carreta); }
+        .v-TRUCK { background: var(--truck); }
+        .v-34 { background: var(--v34); }
+        .v-TOCO { background: var(--toco); color: #000; }
+
+        .btn-th-filter { background: rgba(255,255,255,0.9); color: var(--primary); border: none; padding: 2px 5px; border-radius: 3px; font-size: 8px; cursor: pointer; margin-top: 5px; display: block; width: 80%; margin-inline: auto; font-weight: bold; }
+        .btn-th-filter.active { background: #ffeb3b; color: #000; }
+
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; width: 90%; max-width: 350px; margin: 50px auto; border-radius: 8px; overflow: hidden; }
+        .modal-header { padding: 15px; background: var(--primary); color: white; font-weight: bold; text-align: center; }
+        .modal-body { padding: 10px; overflow-y: auto; max-height: 400px; }
+        .filter-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer; }
+        .modal-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f1f1; }
+        .btn-m { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-m-apply { background: #2e7d32; color: white; }
+        .btn-m-can { background: #d32f2f; color: white; }
+
+        /* Estilo dos novos botões de Marcar/Desmarcar */
+        .selection-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 10px; border-bottom: 2px solid #ddd; background: #fafafa; }
+        .btn-sel { padding: 5px; font-size: 10px; font-weight: bold; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 3px; }
+        .btn-sel:hover { background: #eee; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="menu.html" class="btn-header">⬅️ VOLTAR</a>
+        <span>Bem-vindo, <strong id="userName">Carregando...</strong></span>
+    </div>
+    <button class="btn-header" id="btnSair" style="background:white; color:var(--primary); border:none;">SAIR</button>
+</header>
+
+<div class="container">
+    <div class="banner-title">EXPEDIÇÃO_MÓVEIS SIMONETTI</div>
+
+    <div class="charts-row">
+        <div class="chart-card"><h3>STATUS DAS EXPEDIÇÕES</h3><canvas id="chartStatus"></canvas></div>
+        <div class="chart-card"><h3>VEÍCULOS</h3><canvas id="chartVeiculos"></canvas></div>
+    </div>
+
+    <div class="kpi-container"><div class="kpi-badge" id="txtKpi">CARROS: 0 | EXPEDIÇÕES: 0</div></div>
+
+    <div class="toolbar">
+        <input type="text" id="inputBusca" class="search-box" placeholder="🔍 Busca rápida..." onkeyup="buscaGlobal()">
+        <div class="btn-group">
+            <button class="btn-header" style="background:#1b5e20" onclick="exportarExcel()">📊 EXCEL</button>
+            <button class="btn-header" style="background:#b71c1c" onclick="exportarPDF()">📄 PDF</button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="tabelaMaster">
+            <thead>
+                <tr>
+                    <th onclick="ordenar(0)">DATA ⇅ <button class="btn-th-filter" id="f-data" onclick="event.stopPropagation(); abrirFiltro('data')">FILTRAR</button></th>
+                    <th onclick="ordenar(1)">EXPEDIÇÃO ⇅ <button class="btn-th-filter" id="f-codigo" onclick="event.stopPropagation(); abrirFiltro('codigo')">FILTRAR</button></th>
+                    <th onclick="ordenar(2)">PLACA ⇅ <button class="btn-th-filter" id="f-placa" onclick="event.stopPropagation(); abrirFiltro('placa')">FILTRAR</button></th>
+                    <th onclick="ordenar(3)">DESTINO ⇅ <button class="btn-th-filter" id="f-destino" onclick="event.stopPropagation(); abrirFiltro('destino')">FILTRAR</button></th>
+                    <th onclick="ordenar(4)">BOX ⇅ <button class="btn-th-filter" id="f-box" onclick="event.stopPropagation(); abrirFiltro('box')">FILTRAR</button></th>
+                    <th onclick="ordenar(5)">STATUS ⇅ <button class="btn-th-filter" id="f-status" onclick="event.stopPropagation(); abrirFiltro('status')">FILTRAR</button></th>
+                    <th onclick="ordenar(6)">CONFERENTE ⇅ <button class="btn-th-filter" id="f-conferente" onclick="event.stopPropagation(); abrirFiltro('conferente')">FILTRAR</button></th>
+                    <th onclick="ordenar(7)">VEÍCULO ⇅ <button class="btn-th-filter" id="f-tipo" onclick="event.stopPropagation(); abrirFiltro('tipo')">FILTRAR</button></th>
+                    <th onclick="ordenar(8)">PESO (KG) ⇅</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modalF" class="modal">
+    <div class="modal-content">
+        <div class="modal-header" id="mTit">FILTRAR</div>
+        <div class="selection-tools">
+            <button class="btn-sel" onclick="marcarTodos(true)">MARCAR TODOS</button>
+            <button class="btn-sel" onclick="marcarTodos(false)">DESMARCAR TODOS</button>
+        </div>
+        <div class="modal-body" id="mBody"></div>
+        <div class="modal-footer">
+            <button class="btn-m btn-m-can" onclick="fecharF()">SAIR</button>
+            <button class="btn-m btn-m-apply" onclick="aplicarF()">APLICAR</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let dadosFull = [], filtrosAtivos = {}, colAtual = '', cS, cV;
+    
+    const CORES = { 
+        'CARRETA': '#1b5e20', 'TRUCK': '#03a9f4', 'CARRO 3/4': '#7b1fa2', 'TOCO': '#fbc02d',
+        'FINALIZADO': '#1b5e20', 'EM SEPARAÇÃO': '#e65100', 'CRIADO': '#0d47a1',
+        'EM CARREGAMENTO': '#95e9ae', 'CARREGADO/EM VIAGEM': '#d123a3', 'CONFERÊNCIA FINALIZADA': '#4a148c'
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                // 2. BUSCA O DOCUMENTO NA COLEÇÃO 'usuarios' USANDO O UID DO LOGIN
+                const userRef = doc(db, "usuarios", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    // 3. DEFINE O NOME (O campo no seu banco é 'nome')
+                    document.getElementById('userName').innerText = userSnap.data().nome;
+                } else {
+                    console.log("Usuário não encontrado no banco.");
+                    document.getElementById('userName').innerText = user.email; // Fallback para o email
+                }
+            } catch (error) {
+                console.error("Erro ao buscar nome:", error);
+            }
+
+            // Chama a função carregar para preencher a tabela
+            carregar(); 
+        } else { 
+            window.location.href = "index.html"; 
+        }
+    });
+
+    async function carregar() {
+        const snap = await getDocs(collection(db, "expedicoes"));
+        dadosFull = snap.docs.map(d => d.data());
+        
+        const hoje = new Date().toISOString().split('T')[0];
+        filtrosAtivos['data'] = [hoje];
+        document.getElementById('f-data').classList.add('active');
+        
+        processar();
+    }
+
+    function processar() {
+        let filtrados = [...dadosFull];
+        Object.keys(filtrosAtivos).forEach(c => {
+            if(filtrosAtivos[c].length > 0) {
+                filtrados = filtrados.filter(d => filtrosAtivos[c].includes(String(d[c])));
+            }
+        });
+        exibir(filtrados);
+    }
+
+    function exibir(lista) {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+        lista.forEach(d => {
+            const stClass = d.status.toUpperCase().replace(/ /g, "_").replace(/\//g, "_");
+            const vMod = d.tipo.toUpperCase().includes('3/4') ? '34' : d.tipo.toUpperCase();
+            
+            corpo.innerHTML += `<tr>
+                <td>${d.data.split('-').reverse().join('/')}</td>
+                <td><strong>${d.codigo}</strong></td>
+                <td>${d.placa}</td>
+                <td>${d.destino}</td>
+                <td>${d.box}</td>
+                <td><span class="badge st-${stClass}">${d.status}</span></td>
+                <td>${d.conferente}</td>
+                <td><span class="badge v-${vMod}">${d.tipo}</span></td>
+                <td>${d.peso}</td>
+            </tr>`;
+        });
+        
+        const cargasUnicas = new Set(lista.map(i => i.placa + "_" + i.data)).size;
+        document.getElementById('txtKpi').innerText = `CARROS: ${cargasUnicas} | EXPEDIÇÕES: ${lista.length}`;
+        graficos(lista);
+    }
+
+    function graficos(lista) {
+        const sM = {}, vM = {};
+        const veiculosUnicos = new Set();
+        lista.forEach(d => { 
+            sM[d.status] = (sM[d.status] || 0) + 1; 
+            const idVeiculo = d.placa.toUpperCase() + "_" + d.data;
+            if(!veiculosUnicos.has(idVeiculo)) {
+                veiculosUnicos.add(idVeiculo);
+                const tipo = d.tipo.toUpperCase();
+                vM[tipo] = (vM[tipo] || 0) + 1;
+            }
+        });
+        if(cS) cS.destroy(); if(cV) cV.destroy();
+        const cfg = {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { boxWidth: 12, font:{size:10} }},
+                datalabels: { color: '#fff', font: { weight: 'bold', size: 11 }, formatter: v => v }
+            }
+        };
+        cS = new Chart(document.getElementById('chartStatus'), {
+            type: 'pie', plugins: [ChartDataLabels],
+            data: { labels: Object.keys(sM), datasets: [{ data: Object.values(sM), backgroundColor: Object.keys(sM).map(k => CORES[k] || '#999') }]},
+            options: cfg
+        });
+        cV = new Chart(document.getElementById('chartVeiculos'), {
+            type: 'doughnut', plugins: [ChartDataLabels],
+            data: { labels: Object.keys(vM), datasets: [{ data: Object.values(vM), backgroundColor: Object.keys(vM).map(k => {
+                if(k.includes('CARRETA')) return CORES['CARRETA'];
+                if(k.includes('TRUCK')) return CORES['TRUCK'];
+                if(k.includes('3/4')) return CORES['CARRO 3/4'];
+                return CORES['TOCO'];
+            }) }]},
+            options: cfg
+        });
+    }
+
+    window.marcarTodos = (status) => {
+        const inputs = document.querySelectorAll('#mBody input[type="checkbox"]');
+        inputs.forEach(i => i.checked = status);
+    };
+
+    window.abrirFiltro = (col) => {
+        colAtual = col;
+        const b = document.getElementById('mBody'); b.innerHTML = "";
+        let unicos = [...new Set(dadosFull.map(d => String(d[col])))].sort();
+        unicos.forEach(v => {
+            const ck = (filtrosAtivos[col] || []).includes(v) ? 'checked' : '';
+            b.innerHTML += `<label class="filter-item"><input type="checkbox" value="${v}" ${ck}> ${col==='data'?v.split('-').reverse().join('/'):v}</label>`;
+        });
+        document.getElementById('modalF').style.display = 'block';
+    };
+
+    window.aplicarF = () => {
+        filtrosAtivos[colAtual] = Array.from(document.querySelectorAll('#mBody input:checked')).map(i => i.value);
+        document.getElementById(`f-${colAtual}`).classList.toggle('active', filtrosAtivos[colAtual].length > 0);
+        fecharF(); processar();
+    };
+
+    window.fecharF = () => document.getElementById('modalF').style.display = 'none';
+    window.buscaGlobal = () => {
+        const input = document.getElementById("inputBusca").value.toUpperCase();
+        const tr = document.getElementById("corpoTabela").getElementsByTagName("tr");
+        for (let i = 0; i < tr.length; i++) tr[i].style.display = tr[i].innerText.toUpperCase().indexOf(input) > -1 ? "" : "none";
+    };
+    window.ordenar = (n) => {
+        const table = document.getElementById("tabelaMaster");
+        let rows, switching = true, i, x, y, should, dir = "asc", count = 0;
+        while (switching) {
+            switching = false; rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                should = false;
+                x = rows[i].getElementsByTagName("TD")[n]; y = rows[i+1].getElementsByTagName("TD")[n];
+                if (dir == "asc" ? x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase() : x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) { should = true; break; }
+            }
+            if (should) { rows[i].parentNode.insertBefore(rows[i+1], rows[i]); switching = true; count++; }
+            else if (count == 0 && dir == "asc") { dir = "desc"; switching = true; }
+        }
+    };
+
+    window.exportarExcel = () => {
+        const originalTable = document.getElementById('tabelaMaster');
+        const clone = originalTable.cloneNode(true);
+        clone.querySelectorAll('th').forEach(th => {
+            const text = th.childNodes[0].textContent.replace('⇅', '').trim();
+            th.innerHTML = text;
+        });
+        const wb = XLSX.utils.table_to_book(clone, { sheet: "Expedição Simonetti" });
+        XLSX.writeFile(wb, `Expedicao_Simonetti_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+    };
+
+    window.exportarPDF = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        const dataEmissao = new Date().toLocaleString('pt-BR');
+        doc.setFillColor(183, 28, 28);
+        doc.rect(0, 0, 297, 35, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
+        doc.text("RELATÓRIO DE EXPEDIÇÃO", 15, 18);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        const kpiText = document.getElementById('txtKpi').innerText;
+        doc.text(`EMISSÃO: ${dataEmissao}  |  RESUMO: ${kpiText}`, 15, 28);
+        doc.autoTable({
+            html: '#tabelaMaster',
+            startY: 40,
+            theme: 'grid',
+            headStyles: { fillColor: [183, 28, 28], textColor: 255, fontSize: 8, halign: 'center' },
+            bodyStyles: { fontSize: 8, halign: 'center', fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [250, 240, 240] },
+            didParseCell: (data) => {
+                if (data.section === 'head') {
+                    data.cell.text = data.cell.text[0].split('⇅')[0].trim();
+                }
+            }
+        });
+        doc.save(`Relatorio_Expedicao_Simonetti_${new Date().getTime()}.pdf`);
+    };
+
+    document.getElementById('btnSair').onclick = () => signOut(auth);
+</script>
+</body>
+</html>

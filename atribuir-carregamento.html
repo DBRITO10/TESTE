@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atribuir Carregamento - Simonetti</title>
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --text: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
+        
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
+
+        label { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 14px; }
+        select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* Selector de Equipa com Checkbox */
+        .equipe-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .pessoa-item { display: flex; align-items: center; padding: 10px; background: #f9f9f9; border-radius: 4px; cursor: pointer; border: 1px solid #ddd; }
+        .pessoa-item input { margin-right: 10px; transform: scale(1.2); }
+        .pessoa-item span { font-size: 13px; }
+
+        .btn-vincular { width: 100%; background: #1565c0; color: white; border: none; padding: 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+
+        /* Tabela Responsiva */
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; color: #666; border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+
+        .btn-ready { background: #2e7d32; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-edit { background: #ffeb3b; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Bem-vindo, <strong id="userName">...</strong></span>
+    </div>
+    <button class="btn-sair" id="btnSair">SAIR</button>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2>1. SELECIONAR CARGA PARA CARREGAMENTO</h2>
+        <label>EXPEDIÇÕES PRONTAS (CONFERIDAS)</label>
+        <select id="selectExpedicao">
+            <option value="">Aguardando...</option>
+        </select>
+
+        <label>2. QUEM SÃO OS CARREGADORES?</label>
+        <div class="equipe-selector" id="listaEquipeCheck">
+            </div>
+
+        <button class="btn-vincular" id="btnSalvarVinculo">REGISTAR CARREGAMENTO</button>
+    </div>
+
+    <div class="card">
+        <h2>CARROS EM PROCESSO DE CARREGAMENTO</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PLACA</th>
+                        <th>TIPO</th>
+                        <th>EXPEDIÇÕES</th>
+                        <th>EQUIPE</th>
+                        <th>STATUS</th>
+                        <th>AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaCarregamento">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, updateDoc, onSnapshot, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    async function registrarLog(acao, detalhe) {
+        await addDoc(collection(db, "historico"), {
+            usuario: auth.currentUser.email,
+            acao: acao,
+            detalhe: detalhe,
+            data: serverTimestamp()
+        });
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
+            carregarDados();
+        } else { window.location.href = "index.html"; }
+    });
+
+    function carregarDados() {
+        // 1. Carregar Expedições com status "CONFERÊNCIA FINALIZADA"
+        const qExp = query(collection(db, "expedicoes"), where("status", "==", "CONFERÊNCIA FINALIZADA"));
+        onSnapshot(qExp, (snap) => {
+            const select = document.getElementById('selectExpedicao');
+            select.innerHTML = '<option value="">Selecione a carga...</option>';
+            snap.forEach(d => {
+                select.innerHTML += `<option value="${d.id}">${d.data().codigo} - Placa: ${d.data().placa}</option>`;
+            });
+        });
+
+        // 2. Carregar Equipa
+        onSnapshot(collection(db, "equipe"), (snap) => {
+            const div = document.getElementById('listaEquipeCheck');
+            div.innerHTML = "";
+            snap.forEach(d => {
+                div.innerHTML += `
+                    <label class="pessoa-item">
+                        <input type="checkbox" name="membros" value="${d.data().nome}">
+                        <span>${d.data().nome}</span>
+                    </label>
+                `;
+            });
+        });
+
+        // 3. Tabela de Monitorização (Status: EM CARREGAMENTO)
+        const qTabela = query(collection(db, "expedicoes"), where("status", "==", "EM CARREGAMENTO"));
+        onSnapshot(qTabela, (snap) => {
+            const corpo = document.getElementById('corpoTabelaCarregamento');
+            corpo.innerHTML = "";
+            snap.forEach(d => {
+                const data = d.data();
+                corpo.innerHTML += `
+                    <tr>
+                        <td><strong>${data.placa}</strong></td>
+                        <td>${data.tipo}</td>
+                        <td>${data.codigo}</td>
+                        <td style="color: #1565c0;">${data.equipe_carregamento?.join(', ') || '-'}</td>
+                        <td><span style="color:orange; font-weight:bold;">${data.status}</span></td>
+                        <td>
+                            <button class="btn-ready" onclick="finalizarCarregamento('${d.id}', '${data.placa}')">SAÍDA / VIAGEM</button>
+                            <button class="btn-edit" onclick="editarEquipe('${d.id}')">✏️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        });
+    }
+
+    // Botão Registar Carregamento
+    document.getElementById('btnSalvarVinculo').addEventListener('click', async () => {
+        const idExp = document.getElementById('selectExpedicao').value;
+        const selecionados = Array.from(document.querySelectorAll('input[name="membros"]:checked')).map(i => i.value);
+
+        if (!idExp || selecionados.length === 0) {
+            alert("Selecione a carga e a equipa!");
+            return;
+        }
+
+        try {
+            await updateDoc(doc(db, "expedicoes", idExp), {
+                equipe_carregamento: selecionados,
+                status: "EM CARREGAMENTO",
+                inicioCarregamento: serverTimestamp()
+            });
+            await registrarLog("VÍNCULO EQUIPA", `Equipa ${selecionados.join(', ')} vinculada à carga ${idExp}`);
+            alert("Carregamento iniciado!");
+        } catch (e) { alert("Erro ao vincular."); }
+    });
+
+    window.finalizarCarregamento = async (id, placa) => {
+        if(confirm("Confirmar que o veículo já foi carregado e está em viagem?")) {
+            await updateDoc(doc(db, "expedicoes", id), { 
+                status: "CARREGADO/EM VIAGEM",
+                fimCarregamento: serverTimestamp() 
+            });
+            await registrarLog("FIM CARREGAMENTO", `Veículo ${placa} saiu para viagem.`);
+        }
+    };
+
+    window.editarEquipe = async (id) => {
+        // Lógica simples para resetar o status e permitir vincular novamente
+        if(confirm("Deseja editar a equipa deste veículo?")) {
+            await updateDoc(doc(db, "expedicoes", id), { status: "CONFERÊNCIA FINALIZADA" });
+        }
+    };
+
+    document.getElementById('btnSair').onclick = () => signOut(auth);
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Qualidade - Simonetti</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --danger: #c62828; --success: #2e7d32; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; }
+        
+        header { 
+            background: var(--primary); color: white; padding: 0 15px; 
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 1000;
+            height: 60px; /* Altura fixa para alinhar melhor os itens */
+        }
+
+        .header-left { display: flex; align-items: center; gap: 10px; }
+
+        .btn-header {
+            background: rgba(255, 255, 255, 0.15); border: 1px solid white; color: white;
+            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+            text-decoration: none; font-size: 13px; display: inline-flex; align-items: center;
+        }
+        .btn-header:hover { background: white; color: var(--primary); }
+
+        .user-badge { font-weight: bold; font-size: 14px; white-space: nowrap; }
+
+        /* Esconde o título no celular para não amontoar os botões */
+        @media (max-width: 600px) {
+            .header-center { display: none; }
+            .user-badge { font-size: 12px; }
+        }
+
+        .container { padding: 15px; max-width: 1300px; margin: auto; }
+        .card { background: var(--white); padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .periodo-box { 
+            display: flex; gap: 10px; align-items: center; margin-bottom: 20px; 
+            padding: 15px; background: #f8f9fa; border-radius: 6px; border: 1px solid #ddd;
+            flex-wrap: wrap; /* Garante ajuste no celular */
+        }
+        .periodo-box input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; min-width: 900px; }
+        th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 11px; color: #333; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+
+        .filter-input {
+            width: 100%; padding: 5px; margin-top: 5px; border: 1px solid #ccc;
+            border-radius: 4px; font-size: 11px; box-sizing: border-box;
+        }
+
+        .status-badge {
+            display: inline-block; padding: 4px 8px; border-radius: 12px;
+            font-size: 10px; font-weight: bold; text-transform: uppercase;
+        }
+        .bg-ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
+        .bg-avaria { background: #ffebee; color: #c62828; border: 1px solid #c62828; }
+        
+        .detalhe-avaria { font-size: 10px; color: #b71c1c; display: block; margin-top: 2px; }
+        .btn-excel { background: #1b5e20; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
+        <span class="user-badge" id="userName">Carregando...</span>
+    </div>
+    
+    <div class="header-center">
+        <h1 style="font-size: 16px; margin: 0; text-transform: uppercase;">Relatório de Qualidade</h1>
+    </div>
+
+    <div class="header-right">
+        <button class="btn-header" id="btnLogout">SAIR</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        
+        <div class="periodo-box">
+            <div>
+                <label style="font-size: 12px; font-weight: bold; display: block;">Data Inicial:</label>
+                <input type="date" id="dataInicio">
+            </div>
+            <div>
+                <label style="font-size: 12px; font-weight: bold; display: block;">Data Final:</label>
+                <input type="date" id="dataFim">
+            </div>
+            <button class="btn-header" style="background: var(--primary); border: none; height: 35px; margin-top: 15px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR</button>
+            <div style="flex-grow: 1; text-align: right; margin-top: 15px;">
+                <button class="btn-excel" id="btnExportExcel">📊 EXCEL</button>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="tabelaQualidade">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">DATA <input type="text" class="filter-input" data-col="data" placeholder="Filtrar..."></th>
+                        <th style="width: 100px;">EXPEDIÇÃO <input type="text" class="filter-input" data-col="codigo" placeholder="Filtrar..."></th>
+                        <th>DESTINO <input type="text" class="filter-input" data-col="destino" placeholder="Filtrar..."></th>
+                        <th>PLACA <input type="text" class="filter-input" data-col="placa" placeholder="Filtrar..."></th>
+                        <th>EQUIPE <input type="text" class="filter-input" data-col="equipe" placeholder="Filtrar..."></th>
+                        <th>PRODUTOS / MOTIVOS <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Filtrar..."></th>
+                        <th style="width: 120px;">SITUAÇÃO <input type="text" class="filter-input" data-col="situacaoStr" placeholder="OK ou AVARIA"></th>    
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                    <tr><td colspan="7" style="text-align:center;">Aguardando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let todosOsDados = [];
+
+    onAuthStateChanged(auth, async user => {
+        if(user) { 
+            // BUSCA NOME DO USUÁRIO NO BANCO
+            try {
+                const userRef = doc(db, "usuarios", user.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    document.getElementById('userName').innerText = "👤 " + userSnap.data().nome;
+                } else {
+                    document.getElementById('userName').innerText = "👤 " + user.email.split('@')[0].toUpperCase();
+                }
+            } catch (e) {
+                document.getElementById('userName').innerText = "👤 Usuário";
+            }
+
+            setarDatasPadrao();
+            carregarDadosAutomatico(); 
+        } 
+        else { window.location.href = "index.html"; }
+    });
+
+    document.getElementById('btnLogout').onclick = () => signOut(auth);
+
+    function setarDatasPadrao() {
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('dataInicio').value = hoje;
+        document.getElementById('dataFim').value = hoje;
+    }
+
+    async function carregarDadosAutomatico() {
+        const hoje = new Date().toISOString().split('T')[0];
+        const q = query(
+            collection(db, "expedicoes"), 
+            where("status", "==", "FINALIZADO"),
+            where("data", "==", hoje)
+        );
+        await carregarDados(q);
+    }
+
+    window.filtrarPorPeriodo = async () => {
+        const dIni = document.getElementById('dataInicio').value;
+        const dFim = document.getElementById('dataFim').value;
+
+        const q = query(
+            collection(db, "expedicoes"), 
+            where("status", "==", "FINALIZADO"),
+            where("data", ">=", dIni),
+            where("data", "<=", dFim),
+            orderBy("data", "desc")
+        );
+        await carregarDados(q);
+    };
+
+    async function carregarDados(customQuery) {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando dados...</td></tr>';
+
+        try {
+            const [equipeSnap, avariasSnap, expSnap] = await Promise.all([
+                getDocs(collection(db, "equipe")),
+                getDocs(collection(db, "avarias")),
+                getDocs(customQuery)
+            ]);
+
+            let vinculos = {};
+            equipeSnap.forEach(d => vinculos[d.data().nome] = d.data().vinculo || "TERCEIRO");
+
+            let mapaAvarias = {};
+            avariasSnap.forEach(docA => {
+                const av = docA.data();
+                if (av.expedicaoId) {
+                    if (!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
+                    mapaAvarias[av.expedicaoId].push(av);
+                }
+            });
+
+            todosOsDados = [];
+
+            if (expSnap.empty) {
+                corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum dado encontrado.</td></tr>';
+                return;
+            }
+
+            expSnap.forEach(docExp => {
+                const exp = docExp.data();
+                const avariasDaExp = mapaAvarias[docExp.id] || null;
+                const infoEquipe = (exp.equipe_carregamento || []).map(nome => `${nome} (${vinculos[nome] || 'TERCEIRO'})`);
+                
+                let detalhesBusca = avariasDaExp ? avariasDaExp.map(a => `${a.codigoProduto} ${a.nomeProduto} ${a.motivo}`).join(" ") : "";
+
+                todosOsDados.push({
+                    data: exp.data ? exp.data.split('-').reverse().join('/') : '-',
+                    codigo: exp.codigo || exp.expedicao || 'N/A',
+                    destino: exp.destino || '-',
+                    placa: exp.placa || '-',
+                    equipe: infoEquipe.join(', '),
+                    avarias: avariasDaExp,
+                    detalhesAvaria: detalhesBusca,
+                    situacaoStr: avariasDaExp ? "AVARIA" : "OK"
+                });
+            });
+
+            renderizarTabela(todosOsDados);
+
+        } catch (error) {
+            console.error(error);
+            corpo.innerHTML = `<tr><td colspan="7" style="color:red;">Erro: ${error.message}</td></tr>`;
+        }
+    }
+
+    function renderizarTabela(lista) {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+
+        lista.forEach(item => {
+            let statusHtml = item.avarias ? `<span class="status-badge bg-avaria">⚠️ AVARIA</span>` : `<span class="status-badge bg-ok">✅ OK</span>`;
+            let avariaDetalhadaHtml = "";
+
+            if (item.avarias) {
+                item.avarias.forEach(a => {
+                    avariaDetalhadaHtml += `
+                        <div style="border-bottom: 1px dashed #ddd; margin-bottom: 5px; padding-bottom: 2px;">
+                            <span class="detalhe-avaria" style="color:#000; font-size:11px;">
+                                <strong>Cod: ${a.codigoProduto}</strong> - ${a.nomeProduto}
+                            </span>
+                            <span class="detalhe-avaria">
+                                <b>Motivo:</b> ${a.motivo} | <b>Detalhe:</b> ${a.descricao} | <b>Qtd:</b> ${a.quantidade}
+                            </span>
+                        </div>`;
+                });
+            } else {
+                avariaDetalhadaHtml = `<span style="color:#999; font-size:11px;">Sem ocorrências</span>`;
+            }
+
+            corpo.innerHTML += `
+                <tr>
+                    <td>${item.data}</td>
+                    <td><strong>${item.codigo}</strong></td>
+                    <td>${item.destino}</td>
+                    <td>${item.placa}</td>
+                    <td><small>${item.equipe}</small></td>
+                    <td>${avariaDetalhadaHtml}</td>
+                    <td>${statusHtml}</td>
+                </tr>`;
+        });
+    }
+
+    document.querySelectorAll('.filter-input').forEach(input => {
+        input.addEventListener('keyup', () => {
+            const filtros = {};
+            document.querySelectorAll('.filter-input').forEach(i => {
+                if (i.value) filtros[i.dataset.col] = i.value.toLowerCase();
+            });
+            const dadosFiltrados = todosOsDados.filter(item => {
+                return Object.keys(filtros).every(coluna => String(item[coluna]).toLowerCase().includes(filtros[coluna]));
+            });
+            renderizarTabela(dadosFiltrados);
+        });
+    });
+
+    document.getElementById('btnExportExcel').onclick = () => {
+        const table = document.getElementById("tabelaQualidade");
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `Relatorio_Qualidade_Simonetti.xlsx`);
+    };
+</script>
+</body>
+</html>

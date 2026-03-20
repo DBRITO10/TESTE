@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Conferentes - Simonetti</title>
+    <style>
+        :root { 
+            --primary: #d32f2f; 
+            --bg-body: #fdf2f2; 
+            --white: #fff; 
+            --text: #333;
+            --success: #2e7d32;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
+        
+        /* Cabeçalho Padronizado */
+        header { 
+            background: var(--primary); color: white; padding: 10px 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px; }
+        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
+        
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        
+        .btn-save { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-cancelar { width: 100%; background: #757575; color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; }
+
+        /* Tabela Responsiva */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; color: #666; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .btn-acao { border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+
+        @media (max-width: 600px) {
+            .container { padding: 10px; }
+            header { padding: 10px; }
+            span { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Olá, <strong id="userName">...</strong></span>
+    </div>
+    <button class="btn-sair" id="btnSair">SAIR</button>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2 id="tituloForm">CADASTRAR NOVO CONFERENTE</h2>
+        <form id="formConf">
+            <input type="hidden" id="editId">
+            
+            <label>NOME COMPLETO</label>
+            <input type="text" id="nomeConf" required placeholder="Ex: JOÃO DA SILVA" style="text-transform: uppercase;">
+            
+            <label>MATRÍCULA / ID</label>
+            <input type="text" id="idConf" placeholder="Identificação do conferente" required>
+            
+            <button type="submit" class="btn-save" id="btnSalvar">SALVAR CONFERENTE</button>
+            <button type="button" class="btn-cancelar" id="btnCancelar" onclick="cancelarEdicao()">CANCELAR EDIÇÃO</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>CONFERENTES ATIVOS</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NOME</th>
+                        <th>ID</th>
+                        <th style="text-align: right;">AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoConf">
+                    <tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let editandoId = null;
+
+    // Controle de Acesso e Nome do Usuário
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (userDoc.exists()) {
+                document.getElementById('userName').innerText = userDoc.data().nome.split(' ')[0].toUpperCase();
+            }
+        } else {
+            window.location.href = "index.html";
+        }
+    });
+
+    // Salvar ou Atualizar
+    const form = document.getElementById('formConf');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const btn = document.getElementById('btnSalvar');
+        const nome = document.getElementById('nomeConf').value.toUpperCase();
+        const matricula = document.getElementById('idConf').value;
+
+        btn.disabled = true;
+        btn.innerText = "SALVANDO...";
+
+        try {
+            const dados = { nome, matricula, atualizadoEm: serverTimestamp() };
+
+            if(id) {
+                await updateDoc(doc(db, "conferentes", id), dados);
+                alert("Conferente atualizado!");
+                cancelarEdicao();
+            } else {
+                await addDoc(collection(db, "conferentes"), { ...dados, criadoEm: serverTimestamp() });
+                alert("Conferente cadastrado!");
+            }
+            
+            form.reset();
+        } catch (e) {
+            alert("Erro ao processar.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "SALVAR CONFERENTE";
+        }
+    };
+
+    // Listar em Tempo Real
+    onSnapshot(query(collection(db, "conferentes"), orderBy("nome")), snap => {
+        const corpo = document.getElementById('corpoConf');
+        corpo.innerHTML = "";
+        if (snap.empty) {
+            corpo.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Nenhum conferente cadastrado.</td></tr>";
+            return;
+        }
+        snap.forEach(d => {
+            const c = d.data();
+            corpo.innerHTML += `
+                <tr>
+                    <td><strong>${c.nome}</strong></td>
+                    <td>${c.matricula}</td>
+                    <td style="text-align: right;">
+                        <button class="btn-acao" style="background:#fbc02d" onclick="editar('${d.id}', '${c.nome}', '${c.matricula}')">✏️</button>
+                        <button class="btn-acao" style="background:#ffcdd2; color: #c62828" onclick="excluir('${d.id}', '${c.nome}')">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+    });
+
+    // Funções de Edição
+    window.editar = (id, nome, matricula) => {
+        document.getElementById('editId').value = id;
+        document.getElementById('nomeConf').value = nome;
+        document.getElementById('idConf').value = matricula;
+        
+        const btn = document.getElementById('btnSalvar');
+        btn.innerText = "ATUALIZAR CONFERENTE";
+        btn.style.background = "var(--success)";
+        document.getElementById('btnCancelar').style.display = "block";
+        document.getElementById('tituloForm').innerText = "EDITANDO CONFERENTE";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.cancelarEdicao = () => {
+        document.getElementById('editId').value = "";
+        form.reset();
+        const btn = document.getElementById('btnSalvar');
+        btn.innerText = "SALVAR CONFERENTE";
+        btn.style.background = "var(--primary)";
+        document.getElementById('btnCancelar').style.display = "none";
+        document.getElementById('tituloForm').innerText = "CADASTRAR NOVO CONFERENTE";
+    };
+
+    window.excluir = async (id, nome) => {
+        if(confirm(`Deseja realmente excluir o conferente ${nome}?`)) {
+            await deleteDoc(doc(db, "conferentes", id));
+        }
+    };
+
+    document.getElementById('btnSair').onclick = () => signOut(auth);
+</script>
+</body>
+</html>

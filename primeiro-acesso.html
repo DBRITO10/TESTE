@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Perfil - Simonetti</title>
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-body); padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--primary); margin-top: 0; text-align: center; text-transform: uppercase; font-size: 20px; }
+        p { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #444; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: #fafafa; }
+        input:focus, select:focus { border-color: var(--primary); outline: none; background: #fff; }
+        .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 25px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .btn-salvar:hover { background: #b71c1c; transform: translateY(-1px); }
+        .btn-salvar:disabled { background: #ccc; cursor: not-allowed; }
+        #msgInfo { text-align: center; font-size: 11px; color: #888; margin-top: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Configuração de Acesso</h2>
+    <p>Defina seu perfil para liberar as permissões corretas.</p>
+    
+    <form id="formPerfil">
+        <label>Usuário</label>
+        <input type="text" id="nomeUser" placeholder="Ex: Douglas Brito" required>
+
+        <label>Nova Senha de Acesso</label>
+        <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" required minlength="6">
+
+        <label>Tipo de Função (Nível de Acesso)</label>
+        <select id="funcaoUser" required>
+            <option value="" disabled selected>Selecione seu perfil...</option>
+            <option value="usuario">Usuário Central (Conferência / Destino)</option>
+            <option value="leitor">Leitor (Apenas Relatórios)</option>
+        </select>
+
+        <label>Vínculo / Central</label>
+        <select id="centralUser" required>
+            <option value="" disabled selected>Carregando centrais...</option>
+        </select>
+
+        <button type="submit" id="btnFinalizar" class="btn-salvar">FINALIZAR E ENTRAR</button>
+        <span id="msgInfo">Aguardando definição de perfil...</span>
+    </form>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", 
+        authDomain: "logistica-exp.firebaseapp.com", 
+        projectId: "logistica-exp" 
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) { 
+            currentUser = user; 
+            await carregarDestinos();
+        } else { 
+            window.location.href = "index.html"; 
+        }
+    });
+
+    async function carregarDestinos() {
+        const select = document.getElementById('centralUser');
+        try {
+            const q = query(collection(db, "destinos"), orderBy("nome"));
+            const querySnapshot = await getDocs(q);
+            select.innerHTML = '<option value="" disabled selected>Selecione a Central</option>';
+            querySnapshot.forEach((doc) => {
+                const dados = doc.data();
+                if(dados.nome) {
+                    select.innerHTML += `<option value="${dados.nome}">${dados.nome}</option>`;
+                }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('formPerfil').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnFinalizar');
+        const novaSenha = document.getElementById('novaSenha').value;
+        const funcaoSelecionada = document.getElementById('funcaoUser').value;
+        
+        btn.innerText = "CONFIGURANDO...";
+        btn.disabled = true;
+
+        try {
+            // 1. Atualiza a senha
+            await updatePassword(currentUser, novaSenha);
+
+            // 2. Salva no Firestore com a lógica de níveis que você passou
+            await setDoc(doc(db, "usuarios", currentUser.uid), {
+                nome: document.getElementById('nomeUser').value.toUpperCase(),
+                funcao: funcaoSelecionada, // "admin", "colaborador", "usuario" ou "leitor"
+                nivel: funcaoSelecionada,  // Espelha a função no nível para facilitar o filtro
+                central: document.getElementById('centralUser').value,
+                email: currentUser.email,
+                dataConfiguracao: new Date().toISOString()
+            }, { merge: true });
+
+            alert("Perfil configurado! Redirecionando...");
+            
+            // Redirecionamento inteligente baseado no que você definiu:
+            if (funcaoSelecionada === "usuario") {
+                window.location.href = "menu.html";
+            } else if (funcaoSelecionada === "leitor") {
+                window.location.href = "menu.html";
+            } else {
+                window.location.href = "menu.html";
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("Erro: " + error.message);
+            btn.disabled = false;
+            btn.innerText = "FINALIZAR E ENTRAR";
+        }
+    });
+</script>
+</body>
+</html>

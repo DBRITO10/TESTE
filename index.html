@@ -1,368 +1,66 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8" />
-    <title>MONITORAMENTO SIMONETTI - LOGÍSTICA</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-
-<style>
-    :root { 
-        --simonetti-red: #E30613; 
-        --simonetti-pink: #FF4D6D; 
-        --bg-light: #F4F4F9; 
-        --border-color: #ddd;
-        --group-border-color: #000000;
-        --group-border-width: 3px;
-    }
-    
-    body { background: var(--bg-light); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-    
-    header { 
-        background: var(--simonetti-red); padding: 0 2vw; 
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 0.6vh solid var(--simonetti-pink);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        height: 8vh;
-        position: relative;
-        z-index: 1000;
-    }
-
-    h1 { margin: 0; font-size: 2.2rem; color: #fff; font-weight: 900; letter-spacing: 1px; }
-
-    .main-container { 
-        display: flex; 
-        height: 92vh; 
-        padding: 15px; 
-        gap: 15px; 
-        box-sizing: border-box;
-    }
-
-    .table-section { 
-        flex: 3; 
-        background: #fff; 
-        border-radius: 15px; 
-        overflow: hidden; 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-        border: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-        position: relative;
-    }
-
-    /* ESSENCIAL PARA ESTABILIDADE NA TV */
-    #scrollContainer {
-        overflow: hidden;
-        flex-grow: 1;
-        position: relative;
-        /* Força aceleração de hardware */
-        transform: translateZ(0);
-        backface-visibility: hidden;
-    }
-
-    #tabelaTV {
-        width: 100% !important;
-        /* Evita que a tabela "trema" durante o movimento */
-        will-change: transform; 
-    }
-
-    table.dataTable thead {
-        position: sticky;
-        top: 0;
-        z-index: 500;
-        background-color: var(--simonetti-red) !important;
-    }
-
-    table.dataTable thead th { 
-        background: var(--simonetti-red) !important; 
-        color: #ffffff !important; 
-        font-size: 1.3rem !important; 
-        padding: 15px 10px !important; 
-        text-align: center !important; 
-        text-transform: uppercase;
-        font-weight: 900 !important;
-        border-bottom: 6px solid #000000 !important; 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    table.dataTable { 
-        width: 100% !important; 
-        border-collapse: separate !important; 
-        border-spacing: 0;
-        margin: 0 !important;
-        table-layout: fixed !important;
-    }
-    
-    table.dataTable tbody td { 
-        font-size: 1.2rem !important; 
-        padding: 12px 5px !important; 
-        text-align: center !important; 
-        font-weight: 700; 
-        border-bottom: 1px solid #eee;
-        background-color: #ffffff;
-    }
-
-    .group-start td { border-top: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-end td { border-bottom: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-side-left { border-left: var(--group-border-width) solid var(--group-border-color) !important; }
-    .group-side-right { border-right: var(--group-border-width) solid var(--group-border-color) !important; }
-
-    .bg-armario { background-color: #FFFF00 !important; color: #000 !important; }
-    .bg-mesa { background-color: #00B050 !important; color: #000 !important; }
-    .bg-tecnologia { background-color: #00B0FF !important; color: #000 !important; }
-
-    .pill { 
-        padding: 6px; border-radius: 8px; color: #fff; font-size: 1.1rem; 
-        font-weight: 800; display: inline-block; width: 95%; 
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-    }
-
-    .box-num { font-size: 2.3rem !important; }
-    .box-green { color: #27ae60 !important; }
-    .box-red { color: #E74C3C !important; }
-
-    .dash-section { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 320px; }
-    
-    .kpi-card { 
-        background: #fff; padding: 1vh; text-align: center; border-radius: 15px;
-        border-bottom: 8px solid var(--simonetti-red); 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-        border: 1px solid var(--border-color);
-    }
-    .kpi-value { font-size: 3.8rem; font-weight: 900; color: var(--simonetti-red); display: block; line-height: 1; }
-    .kpi-label { font-size: 1rem; font-weight: 800; color: #333; }
-
-    .chart-box { 
-        background: #fff; padding: 20px; border-radius: 15px; 
-        flex-grow: 1; box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
-        border: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    #statusChart { max-height: 45vh !important; }
-
-    .btn-fullscreen { background: #fff; color: var(--simonetti-red); border: 2px solid var(--simonetti-red); padding: 8px 15px; font-weight: 900; border-radius: 8px; cursor: pointer; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Expedição Simonetti</title>
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; }
+        body { font-family: sans-serif; background: var(--bg-body); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        .logo { color: var(--primary); font-weight: bold; font-size: 20px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-login { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    </style>
 </head>
 <body>
 
-<header>
-    <h1>RECEBIMENTO SIMONETTI</h1>
-    <button class="btn-fullscreen" id="fsBtn" onclick="toggleFullScreen()">📺 TELA CHEIA</button>
-</header>
-
-<div class="main-container">
-    <div class="table-section">
-        <div id="scrollContainer">
-            <table id="tabelaTV" class="display nowrap">
-                <thead>
-                    <tr>
-                        <th style="width: 14%;">DATA</th>
-                        <th style="width: 26%;">FORNECEDOR</th>
-                        <th style="width: 15%;">TIPO</th>
-                        <th style="width: 18%;">PRODUTO</th>                    
-                        <th style="width: 17%;">STATUS</th>
-                        <th style="width: 10%;">BOX</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="dash-section">
-        <div class="kpi-card">
-            <span class="kpi-label">TOTAL DE CARROS</span>
-            <span id="countCarros" class="kpi-value">0</span>
-        </div>
-        <div class="kpi-card">
-            <span class="kpi-label">TOTAL AGENDAS</span>
-            <span id="countAgendas" class="kpi-value">0</span>
-        </div>
-        
-        <div class="chart-box">
-            <h3 style="margin: 0 0 10px 0; color:#444; font-size: 1.1rem; text-align: center; font-weight: 800;">STATUS DAS AGENDAS</h3>
-            <div style="flex-grow: 1; position: relative;">
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
-    </div>
+<div class="login-card">
+    <div class="logo">MÓVEIS SIMONETTI<br><small style="color: #666; font-size: 12px;">EXPEDIÇÃO</small></div>
+    <form id="formLogin">
+        <input type="email" id="email" placeholder="E-mail" required>
+        <input type="password" id="senha" placeholder="Senha" required>
+        <button type="submit" class="btn-login">ENTRAR</button>
+    </form>
+    <p id="msgErro" style="color: red; font-size: 12px; margin-top: 10px;"></p>
 </div>
 
-<script>
-Chart.register(ChartDataLabels);
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const csvUrl = "https://docs.google.com/spreadsheets/d/1Ore02M4GARvE6hldNDZmiVNDrABb4dgaZO7wlMY-fjs/export?format=csv&gid=2090543957";
+    // Usando a config que você passou
+    const firebaseConfig = {
+        apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg",
+        authDomain: "logistica-exp.firebaseapp.com",
+        projectId: "logistica-exp"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-const coresStatus = {
-    "CARGA RECEBIDA": '#2ECC71', "CANCELADA": '#E74C3C', "EM RECEBIMENTO": '#F1C40F', 
-    "NO PATIO - FICOU P/ AMANHÃ": '#34495E', "SOB AJUSTE": '#8B27F5', "REAGENDA": '#9B591B',
-    "NO PATIO - FICOU DE ONTEM": '#B249BF', "NO PATIO - SOB ENCAIXE": '#ff7625',         
-    "NO PATIO": '#1A9EF0', "EM ATRASO": '#FF1744', "PENDENTE": '#95A5A6'
-};
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const senha = document.getElementById('senha').value;
 
-let chartStatus;
-let isScrolling = false;
-let waitingAtTop = true;
-let animationId = null;
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+            const user = userCredential.user;
 
-$(document).ready(() => {
-    carregarDados();
-    setInterval(carregarDados, 60000); 
-    setTimeout(() => { waitingAtTop = false; }, 3000);
-});
-
-function toggleFullScreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.getElementById('fsBtn').innerText = "✖ SAIR";
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        document.getElementById('fsBtn').innerText = "📺 TELA CHEIA";
-    }
-}
-
-function carregarDados() {
-    Papa.parse(csvUrl, {
-        download: true, 
-        header: true, 
-        skipEmptyLines: true,
-        complete: function(results) { 
-            const dadosVisiveis = results.data.filter(row => {
-                return row["FORNECEDOR"] && row["FORNECEDOR"].trim() !== "" && row["DATA"] && row["DATA"].trim() !== "";
-            });
-            renderizar(dadosVisiveis); 
-        }
-    });
-}
-
-function renderizar(dados) {
-    if ($.fn.DataTable.isDataTable('#tabelaTV')) $('#tabelaTV').DataTable().destroy();
-    
-    const prioridadeStatus = { "EM RECEBIMENTO": 1, "CARGA RECEBIDA": 2, "EM ATRASO": 3 };
-
-    dados.sort((a, b) => {
-        const statusA = (a["STATUS"] || "").toUpperCase();
-        const statusB = (b["STATUS"] || "").toUpperCase();
-        const pesoA = prioridadeStatus[statusA] || 99;
-        const pesoB = prioridadeStatus[statusB] || 99;
-        if (pesoA !== pesoB) return pesoA - pesoB;
-        const boxA = parseInt(a["BOX"]) || 999;
-        const boxB = parseInt(b["BOX"]) || 999;
-        if (boxA !== boxB) return boxA - boxB;
-        return (a["CODIGO"] || "").toString().localeCompare((b["CODIGO"] || "").toString());
-    });
-
-    const body = $("#tabelaTV tbody").empty();
-    const stats = {};
-    const codigosUnicos = new Set();
-
-    dados.forEach((r, index) => {
-        const codigo = (r["CODIGO"] || "").trim();
-        const proximo = dados[index + 1] ? (dados[index + 1]["CODIGO"] || "").trim() : null;
-        const anterior = dados[index - 1] ? (dados[index - 1]["CODIGO"] || "").trim() : null;
-        const status = (r["STATUS"] || "PENDENTE").toUpperCase();
-        const tipoProduto = (r["TIPO DE PRODUTO"] || "").toUpperCase();
-        if (codigo) codigosUnicos.add(codigo);
-        stats[status] = (stats[status] || 0) + 1;
-
-        let rowClasses = "";
-        if (codigo !== anterior) rowClasses += " group-start";
-        if (codigo !== proximo) rowClasses += " group-end";
-
-        let tipoCorClass = "";
-        const itensAmarelos = ["PAINEL", "ROUPEIRO", "COMODA", "MULTIUSO", "MODULO", "COZINHA", "ARMARIO"];
-        if(["CELULAR", "ROBO", "TABLET", "NOTEBOOK"].some(p => tipoProduto.includes(p))) tipoCorClass = "bg-tecnologia";
-        else if(itensAmarelos.some(p => tipoProduto.includes(p))) tipoCorClass = "bg-armario";
-        else if(tipoProduto.includes("MESA")) tipoCorClass = "bg-mesa";
-
-        const boxColorClass = (status === "CARGA RECEBIDA") ? "box-green" : "box-red";
-
-        body.append(`
-            <tr class="${rowClasses}">
-                <td class="group-side-left">${r["DATA"] || ""}</td>
-                <td>${r["FORNECEDOR"] || ""}</td>
-                <td class="${tipoCorClass}">${tipoProduto}</td>
-                <td>${r["PRODUTO"] || ""}</td> 
-                <td><span class="pill" style="background:${coresStatus[status] || '#999'}">${status}</span></td>
-                <td class="group-side-right box-num ${boxColorClass}">${r["BOX"] || "-"}</td>
-            </tr>`);
-    });
-
-    $('#tabelaTV').DataTable({ paging: false, info: false, ordering: false, searching: false, autoWidth: false });
-    $("#countCarros").text(codigosUnicos.size);
-    $("#countAgendas").text(dados.length);
-    atualizarGrafico(stats, dados.length);
-    
-    if(!isScrolling) iniciarAutoScroll();
-}
-
-function atualizarGrafico(stats, total) {
-    if(chartStatus) chartStatus.destroy();
-    const ctx = document.getElementById('statusChart').getContext('2d');
-    chartStatus = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: Object.keys(stats),
-            datasets: [{
-                data: Object.values(stats),
-                backgroundColor: Object.keys(stats).map(k => coresStatus[k] || "#ccc"),
-                borderWidth: 2, borderColor: '#fff'
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' }, padding: 10 } },
-                datalabels: {
-                    color: '#fff', font: { size: 14, weight: 'bold' },
-                    formatter: (val) => `${val} (${((val/total)*100).toFixed(0)}%)`
-                }
-            }
-        }
-    });
-}
-
-// FUNÇÃO DE SCROLL OTIMIZADA PARA EVITAR TREMEDEIRA
-function iniciarAutoScroll() {
-    isScrolling = true;
-    const container = document.getElementById('scrollContainer');
-    const table = document.getElementById('tabelaTV');
-    let currentPos = 0;
-    let delayRestart = false;
-
-    function step() {
-        const maxScroll = table.offsetHeight - container.offsetHeight;
-        
-        if (maxScroll > 0 && !delayRestart && !waitingAtTop) {
-            currentPos += 0.5; // Velocidade lenta e constante
+            // Verifica se o perfil já existe no Firestore
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             
-            // Usamos scrollTop para manter o cabeçalho fixo nativamente
-            container.scrollTop = currentPos;
-
-            if (currentPos >= maxScroll) {
-                delayRestart = true;
-                setTimeout(() => {
-                    container.scrollTop = 0;
-                    currentPos = 0;
-                    waitingAtTop = true;
-                    delayRestart = false;
-                    setTimeout(() => { waitingAtTop = false; }, 3000);
-                }, 4000);
+            if (userDoc.exists()) {
+                window.location.href = "menu.html";
+            } else {
+                window.location.href = "primeiro-acesso.html";
             }
+        } catch (error) {
+            document.getElementById('msgErro').innerText = "E-mail ou senha incorretos.";
         }
-        animationId = requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-}
+    });
 </script>
 </body>
 </html>

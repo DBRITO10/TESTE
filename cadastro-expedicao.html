@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Expedições - Simonetti</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --text: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
+        
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 20px; max-width: 1200px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
+
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 12px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-salvar { flex: 2; background: #2e7d32; color: white; border: none; padding: 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-cancelar { flex: 1; background: #757575; color: white; border: none; padding: 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; display: none; }
+
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .resumo-box { display: flex; gap: 15px; }
+        .resumo-item { background: #fff; padding: 10px 15px; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .resumo-item span { display: block; font-size: 10px; color: #666; text-transform: uppercase; }
+        .resumo-item strong { font-size: 18px; color: var(--primary); }
+
+        .search-container { width: 100%; margin-top: 10px; }
+        #inputBusca { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        #inputBusca:focus { border-color: var(--primary); }
+
+        .export-btns { display: flex; gap: 5px; margin-bottom: 10px; }
+        .btn-export { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
+        .btn-excel { background: #1b5e20; }
+        .btn-pdf { background: #b71c1c; }
+
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 11px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; cursor: pointer; user-select: none; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-align: center; display: inline-block; min-width: 80px; }
+        .status-criado { background: #bbdefb; color: #0d47a1; }
+        .status-separacao { background: #ffe0b2; color: #e65100; }
+        .status-conf-finalizada { background: #f3e5f5; color: #4a148c; }
+        .status-finalizado { background: #1b5e20; color: white; }
+
+        .tipo-CARRO { color: #4a148c; font-weight: bold; }
+        .tipo-TOCO { color: #fbc02d; font-weight: bold; }
+        .tipo-TRUCK { color: #03a9f4; font-weight: bold; }
+        .tipo-CARRETTA, .tipo-CARRETA { color: #1b5e20; font-weight: bold; }
+
+        .btn-acao { padding: 6px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; margin-right: 2px; }
+        .btn-edit { background: #90a4ae; color: white; }
+        .btn-del { background: #ffcdd2; color: #c62828; }
+        .b-sep { background: #ef6c00; color: white; }
+        .b-ok { background: #7b1fa2; color: white; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Bem-vindo, <strong id="userName">...</strong></span>
+    </div>
+    <button class="btn-sair" id="btnSair">SAIR</button>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2 id="tituloForm">NOVA EXPEDIÇÃO</h2>
+        <form id="formExpedicao">
+            <input type="hidden" id="editId">
+            <div class="grid-form">
+                <div><label>Nº EXPEDIÇÃO</label><input type="text" id="codExp" placeholder="Ex: 92649" required></div>
+                <div><label>PLACA</label><select id="placa" required><option value="">Selecione...</option></select></div>
+                <div><label>TIPO VEÍCULO</label><input type="text" id="tipoVeic" readonly style="background: #f9f9f9;"></div>
+                <div><label>BOX (Doca)</label><input type="text" id="boxExp" placeholder="Ex: 7D" style="text-transform: uppercase;" required></div>
+                <div><label>PESO (KG)</label><input type="text" id="pesoExp" placeholder="0,00" required></div>
+                <div><label>DESTINO</label><select id="destinoExp" required><option value="">Selecione...</option></select></div>
+                <div><label>CONFERENTE</label><select id="conferenteExp" required><option value="">Selecione...</option></select></div>
+                <div><label>DATA</label><input type="date" id="dataExp" required></div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR EXPEDIÇÃO</button>
+                <button type="button" class="btn-cancelar" id="btnCancelar">CANCELAR</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="toolbar">
+        <div class="resumo-box">
+            <div class="resumo-item"><span>Total de Expedições</span><strong id="totalExp">0</strong></div>
+            <div class="resumo-item"><span>Total de Carros</span><strong id="totalCarros">0</strong></div>
+        </div>
+        <div style="display: flex; gap: 5px; align-items: flex-end;">
+            <div><label style="margin:0; font-size: 10px;">DE:</label><input type="date" id="filtroInicio" style="padding: 5px; width: 130px;"></div>
+            <div><label style="margin:0; font-size: 10px;">ATÉ:</label><input type="date" id="filtroFim" style="padding: 5px; width: 130px;"></div>
+            <button id="btnFiltrar" style="padding: 7px 15px; cursor:pointer; background: var(--primary); color:white; border:none; border-radius:4px;">BUSCAR</button>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="inputBusca" placeholder="🔍 Buscar por Nº Expedição, Placa ou Destino...">
+    </div>
+
+    <div class="export-btns" style="margin-top: 15px;">
+        <button onclick="exportarExcel()" class="btn-export btn-excel">📊 EXCEL</button>
+        <button onclick="exportarPDF()" class="btn-export btn-pdf">📄 PDF</button>
+    </div>
+
+    <div class="card">
+        <h2>HISTÓRICO DE EXPEDIÇÕES</h2>
+        <div class="table-wrapper">
+            <table id="tabelaExpedicoes">
+                <thead>
+                    <tr>
+                        <th onclick="ordenarTabela(0)">DATA</th>
+                        <th onclick="ordenarTabela(1)">EXPEDIÇÃO</th>
+                        <th onclick="ordenarTabela(2)">PLACA</th>
+                        <th onclick="ordenarTabela(3)">TIPO</th>
+                        <th onclick="ordenarTabela(4)">DESTINO</th>
+                        <th onclick="ordenarTabela(5)">BOX</th>
+                        <th onclick="ordenarTabela(6)">PESO</th>
+                        <th onclick="ordenarTabela(7)">CONFERENTE</th>
+                        <th onclick="ordenarTabela(8)">STATUS</th>
+                        <th>AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let dadosOriginais = [];
+    let ordemDirecao = true;
+
+    const obterDataLocal = () => {
+        const agora = new Date();
+        const offset = agora.getTimezoneOffset() * 60000;
+        return new Date(agora - offset).toISOString().split('T')[0];
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
+            const hoje = obterDataLocal();
+            document.getElementById('dataExp').value = hoje;
+            document.getElementById('filtroInicio').value = hoje;
+            document.getElementById('filtroFim').value = hoje;
+            carregarPlacas();
+            carregarDestinos();
+            carregarConferentes();
+            listarExpedicoes(hoje, hoje); 
+        } else { window.location.href = "index.html"; }
+    });
+
+    function listarExpedicoes(inicio, fim) {
+        const q = query(collection(db, "expedicoes"), where("data", ">=", inicio), where("data", "<=", fim));
+        onSnapshot(q, (snap) => {
+            dadosOriginais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            dadosOriginais.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, {numeric: true}));
+            renderizarTabela(dadosOriginais);
+        });
+    }
+
+    function renderizarTabela(lista) {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+        let countExp = 0;
+        let placasUnicas = new Set();
+
+        lista.forEach(item => {
+            countExp++;
+            placasUnicas.add(item.placa + "_" + item.data);
+            const dataF = item.data.split('-').reverse().join('/');
+            const classeTipo = `tipo-${item.tipo.toUpperCase()}`;
+
+            corpo.innerHTML += `
+                <tr>
+                    <td>${dataF}</td>
+                    <td><strong>${item.codigo}</strong></td>
+                    <td>${item.placa}</td>
+                    <td><span class="${classeTipo}">${item.tipo}</span></td>
+                    <td>${item.destino}</td>
+                    <td>${item.box}</td>
+                    <td>${item.peso}</td>
+                    <td>${item.conferente}</td>
+                    <td><span class="badge ${getStatusClass(item.status)}">${item.status}</span></td>
+                    <td style="white-space: nowrap;">
+                        <button class="btn-acao b-sep" onclick="mudarStatus('${item.id}', 'EM SEPARAÇÃO')">SEP</button>
+                        <button class="btn-acao b-ok" onclick="mudarStatus('${item.id}', 'CONFERÊNCIA FINALIZADA')">✅</button>
+                        <button class="btn-acao btn-edit" onclick="editar('${item.id}')">✏️</button>
+                        <button class="btn-acao btn-del" onclick="excluir('${item.id}')">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+        document.getElementById('totalExp').innerText = countExp;
+        document.getElementById('totalCarros').innerText = placasUnicas.size;
+    }
+
+    // Botão Cancelar Edição
+    document.getElementById('btnCancelar').onclick = () => {
+        document.getElementById('formExpedicao').reset();
+        document.getElementById('editId').value = "";
+        document.getElementById('tituloForm').innerText = "NOVA EXPEDIÇÃO";
+        document.getElementById('btnCancelar').style.display = "none";
+        document.getElementById('dataExp').value = obterDataLocal();
+    };
+
+    window.editar = async (id) => {
+        const d = await getDoc(doc(db, "expedicoes", id));
+        const data = d.data();
+        document.getElementById('editId').value = id;
+        document.getElementById('codExp').value = data.codigo;
+        document.getElementById('placa').value = data.placa;
+        document.getElementById('tipoVeic').value = data.tipo;
+        document.getElementById('boxExp').value = data.box;
+        document.getElementById('pesoExp').value = data.peso;
+        document.getElementById('destinoExp').value = data.destino;
+        document.getElementById('conferenteExp').value = data.conferente;
+        document.getElementById('dataExp').value = data.data;
+        document.getElementById('tituloForm').innerText = "EDITANDO EXPEDIÇÃO";
+        document.getElementById('btnCancelar').style.display = "block";
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    };
+
+    document.getElementById('formExpedicao').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const dados = {
+            codigo: document.getElementById('codExp').value,
+            placa: document.getElementById('placa').value,
+            tipo: document.getElementById('tipoVeic').value,
+            box: document.getElementById('boxExp').value.toUpperCase(),
+            peso: document.getElementById('pesoExp').value,
+            destino: document.getElementById('destinoExp').value,
+            conferente: document.getElementById('conferenteExp').value,
+            data: document.getElementById('dataExp').value,
+            atualizadoEm: serverTimestamp()
+        };
+        if (id) { await updateDoc(doc(db, "expedicoes", id), dados); alert("Atualizado!"); }
+        else { dados.status = "CRIADO"; dados.criadoEm = serverTimestamp(); await addDoc(collection(db, "expedicoes"), dados); alert("Salvo!"); }
+        
+        e.target.reset(); 
+        document.getElementById('editId').value = ""; 
+        document.getElementById('tituloForm').innerText = "NOVA EXPEDIÇÃO";
+        document.getElementById('btnCancelar').style.display = "none";
+        document.getElementById('dataExp').value = obterDataLocal();
+    };
+
+    // --- FUNÇÕES JÁ EXISTENTES ---
+    document.getElementById('inputBusca').onkeyup = function() {
+        const termo = this.value.toLowerCase();
+        const filtrados = dadosOriginais.filter(d => 
+            d.codigo.toLowerCase().includes(termo) || 
+            d.placa.toLowerCase().includes(termo) || 
+            d.destino.toLowerCase().includes(termo)
+        );
+        renderizarTabela(filtrados);
+    };
+
+    window.ordenarTabela = (index) => {
+        const chaves = ['data', 'codigo', 'placa', 'tipo', 'destino', 'box', 'peso', 'conferente', 'status'];
+        const chave = chaves[index];
+        ordemDirecao = !ordemDirecao;
+        dadosOriginais.sort((a, b) => {
+            let valA = a[chave].toString().toLowerCase();
+            let valB = b[chave].toString().toLowerCase();
+            return ordemDirecao ? valA.localeCompare(valB, undefined, {numeric: true}) : valB.localeCompare(valA, undefined, {numeric: true});
+        });
+        renderizarTabela(dadosOriginais);
+    };
+
+    async function carregarPlacas() {
+        const snap = await getDocs(collection(db, "cad_veiculos"));
+        const selectPlaca = document.getElementById('placa');
+        const veiculosCache = {};
+        snap.forEach(doc => {
+            const v = doc.data();
+            veiculosCache[v.placa] = v.tipo;
+            selectPlaca.innerHTML += `<option value="${v.placa}">${v.placa}</option>`;
+        });
+        selectPlaca.onchange = (e) => document.getElementById('tipoVeic').value = veiculosCache[e.target.value] || "";
+    }
+
+    async function carregarDestinos() {
+        const snap = await getDocs(collection(db, "destinos"));
+        const select = document.getElementById('destinoExp');
+        snap.forEach(doc => { select.innerHTML += `<option value="${doc.data().nome}">${doc.data().nome}</option>`; });
+    }
+
+    async function carregarConferentes() {
+        const snap = await getDocs(collection(db, "conferentes"));
+        const select = document.getElementById('conferenteExp');
+        snap.forEach(doc => { select.innerHTML += `<option value="${doc.data().nome}">${doc.data().nome}</option>`; });
+    }
+
+    document.getElementById('btnFiltrar').onclick = () => {
+        listarExpedicoes(document.getElementById('filtroInicio').value, document.getElementById('filtroFim').value);
+    };
+
+    function getStatusClass(s) {
+        if (s === 'CRIADO') return 'status-criado';
+        if (s === 'EM SEPARAÇÃO') return 'status-separacao';
+        if (s === 'CONFERÊNCIA FINALIZADA') return 'status-conf-finalizada';
+        return 'status-finalizado';
+    }
+
+    window.mudarStatus = async (id, status) => await updateDoc(doc(db, "expedicoes", id), { status });
+    window.excluir = async (id) => { if(confirm("Excluir?")) await deleteDoc(doc(db, "expedicoes", id)); };
+    document.getElementById('btnSair').onclick = () => signOut(auth);
+
+    const hexToRgb = (hex) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return [r, g, b];
+    };
+
+    const coresStatusPDF = {
+        'CRIADO': '#0d47a1',
+        'EM SEPARAÇÃO': '#e65100',
+        'EM CARREGAMENTO': '#95e9ae',
+        'CARREGADO/EM VIAGEM': '#d123a3',      
+        'CONFERÊNCIA FINALIZADA': '#4a148c',
+        'FINALIZADO': '#1b5e20'
+    };
+
+    const coresVeiculosPDF = {
+        'TOCO': '#fbc02d',
+        'TRUCK': '#03a9f4',
+        'CARRETA': '#1b5e20',
+        'CARRO 3/4': '#4a148c'
+    };
+
+    window.exportarExcel = () => {
+        const tabelaOriginal = document.getElementById('tabelaExpedicoes');
+        const copiaTabela = tabelaOriginal.cloneNode(true);
+        copiaTabela.querySelectorAll('tr').forEach(linha => {
+            if (linha.lastElementChild) linha.removeChild(linha.lastElementChild);
+        });
+        const wb = XLSX.utils.table_to_book(copiaTabela, { sheet: "Expedicoes" });
+        XLSX.writeFile(wb, `Expedicao_Simonetti_${new Date().toLocaleDateString()}.xlsx`);
+    };
+
+    // --- PDF COM RESUMO NO TOPO ---
+    window.exportarPDF = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+        
+        // Cabeçalho Vermelho
+        doc.setFillColor(178, 34, 34);
+        doc.rect(0, 0, 297, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.text("EXPEDIÇÃO - MÓVEIS SIMONETTI", 15, 12);
+
+        // Cálculos para o Cabeçalho
+        const totalExp = dadosOriginais.length;
+        const placasUnicas = new Set(dadosOriginais.map(item => item.placa + "_" + item.data)).size;
+
+        // Subtítulo com Totais (Como era antes)
+        doc.setFontSize(11);
+        doc.text(`TOTAL DE EXPEDIÇÕES: ${totalExp}   |   TOTAL DE CARROS: ${placasUnicas}   |   DATA: ${dataAtual}`, 15, 20);
+
+        const body = [];
+        const contagemPorTipo = {};
+
+        dadosOriginais.forEach(item => {
+            body.push([
+                item.data.split('-').reverse().join('/'),
+                item.codigo,
+                item.placa,
+                item.tipo,
+                item.destino,
+                item.box,
+                item.peso,
+                item.conferente,
+                item.status
+            ]);
+            
+            // Lógica de carros únicos para o resumo final
+            const t = item.tipo.toUpperCase();
+            if (!contagemPorTipo[t]) contagemPorTipo[t] = new Set();
+            contagemPorTipo[t].add(item.placa + "_" + item.data);
+        });
+
+        doc.autoTable({
+            startY: 30,
+            head: [['DATA', 'EXPEDIÇÃO', 'PLACA', 'TIPO', 'DESTINO', 'BOX', 'PESO', 'CONFERENTE', 'STATUS']],
+            body: body,
+            theme: 'grid',
+            styles: { fontSize: 7, halign: 'center' },
+            headStyles: { fillColor: [178, 34, 34] },
+            didParseCell: (data) => {
+                if (data.section === 'body') {
+                    if (data.column.index === 3) {
+                        const tipo = data.cell.raw.toUpperCase();
+                        if (coresVeiculosPDF[tipo]) {
+                            data.cell.styles.textColor = hexToRgb(coresVeiculosPDF[tipo]);
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
+                    if (data.column.index === 8) {
+                        const status = data.cell.raw.toUpperCase();
+                        if (coresStatusPDF[status]) {
+                            data.cell.styles.textColor = hexToRgb(coresStatusPDF[status]);
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
+                }
+            }
+        });
+
+        // Resumo por Tipos ao Final
+        let finalY = doc.lastAutoTable.finalY + 10;
+        if (finalY > 160) { doc.addPage(); finalY = 20; }
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(11);
+        doc.text("RESUMO DE CARROS ÚNICOS POR TIPO:", 15, finalY);
+
+        const summaryData = Object.keys(contagemPorTipo).map(tipo => [tipo, contagemPorTipo[tipo].size]);
+        doc.autoTable({
+            startY: finalY + 5,
+            head: [["VEÍCULO", "QTD CARROS"]],
+            body: summaryData,
+            tableWidth: 80,
+            theme: 'grid',
+            headStyles: { fillColor: [80, 80, 80] }
+        });
+
+        doc.save(`Relatorio_Simonetti_${dataAtual.replace(/\//g, '-')}.pdf`);
+    };
+</script>
+</body>
+</html>

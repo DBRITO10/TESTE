@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Equipe - Simonetti</title>
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --success: #2e7d32; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; }
+        
+        /* Header Padronizado */
+        header { 
+            background: var(--primary); color: white; padding: 10px 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px; }
+        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Título Centralizado */
+        h2.title-center { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; text-align: center; }
+
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        
+        .btn-save { width: 100%; background: var(--success); color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-cancelar { width: 100%; background: #757575; color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; }
+        
+        /* Tabela Responsiva */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; color: #666; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .btn-acao { border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .edit { background: #fbc02d; margin-right: 5px; }
+        .del { background: #ffcdd2; color: #c62828; }
+
+        @media (max-width: 600px) {
+            .container { padding: 10px; }
+            header { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Olá, <strong id="userName">...</strong></span>
+    </div>
+    <button class="btn-sair" id="btnSair">SAIR</button>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2 id="tituloForm" class="title-center">CADASTRAR MEMBRO DA EQUIPE</h2>
+        <form id="formEquipe">
+            <input type="hidden" id="editId">
+            <div class="grid-form">
+                <div style="grid-column: span 2;">
+                    <label>NOME COMPLETO</label>
+                    <input type="text" id="nomePessoa" required placeholder="NOME DO COLABORADOR" style="text-transform: uppercase;">
+                </div>
+                <div>
+                    <label>CPF (APENAS NÚMEROS)</label>
+                    <input type="text" id="cpfPessoa" placeholder="000.000.000-00" maxlength="14" required>
+                </div>
+                <div>
+                    <label>VÍNCULO</label>
+                    <select id="vinculoPessoa" required>
+                        <option value="">SELECIONE...</option>
+                        <option value="MEI">MEI</option>
+                        <option value="TERCEIRO">TERCEIRO</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn-save" id="btnSalvar">SALVAR PESSOA</button>
+            <button type="button" class="btn-cancelar" id="btnCancelar" onclick="cancelarEdicao()">CANCELAR EDIÇÃO</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2 class="title-center">EQUIPE CADASTRADA</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NOME</th>
+                        <th>VÍNCULO</th>
+                        <th>CPF</th>
+                        <th style="text-align: right;">AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoEquipe">
+                    <tr><td colspan="4" style="text-align: center;">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // --- MÁSCARA CPF ---
+    const inputCpf = document.getElementById('cpfPessoa');
+    inputCpf.addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g, ""); // Remove tudo que não é número
+        
+        if (v.length <= 11) {
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        }
+        e.target.value = v;
+    });
+
+    // Controle de Sessão e Nome do Usuário
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (userDoc.exists()) {
+                document.getElementById('userName').innerText = userDoc.data().nome.split(' ')[0].toUpperCase();
+            }
+        } else {
+            window.location.href = "index.html";
+        }
+    });
+
+    // SALVAR / EDITAR
+    const form = document.getElementById('formEquipe');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const btn = document.getElementById('btnSalvar');
+
+        btn.disabled = true;
+        btn.innerText = "PROCESSANDO...";
+
+        const dados = {
+            nome: document.getElementById('nomePessoa').value.toUpperCase(),
+            cpf: document.getElementById('cpfPessoa').value,
+            vinculo: document.getElementById('vinculoPessoa').value,
+            atualizadoEm: serverTimestamp()
+        };
+
+        try {
+            if(id) {
+                await updateDoc(doc(db, "equipe", id), dados);
+                alert("Cadastro atualizado!");
+                cancelarEdicao();
+            } else {
+                await addDoc(collection(db, "equipe"), { ...dados, criadoEm: serverTimestamp() });
+                alert("Membro cadastrado!");
+            }
+            form.reset();
+        } catch (err) {
+            alert("Erro ao salvar.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "SALVAR PESSOA";
+        }
+    });
+
+    // LISTAR EM TEMPO REAL
+    onSnapshot(query(collection(db, "equipe"), orderBy("nome")), snap => {
+        const corpo = document.getElementById('corpoEquipe');
+        corpo.innerHTML = "";
+        snap.forEach(d => {
+            const p = d.data();
+            corpo.innerHTML += `
+                <tr>
+                    <td><strong>${p.nome}</strong></td>
+                    <td>${p.vinculo}</td>
+                    <td>${p.cpf}</td>
+                    <td style="text-align: right;">
+                        <button class="btn-acao edit" onclick="prepararEdicao('${d.id}', '${p.nome}', '${p.cpf}', '${p.vinculo}')">✏️</button>
+                        <button class="btn-acao del" onclick="excluir('${d.id}', '${p.nome}')">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+    });
+
+    // FUNÇÕES DE EDIÇÃO
+    window.prepararEdicao = (id, nome, cpf, vinculo) => {
+        document.getElementById('editId').value = id;
+        document.getElementById('nomePessoa').value = nome;
+        document.getElementById('cpfPessoa').value = cpf;
+        document.getElementById('vinculoPessoa').value = vinculo;
+        
+        document.getElementById('btnSalvar').innerText = "ATUALIZAR CADASTRO";
+        document.getElementById('btnCancelar').style.display = "block";
+        document.getElementById('tituloForm').innerText = "EDITANDO MEMBRO";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.cancelarEdicao = () => {
+        document.getElementById('editId').value = "";
+        form.reset();
+        document.getElementById('btnSalvar').innerText = "SALVAR PESSOA";
+        document.getElementById('btnCancelar').style.display = "none";
+        document.getElementById('tituloForm').innerText = "CADASTRAR MEMBRO DA EQUIPE";
+    };
+
+    window.excluir = async (id, nome) => {
+        if(confirm(`Excluir ${nome} da equipe?`)) {
+            await deleteDoc(doc(db, "equipe", id));
+        }
+    };
+
+    document.getElementById('btnSair').onclick = () => signOut(auth);
+</script>
+</body>
+</html>
