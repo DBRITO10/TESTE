@@ -18,97 +18,96 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-body);
             margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
 
+        /* HEADER CENTRALIZADO */
         header {
             background-color: var(--primary);
             color: var(--white);
             padding: 15px 25px;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             position: sticky;
             top: 0;
             z-index: 1000;
+            height: 60px;
+            box-sizing: border-box;
         }
 
-        .user-info { font-weight: 600; font-size: 14px; }
-        .header-title { font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
-        .user-section { display: flex; justify-content: flex-end; }
+        .user-info { font-weight: 600; font-size: 14px; z-index: 2; }
+        
+        .header-title { 
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            text-align: center;
+            width: auto;
+            white-space: nowrap;
+        }
+
+        .user-section { z-index: 2; }
         
         .btn-sair {
             background: rgba(255, 255, 255, 0.2);
             border: 1px solid #ffffff;
             color: #ffffff;
-            padding: 8px 18px;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
             transition: 0.3s;
+            font-size: 12px;
         }
-        .btn-sair:hover { background: #ffffff; color: var(--primary); }
+        .btn-sair:hover { background: #white; color: var(--primary); }
 
-        /* Banner Institucional */
         .welcome-banner {
             text-align: center;
-            padding: 40px 20px 10px;
+            padding: 30px 20px 10px;
         }
-        .welcome-banner h1 { 
-            margin: 0; 
-            color: var(--primary); 
-            font-size: 32px; 
-            font-weight: 900; 
-            text-transform: uppercase;
-        }
-        .welcome-banner p { 
-            margin: 5px 0 0; 
-            color: #666; 
-            font-size: 16px; 
-            font-style: italic;
-        }
+        .welcome-banner h1 { margin: 0; color: var(--primary); font-size: 28px; font-weight: 900; text-transform: uppercase; }
+        .welcome-banner p { margin: 5px 0 0; color: #666; font-size: 15px; font-style: italic; }
 
-        /* Grid de Cards Principais */
         .container {
             flex: 1;
-            padding: 30px 25px;
+            padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
             box-sizing: border-box;
         }
 
         .card-main {
             background: var(--white);
-            border-radius: 20px;
-            padding: 50px 20px;
+            border-radius: 15px;
+            padding: 40px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: 0.3s;
             border: 1px solid rgba(0,0,0,0.05);
             box-shadow: var(--shadow);
-            display: none; /* JS controla visibilidade */
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
+        .card-main:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .card-main i { font-size: 50px; margin-bottom: 15px; }
+        .card-main span { font-weight: 800; font-size: 18px; color: var(--text); text-transform: uppercase; }
 
-        .card-main:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(211, 47, 47, 0.15);
-            border-color: var(--primary);
-        }
-
-        .card-main i { font-size: 70px; margin-bottom: 25px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
-        .card-main span { font-weight: 800; font-size: 20px; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
-
-        /* MODAIS */
+        /* AJUSTES DO MODAL */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -120,30 +119,34 @@
             justify-content: center;
             align-items: center;
             z-index: 2000;
-            backdrop-filter: blur(6px);
+            backdrop-filter: blur(4px);
+            padding: 20px; /* Garante margem para clicar fora no celular */
+            box-sizing: border-box;
         }
 
         .modal-content {
             background: var(--white);
-            width: 90%;
-            max-width: 700px;
-            border-radius: 24px;
-            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh; /* Altura máxima para não sumir o fundo */
+            border-radius: 20px;
+            padding: 30px;
             position: relative;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-            animation: slideUp 0.4s ease-out;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            overflow-y: auto; /* Scroll interno se o conteúdo for grande */
+            animation: slideUp 0.3s ease-out;
         }
 
         @keyframes slideUp {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .modal-header {
-            border-bottom: 3px solid var(--bg-body);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            font-size: 22px;
+            border-bottom: 2px solid var(--bg-body);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 20px;
             font-weight: 900;
             color: var(--primary);
             text-transform: uppercase;
@@ -152,14 +155,14 @@
 
         .modal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
         }
 
         .btn-link {
             background: #f9f9f9;
-            padding: 25px 15px;
-            border-radius: 15px;
+            padding: 20px 10px;
+            border-radius: 12px;
             text-decoration: none;
             color: var(--text);
             text-align: center;
@@ -167,24 +170,21 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: 0.3s;
+            transition: 0.2s;
             border: 1px solid #eee;
         }
+        .btn-link:hover { background: var(--primary); color: white; }
+        .btn-link i { font-size: 30px; margin-bottom: 8px; }
 
-        .btn-link:hover {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.05);
-        }
+        footer { text-align: center; padding: 15px; font-size: 11px; color: #888; background: #fff; border-top: 1px solid #eee; }
 
-        .btn-link i { font-size: 35px; margin-bottom: 12px; }
-
-        footer { text-align: center; padding: 20px; font-size: 12px; color: #888; background: #fff; border-top: 1px solid #eee; }
-
+        /* RESPONSIVIDADE CELULAR */
         @media (max-width: 600px) {
-            .welcome-banner h1 { font-size: 24px; }
+            .header-title { font-size: 14px; }
+            .welcome-banner { display: none; } /* Oculta banner no celular para subir os cards */
+            .container { padding: 15px; gap: 15px; }
             .modal-grid { grid-template-columns: 1fr; }
-            .card-main { padding: 30px 15px; }
+            .modal-content { padding: 20px; }
         }
     </style>
 </head>
@@ -214,17 +214,18 @@
         <i>📝</i><span>Cadastros</span>
     </div>
     
-    <a href="historico.html" class="card-main" style="text-decoration:none" id="cardAdmin">
+    <a href="historico.html" class="card-main" style="text-decoration:none" id="cardAdminHist">
         <i>📜</i><span>Histórico</span>
+    </a>
         
-    <a href="gestao-usuarios.html" class="card-main" style="text-decoration:none" id="cardAdmin">
+    <a href="gestao-usuarios.html" class="card-main" style="text-decoration:none" id="cardAdminAcesso">
         <i>⚙️</i><span>Níveis de Acesso</span>
     </a>
 </div>
 
 <div id="modalExpedicao" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Expedição de Mercadoria</div>
+        <div class="modal-header">Expedição</div>
         <div class="modal-grid" id="gridExpedicao">
             <a href="cadastro-expedicao.html" class="btn-link" data-min="colaborador"><i>➕</i>Nova Expedição</a>
             <a href="relatorio.html" class="btn-link" data-min="leitor"><i>📅</i>Expedição do Dia</a>
@@ -236,7 +237,7 @@
 
 <div id="modalConferencia" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Recebimento de Cargas</div>
+        <div class="modal-header">Recebimento</div>
         <div class="modal-grid">
             <a href="conferencia.html" class="btn-link"><i>📥</i>Validar Situação</a>
         </div>
@@ -245,7 +246,7 @@
 
 <div id="modalCadastros" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <div class="modal-header">Administrar Cadastros</div>
+        <div class="modal-header">Cadastros</div>
         <div class="modal-grid">
             <a href="veiculos.html" class="btn-link"><i>🚚</i>Veículos</a>
             <a href="produtos.html" class="btn-link"><i>📦</i>Produtos</a>
@@ -259,8 +260,17 @@
 <footer>Móveis Simonetti - Logística - Developed by DB</footer>
 
 <script type="module">
-    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-    window.closeModal = (e) => { if(e.target.classList.contains('modal-overlay')) e.target.style.display = 'none'; };
+    window.openModal = (id) => {
+        document.getElementById(id).style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Trava o scroll do fundo
+    };
+    
+    window.closeModal = (e) => { 
+        if(e.target.classList.contains('modal-overlay')) {
+            e.target.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Destrava scroll
+        }
+    };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -277,15 +287,11 @@
     const db = getFirestore(app);
 
     onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.href = "index.html";
-            return;
-        }
+        if (!user) { window.location.href = "index.html"; return; }
 
         try {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (!userDoc.exists()) {
-                // Se o usuário está logado no Firebase mas não existe no seu Firestore, expulsa
                 signOut(auth).then(() => window.location.href = "index.html");
                 return;
             }
@@ -294,7 +300,7 @@
             const nivel = userData.nivel || 'leitor';
             document.getElementById('userName').innerText = (userData.nome || "Usuário").split(' ')[0].toUpperCase();
 
-            // LOGICA DE PERMISSÕES DE CARDS PRINCIPAIS
+            // LOGICA DE PERMISSÕES
             if(nivel === 'admin') {
                 document.querySelectorAll('.card-main').forEach(c => c.style.display = 'flex');
             } else if(nivel === 'leitor' || nivel === 'colaborador') {
@@ -303,16 +309,11 @@
                 document.getElementById('cardConferencia').style.display = 'flex';
             }
 
-            // LÓGICA DE FILTRO DENTRO DO MODAL EXPEDIÇÃO
             const linksExp = document.querySelectorAll('#gridExpedicao .btn-link');
             linksExp.forEach(link => {
                 const min = link.getAttribute('data-min');
-                if(nivel === 'admin') return; // Admin vê tudo
-                
-                if(nivel === 'leitor' && min !== 'leitor') {
-                    link.style.display = 'none';
-                }
-                // Colaborador vê o dele e o de leitor, então não precisa de restrição extra aqui
+                if(nivel === 'admin') return;
+                if(nivel === 'leitor' && min !== 'leitor') link.style.display = 'none';
             });
 
         } catch (error) { 
