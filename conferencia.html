@@ -13,36 +13,34 @@
         .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
         .container { padding: 20px; max-width: 1000px; margin: auto; }
-        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
-
-        .grid-cargas { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
-        .item-carga { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; position: relative; border-left: 5px solid var(--primary); }
-        .item-carga h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 16px; display: flex; justify-content: space-between; }
-        .info-p { margin: 4px 0; font-size: 13px; color: #555; }
-        .info-p strong { color: #333; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 25px; }
         
-        .badge-data { font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 4px; color: #666; font-weight: normal; }
+        h2 { color: var(--primary); margin-top: 0; font-size: 16px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+
+        /* Estilo dos Filtros */
+        .filter-group { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
+        .filter-group div { flex: 1; }
+        .filter-group label { font-size: 11px; font-weight: bold; color: #666; display: block; }
+        .filter-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+        .btn-search { background: var(--primary); color: white; border: none; padding: 9px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        /* Grid de Cards */
+        .grid-cargas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .item-carga { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); }
+        .item-carga.finalizado { border-left: 5px solid var(--success); opacity: 0.9; }
+        
+        .info-p { margin: 4px 0; font-size: 13px; }
+        .badge-data { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
 
         .btn-confirmar { width: 100%; background: var(--success); color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        
+
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { 
-            background: white; padding: 25px; border-radius: 8px; width: 95%; max-width: 500px; 
-            max-height: 90vh; overflow-y: auto; position: relative;
-        }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-content input, .modal-content textarea, .modal-content select { width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
 
-        .modal-content input, .modal-content textarea, .modal-content select { 
-            width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; 
-        }
-
-        .item-avaria-card { 
-            background: #fdfdfd; border: 1px solid #e0e0e0; padding: 15px; 
-            border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--primary);
-        }
+        .item-avaria-card { background: #fdfdfd; border: 1px solid #e0e0e0; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--primary); }
         .remove-item { color: var(--primary); cursor: pointer; font-size: 11px; font-weight: bold; float: right; }
-        
         .btn-add-item { background: #1976d2; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; margin: 15px 0; font-weight: bold; }
 
         .btn-group { display: flex; gap: 10px; margin-top: 25px; }
@@ -50,6 +48,8 @@
         .btn-save-avaria { background: var(--primary); color: white; border: none; flex: 2; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
         .loading-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 10; justify-content: center; align-items: center; font-weight: bold; color: var(--primary); }
+        
+        @media (max-width: 600px) { .filter-group { flex-direction: column; align-items: stretch; } }
     </style>
 </head>
 <body>
@@ -64,9 +64,29 @@
 
 <div class="container">
     <div class="card">
-        <h2>CARGAS EM TRÂNSITO</h2>
+        <h2>🚚 CARGAS EM TRÂNSITO (PENDENTES)</h2>
         <div class="grid-cargas" id="listaCargas">
-            <p style="text-align:center; width:100%;">Carregando expedições...</p>
+            <p style="text-align:center; width:100%;">Buscando expedições...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>✅ HISTÓRICO DE RECEBIMENTOS</h2>
+        
+        <div class="filter-group">
+            <div>
+                <label>Data Inicial:</label>
+                <input type="date" id="dataInicio">
+            </div>
+            <div>
+                <label>Data Final:</label>
+                <input type="date" id="dataFim">
+            </div>
+            <button class="btn-search" id="btnFiltrarHistorico">🔍 BUSCAR</button>
+        </div>
+
+        <div class="grid-cargas" id="listaHistorico">
+            <p style="text-align:center; width:100%; color: #999;">Selecione o período para visualizar.</p>
         </div>
     </div>
 </div>
@@ -75,15 +95,14 @@
     <div class="modal-content">
         <div class="loading-overlay" id="loadingModal">PROCESSANDO...</div>
         
-        <h3 style="margin-top:0; color: var(--primary);">Conferência de Recebimento</h3>
-        <p id="detalheCarga" style="font-size: 13px; color: #666; background: #eee; padding: 8px; border-radius: 4px;"></p>
+        <h3 style="margin-top:0; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 10px;">Conferência de Recebimento</h3>
+        <div id="detalheCarga" style="font-size: 12px; color: #444; background: #f5f5f5; padding: 12px; border-radius: 6px; line-height: 1.6;"></div>
         
         <div style="margin-top: 15px;">
             <label style="font-size: 14px; font-weight: bold;">Status da Entrega:</label>
             <select id="selectAvaria" onchange="toggleCamposAvaria()">
                 <option value="nao">✅ CARGA 100% OK</option>
-                <option value="avaria">⚠️ POSSUI AVARIA</option>
-                <option value="falta_sobra">❌ POSSUI FALTA / SOBRA</option>
+                <option value="sim">⚠️ POSSUI AVARIA / FALTA / SOBRA</option>
             </select>
         </div>
 
@@ -102,14 +121,9 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, addDoc, onSnapshot, query, where, serverTimestamp, orderBy, startAt, endAt } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { 
-        apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", 
-        authDomain: "logistica-exp.firebaseapp.com", 
-        projectId: "logistica-exp" 
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -118,136 +132,140 @@
     let cargaSelecionadaId = null;
     let listaProdutosDB = [];
 
+    // CONFIGURAÇÃO INICIAL DE DATAS (HOJE)
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('dataInicio').value = hoje;
+    document.getElementById('dataFim').value = hoje;
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) {
                 usuarioDados = userDoc.data();
-                document.getElementById('userName').innerText = usuarioDados.nome;
+                document.getElementById('userName').innerText = usuarioDados.nome.toUpperCase();
                 await carregarListaProdutos();
-                carregarCargas();
+                carregarCargasPendentes();
+                carregarHistorico();
             }
         } else { window.location.href = "index.html"; }
     });
 
-    document.getElementById('btnSair').onclick = () => signOut(auth);
-
     async function carregarListaProdutos() {
-        try {
-            const snap = await getDocs(collection(db, "produtos_lista"));
-            listaProdutosDB = snap.docs.map(d => d.data());
-        } catch (e) { console.error(e); }
+        const snap = await getDocs(collection(db, "produtos_lista"));
+        listaProdutosDB = snap.docs.map(d => d.data());
     }
 
-    function carregarCargas() {
+    // CARGAS EM TRÂNSITO
+    function carregarCargasPendentes() {
         const q = query(collection(db, "expedicoes"), where("status", "==", "CARREGADO/EM VIAGEM"));
         onSnapshot(q, (snap) => {
             const container = document.getElementById('listaCargas');
             container.innerHTML = "";
+            let temCarga = false;
             snap.forEach(d => {
                 const data = d.data();
                 if (usuarioDados.nivel === 'admin' || (usuarioDados.central && usuarioDados.central.includes(data.destino))) {
-                    
-                    // Formata a data se existir
-                    let dataExp = "---";
-                    if(data.dataExpedicao) {
-                        const dt = data.dataExpedicao.toDate();
-                        dataExp = dt.toLocaleDateString('pt-BR');
-                    }
-
+                    temCarga = true;
+                    let dtExp = data.dataExpedicao?.toDate ? data.dataExpedicao.toDate().toLocaleDateString('pt-BR') : '---';
                     container.innerHTML += `
                         <div class="item-carga">
-                            <h3>
-                                📦 Exp: ${data.codigo || data.expedicao}
-                                <span class="badge-data">${dataExp}</span>
-                            </h3>
-                            <p class="info-p"><strong>Placa:</strong> ${data.placa} (${data.veiculo || 'N/A'})</p>
-                            <p class="info-p"><strong>Destino:</strong> ${data.destino}</p>
-                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${data.codigo || data.expedicao}', '${data.placa}')">CONFERIR RECEBIMENTO</button>
-                        </div>
-                    `;
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span class="badge-data">📅 ${dtExp}</span>
+                                <strong style="color:var(--primary)">Exp: ${data.codigo || data.expedicao}</strong>
+                            </div>
+                            <p class="info-p"><strong>🚛 Placa:</strong> ${data.placa}</p>
+                            <p class="info-p"><strong>📦 Veículo:</strong> ${data.veiculo || data.tipoVeiculo || '---'}</p>
+                            <p class="info-p"><strong>📍 Destino:</strong> ${data.destino}</p>
+                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${dtExp}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.veiculo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
+                        </div>`;
                 }
             });
+            if(!temCarga) container.innerHTML = "<p style='text-align:center; width:100%; color:#999;'>Nenhuma carga em trânsito para sua central.</p>";
         });
     }
 
-    window.abrirModal = (id, codigo, placa) => {
+    // CARGAS JÁ RECEBIDAS (HISTÓRICO)
+    async function carregarHistorico() {
+        const container = document.getElementById('listaHistorico');
+        container.innerHTML = "<p style='text-align:center; width:100%;'>Buscando...</p>";
+
+        const dtIn = new Date(document.getElementById('dataInicio').value + "T00:00:00");
+        const dtFim = new Date(document.getElementById('dataFim').value + "T23:59:59");
+
+        const q = query(
+            collection(db, "expedicoes"), 
+            where("status", "==", "FINALIZADO"),
+            where("dataRecebimento", ">=", dtIn),
+            where("dataRecebimento", "<=", dtFim),
+            orderBy("dataRecebimento", "desc")
+        );
+
+        const snap = await getDocs(q);
+        container.innerHTML = "";
+        let encontrou = false;
+
+        snap.forEach(d => {
+            const data = d.data();
+            if (usuarioDados.nivel === 'admin' || (usuarioDados.central && usuarioDados.central.includes(data.destino))) {
+                encontrou = true;
+                let dtRec = data.dataRecebimento?.toDate().toLocaleString('pt-BR');
+                container.innerHTML += `
+                    <div class="item-carga finalizado">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span class="badge-data" style="background:#e8f5e9; color:#2e7d32;">✅ RECEBIDO</span>
+                            <strong>Exp: ${data.codigo || data.expedicao}</strong>
+                        </div>
+                        <p class="info-p"><strong>Recebido em:</strong> ${dtRec}</p>
+                        <p class="info-p"><strong>Placa:</strong> ${data.placa}</p>
+                        <p class="info-p"><strong>Ocorrências:</strong> ${data.teveOcorrencia ? '⚠️ SIM' : '✅ NÃO'}</p>
+                    </div>`;
+            }
+        });
+        if(!encontrou) container.innerHTML = "<p style='text-align:center; width:100%; color:#999;'>Nenhum registro encontrado neste período.</p>";
+    }
+
+    window.abrirModal = (id, data, exp, placa, veiculo) => {
         cargaSelecionadaId = id;
         document.getElementById('listaItensAvaria').innerHTML = "";
-        document.getElementById('detalheCarga').innerText = `Expedição: ${codigo} | Veículo: ${placa}`;
+        document.getElementById('detalheCarga').innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <span><strong>📅 DATA:</strong> ${data}</span>
+                <span><strong>📦 EXPEDIÇÃO:</strong> ${exp}</span>
+                <span><strong>🚛 PLACA:</strong> ${placa}</span>
+                <span><strong>🚚 VEÍCULO:</strong> ${veiculo}</span>
+            </div>`;
         document.getElementById('modalConferencia').style.display = 'flex';
         document.getElementById('selectAvaria').value = 'nao';
         toggleCamposAvaria();
     };
 
-    const fecharModal = () => { document.getElementById('modalConferencia').style.display = 'none'; };
-
     const toggleCamposAvaria = () => {
         const val = document.getElementById('selectAvaria').value;
-        const container = document.getElementById('containerAvarias');
-        
-        if (val === 'nao') {
-            container.style.display = 'none';
-        } else {
-            container.style.display = 'block';
-            // Se mudou o tipo de status, limpa a lista para aplicar os novos motivos
-            document.getElementById('listaItensAvaria').innerHTML = "";
-            adicionarItemAvaria();
-        }
-    };
-
-    window.buscarDescricao = (input, id) => {
-        const produto = listaProdutosDB.find(p => p.codigo == input.value.trim());
-        const campoNome = document.getElementById(`nome_${id}`);
-        if (produto) {
-            campoNome.value = produto.nome;
-            campoNome.readOnly = true;
-            campoNome.style.background = "#f0f0f0";
-        } else {
-            campoNome.value = "";
-            campoNome.readOnly = false;
-            campoNome.style.background = "#fff";
-        }
+        document.getElementById('containerAvarias').style.display = (val === 'sim') ? 'block' : 'none';
+        if (val === 'sim' && document.getElementById('listaItensAvaria').children.length === 0) adicionarItemAvaria();
     };
 
     const adicionarItemAvaria = () => {
-    const idUnico = Date.now();
-    const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
-
-    const itemHtml = `
-        <div class="item-avaria-card" id="item_${idUnico}">
-            <span class="remove-item" onclick="document.getElementById('item_${idUnico}').remove()">X REMOVER</span>
-            
-            <input type="text" class="p-cod" placeholder="Código do Produto" 
-                list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
-            
-            <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
-
-            <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" required>
-            
-            <div style="display: flex; gap: 8px;">
-                <input type="number" class="p-qtd" placeholder="Qtd" style="flex: 1;" required>
-                <select class="p-motivo" style="flex: 2;" required>
-                    <option value="">Selecione o Motivo...</option>
-                    <optgroup label="AVARIAS">
-                        <option value="Danificado">Danificado</option>
-                        <option value="Amassado">Amassado</option>
-                        <option value="Quebrado">Quebrado</option>
-                        <option value="Molhado">Molhado</option>
-                    </optgroup>
-                    <optgroup label="FALTAS E SOBRAS">
-                        <option value="Falta de Produto">Falta de Produto</option>
-                        <option value="Falta de Volume">Falta de Volume</option>
-                        <option value="Sobra de Produto">Sobra de Produto</option>
-                        <option value="Sobra de Volume">Sobra de Volume</option>
-                    </optgroup>
-                </select>
-            </div>
-            <textarea class="p-obs" placeholder="Observações adicionais..."></textarea>
-        </div>
-    `;
-    document.getElementById('listaItensAvaria').insertAdjacentHTML('beforeend', itemHtml);
-};
+        const idUnico = Date.now();
+        const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
+        const itemHtml = `
+            <div class="item-avaria-card" id="item_${idUnico}">
+                <span class="remove-item" onclick="document.getElementById('item_${idUnico}').remove()">X REMOVER</span>
+                <input type="text" class="p-cod" placeholder="Código do Produto" list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
+                <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
+                <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" required>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" class="p-qtd" placeholder="Qtd" style="flex: 1;" required>
+                    <select class="p-motivo" style="flex: 2;" required>
+                        <option value="">Motivo...</option>
+                        <optgroup label="AVARIAS"><option value="Danificado">Danificado</option><option value="Amassado">Amassado</option><option value="Quebrado">Quebrado</option><option value="Molhado">Molhado</option></optgroup>
+                        <optgroup label="FALTAS/SOBRAS"><option value="Falta de Produto">Falta de Produto</option><option value="Falta de Volume">Falta de Volume</option><option value="Sobra de Produto">Sobra de Produto</option><option value="Sobra de Volume">Sobra de Volume</option></optgroup>
+                    </select>
+                </div>
+                <textarea class="p-obs" placeholder="Observações..."></textarea>
+            </div>`;
+        document.getElementById('listaItensAvaria').insertAdjacentHTML('beforeend', itemHtml);
+    };
 
     document.getElementById('btnFinalizar').onclick = async () => {
         const valAvaria = document.getElementById('selectAvaria').value;
@@ -255,17 +273,16 @@
         loading.style.display = 'flex';
 
         try {
-            if (valAvaria !== 'nao') {
+            if (valAvaria === 'sim') {
                 const cards = document.querySelectorAll('.item-avaria-card');
                 for (let card of cards) {
                     await addDoc(collection(db, "avarias"), {
                         expedicaoId: cargaSelecionadaId,
-                        tipoOcorrencia: valAvaria, // 'avaria' ou 'falta_sobra'
                         codigoProduto: card.querySelector('.p-cod').value,
-                        nomeProduto: card.querySelector('.p-nome').value,
+                        nomeProduto: card.querySelector('.p-nome').value.toUpperCase(),
                         quantidade: card.querySelector('.p-qtd').value,
                         motivo: card.querySelector('.p-motivo').value,
-                        descricao: card.querySelector('.p-obs').value,
+                        descricao: card.querySelector('.p-obs').value.toUpperCase(),
                         usuario: usuarioDados.nome,
                         central: usuarioDados.central,
                         dataRegistro: serverTimestamp()
@@ -277,30 +294,28 @@
                 status: "FINALIZADO",
                 dataRecebimento: serverTimestamp(),
                 recebidoPor: usuarioDados.nome,
-                teveOcorrencia: (valAvaria !== 'nao'),
-                tipoFinalizacao: valAvaria
+                teveOcorrencia: (valAvaria === 'sim')
             });
 
-            await addDoc(collection(db, "historico"), {
-                acao: "RECEBIMENTO",
-                detalhe: `Exp. ${cargaSelecionadaId} finalizada como ${valAvaria.toUpperCase()}`,
-                usuario: auth.currentUser.email,
-                data: serverTimestamp()
-            });
-
-            alert("Baixa concluída com sucesso!");
-            fecharModal();
-        } catch (e) {
-            console.error(e);
-            alert("Erro ao processar.");
-        } finally {
-            loading.style.display = 'none';
-        }
+            alert("Recebimento finalizado!");
+            document.getElementById('modalConferencia').style.display = 'none';
+            carregarHistorico(); // Atualiza a lista de baixo
+        } catch (e) { alert("Erro ao salvar."); }
+        loading.style.display = 'none';
     };
 
-    document.getElementById('btnCancelar').onclick = fecharModal;
+    window.buscarDescricao = (input, id) => {
+        const p = listaProdutosDB.find(x => x.codigo == input.value.trim());
+        const field = document.getElementById(`nome_${id}`);
+        if(p) { field.value = p.nome; field.readOnly = true; field.style.background = "#eee"; }
+        else { field.value = ""; field.readOnly = false; field.style.background = "#fff"; }
+    };
+
+    document.getElementById('btnFiltrarHistorico').onclick = carregarHistorico;
+    document.getElementById('btnCancelar').onclick = () => document.getElementById('modalConferencia').style.display = 'none';
     document.getElementById('btnAddItem').onclick = adicionarItemAvaria;
-    window.abrirModal = abrirModal; 
+    document.getElementById('btnSair').onclick = () => signOut(auth);
+    window.abrirModal = abrirModal;
     window.toggleCamposAvaria = toggleCamposAvaria;
 </script>
 </body>
