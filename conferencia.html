@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conferência de Destino - Gestão de Qualidade</title>
+    <title>Conferência de Destino - Simonetti</title>
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --text: #333; --success: #2e7d32; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
@@ -16,10 +16,13 @@
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
 
-        .grid-cargas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .item-carga { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
-        .item-carga h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 16px; }
-        .info-p { margin: 5px 0; font-size: 14px; }
+        .grid-cargas { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        .item-carga { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; position: relative; border-left: 5px solid var(--primary); }
+        .item-carga h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 16px; display: flex; justify-content: space-between; }
+        .info-p { margin: 4px 0; font-size: 13px; color: #555; }
+        .info-p strong { color: #333; }
+        
+        .badge-data { font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 4px; color: #666; font-weight: normal; }
 
         .btn-confirmar { width: 100%; background: var(--success); color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         
@@ -78,14 +81,15 @@
         <div style="margin-top: 15px;">
             <label style="font-size: 14px; font-weight: bold;">Status da Entrega:</label>
             <select id="selectAvaria" onchange="toggleCamposAvaria()">
-                <option value="nao">✅ CARGA 100% OK (SEM AVARIAS)</option>
-                <option value="sim">⚠️ POSSUI ITENS COM AVARIA / FALTA</option>
+                <option value="nao">✅ CARGA 100% OK</option>
+                <option value="avaria">⚠️ POSSUI AVARIA</option>
+                <option value="falta_sobra">❌ POSSUI FALTA / SOBRA</option>
             </select>
         </div>
 
         <div id="containerAvarias" style="display: none;">
             <div id="listaItensAvaria"></div>
-            <button class="btn-add-item" id="btnAddItem">+ ADICIONAR PRODUTO AVARIADO</button>
+            <button class="btn-add-item" id="btnAddItem">+ ADICIONAR ITEM</button>
         </div>
 
         <div class="btn-group">
@@ -112,7 +116,7 @@
 
     let usuarioDados = null;
     let cargaSelecionadaId = null;
-    let listaProdutosDB = []; // Cache dos produtos cadastrados
+    let listaProdutosDB = [];
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -120,7 +124,7 @@
             if (userDoc.exists()) {
                 usuarioDados = userDoc.data();
                 document.getElementById('userName').innerText = usuarioDados.nome;
-                await carregarListaProdutos(); // Carrega produtos para o autocomplete
+                await carregarListaProdutos();
                 carregarCargas();
             }
         } else { window.location.href = "index.html"; }
@@ -128,12 +132,11 @@
 
     document.getElementById('btnSair').onclick = () => signOut(auth);
 
-    // FUNÇÃO PARA CARREGAR PRODUTOS DO FIREBASE
     async function carregarListaProdutos() {
         try {
             const snap = await getDocs(collection(db, "produtos_lista"));
             listaProdutosDB = snap.docs.map(d => d.data());
-        } catch (e) { console.error("Erro ao carregar lista de produtos", e); }
+        } catch (e) { console.error(e); }
     }
 
     function carregarCargas() {
@@ -144,10 +147,21 @@
             snap.forEach(d => {
                 const data = d.data();
                 if (usuarioDados.nivel === 'admin' || (usuarioDados.central && usuarioDados.central.includes(data.destino))) {
+                    
+                    // Formata a data se existir
+                    let dataExp = "---";
+                    if(data.dataExpedicao) {
+                        const dt = data.dataExpedicao.toDate();
+                        dataExp = dt.toLocaleDateString('pt-BR');
+                    }
+
                     container.innerHTML += `
                         <div class="item-carga">
-                            <h3>📦 Exp: ${data.codigo || data.expedicao}</h3>
-                            <p class="info-p"><strong>Placa:</strong> ${data.placa}</p>
+                            <h3>
+                                📦 Exp: ${data.codigo || data.expedicao}
+                                <span class="badge-data">${dataExp}</span>
+                            </h3>
+                            <p class="info-p"><strong>Placa:</strong> ${data.placa} (${data.veiculo || 'N/A'})</p>
                             <p class="info-p"><strong>Destino:</strong> ${data.destino}</p>
                             <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${data.codigo || data.expedicao}', '${data.placa}')">CONFERIR RECEBIMENTO</button>
                         </div>
@@ -170,16 +184,21 @@
 
     const toggleCamposAvaria = () => {
         const val = document.getElementById('selectAvaria').value;
-        document.getElementById('containerAvarias').style.display = (val === 'sim') ? 'block' : 'none';
-        if (val === 'sim' && document.getElementById('listaItensAvaria').children.length === 0) adicionarItemAvaria();
+        const container = document.getElementById('containerAvarias');
+        
+        if (val === 'nao') {
+            container.style.display = 'none';
+        } else {
+            container.style.display = 'block';
+            // Se mudou o tipo de status, limpa a lista para aplicar os novos motivos
+            document.getElementById('listaItensAvaria').innerHTML = "";
+            adicionarItemAvaria();
+        }
     };
 
-    // BUSCA AUTOMÁTICA DE DESCRIÇÃO
     window.buscarDescricao = (input, id) => {
-        const codigoDigitado = input.value.trim();
-        const produto = listaProdutosDB.find(p => p.codigo == codigoDigitado);
+        const produto = listaProdutosDB.find(p => p.codigo == input.value.trim());
         const campoNome = document.getElementById(`nome_${id}`);
-
         if (produto) {
             campoNome.value = produto.nome;
             campoNome.readOnly = true;
@@ -188,44 +207,47 @@
             campoNome.value = "";
             campoNome.readOnly = false;
             campoNome.style.background = "#fff";
-            if (codigoDigitado !== "") {
-                campoNome.placeholder = "Não cadastrado. Digite manualmente...";
-            }
         }
     };
 
     const adicionarItemAvaria = () => {
-        const idUnico = Date.now();
-        // Gera as opções para o datalist de produtos
-        const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
+    const idUnico = Date.now();
+    const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
 
-        const itemHtml = `
-            <div class="item-avaria-card" id="item_${idUnico}">
-                <span class="remove-item" onclick="document.getElementById('item_${idUnico}').remove()">X REMOVER</span>
-                
-                <input type="text" class="p-cod" placeholder="Código do Produto" 
-                    list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
-                
-                <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
+    const itemHtml = `
+        <div class="item-avaria-card" id="item_${idUnico}">
+            <span class="remove-item" onclick="document.getElementById('item_${idUnico}').remove()">X REMOVER</span>
+            
+            <input type="text" class="p-cod" placeholder="Código do Produto" 
+                list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
+            
+            <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
 
-                <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" required>
-                
-                <div style="display: flex; gap: 8px;">
-                    <input type="number" class="p-qtd" placeholder="Qtd" style="flex: 1;" required>
-                    <select class="p-motivo" style="flex: 2;" required>
-                        <option value="">Motivo...</option>
+            <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" required>
+            
+            <div style="display: flex; gap: 8px;">
+                <input type="number" class="p-qtd" placeholder="Qtd" style="flex: 1;" required>
+                <select class="p-motivo" style="flex: 2;" required>
+                    <option value="">Selecione o Motivo...</option>
+                    <optgroup label="AVARIAS">
                         <option value="Danificado">Danificado</option>
-                        <option value="Amassado">Amassado</option>                       
+                        <option value="Amassado">Amassado</option>
                         <option value="Quebrado">Quebrado</option>
                         <option value="Molhado">Molhado</option>
-                        <option value="Falta">Falta/Extravio</option>
-                    </select>
-                </div>
-                <textarea class="p-obs" placeholder="Motivo detalhado / Observações..."></textarea>
+                    </optgroup>
+                    <optgroup label="FALTAS E SOBRAS">
+                        <option value="Falta de Produto">Falta de Produto</option>
+                        <option value="Falta de Volume">Falta de Volume</option>
+                        <option value="Sobra de Produto">Sobra de Produto</option>
+                        <option value="Sobra de Volume">Sobra de Volume</option>
+                    </optgroup>
+                </select>
             </div>
-        `;
-        document.getElementById('listaItensAvaria').insertAdjacentHTML('beforeend', itemHtml);
-    };
+            <textarea class="p-obs" placeholder="Observações adicionais..."></textarea>
+        </div>
+    `;
+    document.getElementById('listaItensAvaria').insertAdjacentHTML('beforeend', itemHtml);
+};
 
     document.getElementById('btnFinalizar').onclick = async () => {
         const valAvaria = document.getElementById('selectAvaria').value;
@@ -233,11 +255,12 @@
         loading.style.display = 'flex';
 
         try {
-            if (valAvaria === 'sim') {
+            if (valAvaria !== 'nao') {
                 const cards = document.querySelectorAll('.item-avaria-card');
                 for (let card of cards) {
                     await addDoc(collection(db, "avarias"), {
                         expedicaoId: cargaSelecionadaId,
+                        tipoOcorrencia: valAvaria, // 'avaria' ou 'falta_sobra'
                         codigoProduto: card.querySelector('.p-cod').value,
                         nomeProduto: card.querySelector('.p-nome').value,
                         quantidade: card.querySelector('.p-qtd').value,
@@ -254,17 +277,18 @@
                 status: "FINALIZADO",
                 dataRecebimento: serverTimestamp(),
                 recebidoPor: usuarioDados.nome,
-                teveAvaria: (valAvaria === 'sim')
+                teveOcorrencia: (valAvaria !== 'nao'),
+                tipoFinalizacao: valAvaria
             });
 
             await addDoc(collection(db, "historico"), {
                 acao: "RECEBIMENTO",
-                detalhe: `Exp. ${cargaSelecionadaId} finalizada. Avarias: ${valAvaria}`,
+                detalhe: `Exp. ${cargaSelecionadaId} finalizada como ${valAvaria.toUpperCase()}`,
                 usuario: auth.currentUser.email,
                 data: serverTimestamp()
             });
 
-            alert("Baixa concluída!");
+            alert("Baixa concluída com sucesso!");
             fecharModal();
         } catch (e) {
             console.error(e);
