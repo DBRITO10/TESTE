@@ -174,9 +174,9 @@
                                 <strong style="color:var(--primary)">Exp: ${data.codigo || data.expedicao}</strong>
                             </div>
                             <p class="info-p"><strong>🚛 Placa:</strong> ${data.placa}</p>
-                            <p class="info-p"><strong>📦 Veículo:</strong> ${data.veiculo || data.tipoVeiculo || '---'}</p>
+                            <p class="info-p"><strong>📦 Veículo:</strong> ${data.tipo || data.tipoVeiculo || '---'}</p>
                             <p class="info-p"><strong>📍 Destino:</strong> ${data.destino}</p>
-                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${dtExp}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.veiculo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
+                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${dtExp}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.tipo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
                         </div>`;
                 }
             });
