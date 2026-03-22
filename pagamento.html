@@ -261,48 +261,108 @@
         XLSX.writeFile(wb, "Fechamento_Simonetti.xlsx");
     };
 
-    window.exportPDF = () => {
-        if(dadosParaExportar.length === 0) return alert("Gere o relatório!");
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4');
+   window.exportPDF = () => {
+       if(dadosParaExportar.length === 0) return alert("Gere o relatório primeiro!");
+    
+       const { jsPDF } = window.jspdf;
+       const doc = new jsPDF('l', 'mm', 'a4');
+       const totalPagesExp = "{total_pages_count_string}";
+
+       // CONFIGURAÇÃO DE CORES E ESTILO
+       const corPrimaria = [183, 28, 28]; // Vermelho Simonetti
+       const corTextoHeader = [255, 255, 255]; // Branco
+
+       // 1. CABEÇALHO ESTILIZADO (RETÂNGULO VERMELHO)
+       doc.setFillColor(...corPrimaria);
+       doc.rect(0, 0, 297, 25, 'F'); 
+    
+       doc.setFontSize(18);
+       doc.setTextColor(...corTextoHeader);
+       doc.setFont("helvetica", "bold");
+       doc.text("FECHAMENTO FINANCEIRO - LOGÍSTICA SIMONETTI", 15, 12);
+    
+       doc.setFontSize(10);
+       doc.setFont("helvetica", "normal");
+       const dataEmissao = new Date().toLocaleString('pt-BR');
+       doc.text(`Emissão: ${dataEmissao}`, 15, 19);
+
+       // 2. TABELA DE DADOS
+       let lastDate = "";
+       let useGray = false;
+
+       doc.autoTable({
+           head: [['DATA', 'PLACA', 'VEÍCULO', 'EXPEDIÇÕES', 'NOME', 'VÍNCULO', 'BASE', 'INSS', 'TOTAL']],
+           body: dadosParaExportar.map(d => [
+               d.data, 
+               d.placa, 
+               d.veiculo, 
+               d.exps, 
+               d.nome, 
+               d.vinculo, 
+               `R$ ${d.base.toFixed(2)}`, 
+               `R$ ${d.inss.toFixed(2)}`, 
+               `R$ ${d.total.toFixed(2)}`
+           ]),
+           startY: 30,
+           theme: 'plain', // Usamos plain para controlar a cor manualmente
+           headStyles: { 
+               fillColor: [51, 51, 51], // Cinza escuro para o topo da tabela
+               textColor: 255, 
+               fontStyle: 'bold',
+               fontSize: 9
+           },
+           styles: { fontSize: 8, cellPadding: 3 },
+           didParseCell: function(data) {
+               if (data.section === 'body') {
+                   const rowDate = data.row.raw[0]; // Pega a data da linha
+                   if (rowDate !== lastDate) {
+                       useGray = !useGray;
+                       lastDate = rowDate;
+                   }
+                   if (useGray) {
+                       data.cell.styles.fillColor = [242, 242, 242]; // Salteado cinza claro
+                   }
+               }
+           }
+       });
+
+       // 3. RESUMO DE PAGAMENTOS (LOGICA DE POSICIONAMENTO)
+       let finalY = doc.lastAutoTable.finalY + 10;
+    
+       // Verifica se o resumo cabe na página, se não, adiciona nova página
+       if (finalY > 160) {
+           doc.addPage();
+           finalY = 20;
+       }
+
+       doc.setTextColor(0, 0, 0);
+       doc.setFontSize(12);
+       doc.setFont("helvetica", "bold");
+       doc.text("RESUMO DE PAGAMENTOS:", 14, finalY);
+    
+       finalY += 2;
+       doc.setDrawColor(...corPrimaria);
+       doc.line(14, finalY, 80, finalY); // Linha decorativa abaixo do título
+
+       for (let p in resumoPorPessoa) {
+           finalY += 8;
+           doc.setFontSize(10);
+           doc.setFont("helvetica", "bold");
+           doc.text(`${p}:`, 14, finalY);
         
-        doc.setFontSize(16);
-        doc.text("FECHAMENTO FINANCEIRO - LOGÍSTICA SIMONETTI", 148, 15, { align: "center" });
-
-        let lastDate = "";
-        let useGray = false;
-
-        doc.autoTable({
-            head: [['DATA', 'PLACA', 'VEÍCULO', 'NOME', 'VÍNCULO', 'BASE', 'INSS', 'TOTAL']],
-            body: dadosParaExportar.map(d => [d.data, d.placa, d.veiculo, d.nome, d.vinculo, d.base.toFixed(2), d.inss.toFixed(2), d.total.toFixed(2)]),
-            startY: 25,
-            theme: 'plain',
-            headStyles: { fillStyle: [183, 28, 28], textColor: 255 },
-            didParseCell: function(data) {
-                if (data.section === 'body') {
-                    const rowDate = data.row.raw[0];
-                    if (rowDate !== lastDate) {
-                        useGray = !useGray;
-                        lastDate = rowDate;
-                    }
-                    if (useGray) data.cell.styles.fillColor = [240, 240, 240];
-                }
-            }
-        });
-
-        let finalY = doc.lastAutoTable.finalY + 15;
-        doc.setFontSize(12);
-        doc.text("RESUMO DE PAGAMENTOS:", 14, finalY);
+           doc.setFont("helvetica", "normal");
+           const textoValor = `R$ ${resumoPorPessoa[p].total.toFixed(2)} (${resumoPorPessoa[p].carros} Carros)`;
+           doc.text(textoValor, 80, finalY);
         
-        for (let p in resumoPorPessoa) {
-            finalY += 7;
-            doc.setFontSize(10);
-            doc.text(`${p}: R$ ${resumoPorPessoa[p].total.toFixed(2)} (${resumoPorPessoa[p].carros} Carros)`, 14, finalY);
-            if(finalY > 185) { doc.addPage(); finalY = 20; }
-        }
+           // Linha pontilhada entre nome e valor (opcional para estilo)
+           doc.setDrawColor(200, 200, 200);
+           doc.setLineDash([1, 1], 0);
+           doc.line(14 + doc.getTextWidth(p) + 2, finalY, 78, finalY);
+           doc.setLineDash([], 0);
+       }
 
-        doc.save("Fechamento_Simonetti.pdf");
-    };
+       doc.save(`Fechamento_Simonetti_${new Date().getTime()}.pdf`);
+   };
 </script>
 </body>
 </html>
