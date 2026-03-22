@@ -68,7 +68,6 @@
         .btn-m-apply { background: #2e7d32; color: white; }
         .btn-m-can { background: #d32f2f; color: white; }
 
-        /* Estilo dos novos botões de Marcar/Desmarcar */
         .selection-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 10px; border-bottom: 2px solid #ddd; background: #fafafa; }
         .btn-sel { padding: 5px; font-size: 10px; font-weight: bold; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 3px; }
         .btn-sel:hover { background: #eee; }
@@ -158,22 +157,16 @@
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             try {
-                // 2. BUSCA O DOCUMENTO NA COLEÇÃO 'usuarios' USANDO O UID DO LOGIN
                 const userRef = doc(db, "usuarios", user.uid);
                 const userSnap = await getDoc(userRef);
-
                 if (userSnap.exists()) {
-                    // 3. DEFINE O NOME (O campo no seu banco é 'nome')
                     document.getElementById('userName').innerText = userSnap.data().nome;
                 } else {
-                    console.log("Usuário não encontrado no banco.");
-                    document.getElementById('userName').innerText = user.email; // Fallback para o email
+                    document.getElementById('userName').innerText = user.email;
                 }
             } catch (error) {
                 console.error("Erro ao buscar nome:", error);
             }
-
-            // Chama a função carregar para preencher a tabela
             carregar(); 
         } else { 
             window.location.href = "index.html"; 
@@ -184,7 +177,13 @@
         const snap = await getDocs(collection(db, "expedicoes"));
         dadosFull = snap.docs.map(d => d.data());
         
-        const hoje = new Date().toISOString().split('T')[0];
+        // AJUSTE: DATA ATUAL NO HORÁRIO DE BRASÍLIA
+        const agora = new Date();
+        const offsetBR = -3; 
+        const dataBR = new Date(agora.getTime() + (offsetBR * 3600000));
+        const hoje = dataBR.toISOString().split('T')[0];
+
+        // DEFINE O FILTRO DE DATA INICIALMENTE COMO HOJE
         filtrosAtivos['data'] = [hoje];
         document.getElementById('f-data').classList.add('active');
         
