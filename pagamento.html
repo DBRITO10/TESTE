@@ -135,31 +135,55 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", 
+        authDomain: "logistica-exp.firebaseapp.com", 
+        projectId: "logistica-exp" 
+    };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     let dadosParaExportar = [];
     let resumoPorPessoa = {};
 
-    // AJUSTE: Carrega o nome sem te expulsar da página
-    async function carregarUsuario() {
-        const userUid = localStorage.getItem("userUid") || "LqfKXq6uevZMAW49sdEKpbprLa53";
+    // FUNÇÃO PARA VALIDAR ADMIN E CARREGAR NOME
+    async function verificarAcesso() {
+        const userUid = localStorage.getItem("userUid");
+        
+        // Se não tiver UID, volta pro login
+        if (!userUid) {
+            window.location.href = "index.html";
+            return;
+        }
+
         try {
             const userDoc = await getDoc(doc(db, "usuarios", userUid));
+            
             if (userDoc.exists()) {
-                document.getElementById('userName').innerText = userDoc.data().nome;
+                const dados = userDoc.data();
+                
+                // Valida se é admin conforme sua imagem (nivel: "admin")
+                if (dados.nivel === "admin") {
+                    document.getElementById('userName').innerText = dados.nome;
+                } else {
+                    alert("Acesso restrito a administradores!");
+                    window.location.href = "menu.html";
+                }
+            } else {
+                window.location.href = "index.html";
             }
         } catch (error) {
-            console.error("Erro ao carregar usuário:", error);
+            console.error("Erro na verificação:", error);
         }
     }
-    carregarUsuario();
 
-    // AJUSTE: Botão de Sair só funciona no clique
+    // Executa ao abrir a página
+    verificarAcesso();
+
+    // BOTÃO SAIR (Só desloga se clicar)
     document.getElementById('btnLogout').addEventListener('click', () => {
-        localStorage.clear(); 
-        window.location.href = "index.html"; 
+        localStorage.removeItem("userUid");
+        window.location.href = "index.html";
     });
 
     window.gerarFechamento = async () => {
