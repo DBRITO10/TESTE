@@ -52,12 +52,12 @@
 
 <header>
     <div class="header-brand">
-        <a href="menu.html" class="btn-back">⬅ VOLTAR AO MENU</a>
+        <a href="menu.html" class="btn-back">⬅ VOLTAR</a>
         <h2 style="margin: 0;">RELATÓRIO DE PAGAMENTO EQUIPE</h2>
     </div>
     <div style="text-align: right;">
         <div id="adminName" style="font-weight: bold;">ADMIN: Carregando...</div>
-        <button onclick="logout()" style="color:red; border:none; background:none; cursor:pointer; font-size:12px;">[ SAIR DO SISTEMA ]</button>
+        <button onclick="logout()" style="color:red; border:none; background:none; cursor:pointer; font-size:12px;">SAIR</button>
     </div>
 </header>
 
@@ -219,37 +219,101 @@
         }
     };
 
-    window.exportPDF = () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4');
-        doc.setFontSize(18);
-        doc.text("FECHAMENTO FINANCEIRO - LOGÍSTICA SIMONETTI", 14, 15);
-        
-        const body = dadosParaExportar.map(d => [d.data, d.placa, d.exps, d.nome, d.vinculo, d.base.toFixed(2), d.inss.toFixed(2), d.total.toFixed(2)]);
-        
-        doc.autoTable({
-            head: [['DATA', 'PLACA', 'EXPEDIÇÕES', 'NOME', 'VÍNCULO', 'BASE', 'INSS', 'TOTAL']],
-            body: body,
-            startY: 25,
-            theme: 'striped',
-            headStyles: { fillStyle: [183, 28, 28] },
-            didParseCell: function(data) {
-                // Aqui você pode aplicar cores customizadas no PDF se desejar
+// --- EXPORTAR EXCEL ---
+window.exportExcel = () => {
+    // Cria uma aba para o detalhamento e outra para o resumo consolidado
+    const wb = XLSX.utils.book_new();
+    
+    // Aba Detalhada
+    const wsDetalhes = XLSX.utils.json_to_sheet(dadosParaExportar);
+    XLSX.utils.book_append_sheet(wb, wsDetalhes, "Detalhamento");
+
+    // Aba Resumo Consolidado
+    const resumoData = Object.keys(resumoPorPessoa).map(nome => {
+        const r = resumoPorPessoa[nome];
+        return {
+            "Colaborador": nome,
+            "Total de Veículos": r.carros,
+            "Detalhamento Frota": `Carreta: ${r.detalheVeiculos.CARRETA || 0}, Truck: ${r.detalheVeiculos.TRUCK || 0}, Toco: ${r.detalheVeiculos.TOCO || 0}, 3/4: ${r.detalheVeiculos['CARRO 3/4'] || 0}`,
+            "Valor Total a Receber": `R$ ${r.total.toFixed(2)}`
+        };
+    });
+    const wsResumo = XLSX.utils.json_to_sheet(resumoData);
+    XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo de Pagamento");
+
+    XLSX.writeFile(wb, "Fechamento_Financeiro_Simonetti.xlsx");
+};
+
+// --- EXPORTAR PDF COM ZEBRA POR DATA ---
+window.exportPDF = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    doc.setFontSize(16);
+    doc.text("FECHAMENTO FINANCEIRO - LOGÍSTICA SIMONETTI", 14, 15);
+    
+    const colunas = ["DATA", "PLACA", "EXPEDIÇÕES", "NOME", "VÍNCULO", "BASE", "INSS (20%)", "TOTAL"];
+    const rows = dadosParaExportar.map(d => [
+        d.data, d.placa, d.exps, d.nome, d.vinculo, 
+        d.base.toFixed(2), d.inss.toFixed(2), d.total.toFixed(2)
+    ]);
+
+    let lastDate = "";
+    let useGray = false;
+
+    doc.autoTable({
+        head: [colunas],
+        body: rows,
+        startY: 25,
+        theme: 'plain', // Usamos plain para controlar as cores manualmente
+        headStyles: { fillStyle: [183, 28, 28], textColor: 255, fontStyle: 'bold' },
+        didParseCell: function(data) {
+            if (data.section === 'body') {
+                const currentDate = data.row.raw[0]; // Pega a Data da linha
+                if (currentDate !== lastDate) {
+                    useGray = !useGray; // Inverte a cor quando a data muda
+                    lastDate = currentDate;
+                }
+                // Aplica cinza claro se for a vez do cinza
+                if (useGray) {
+                    data.cell.styles.fillColor = [240, 240, 240];
+                }
             }
-        });
+        },
+        styles: { fontSize: 8, cellPadding: 3 }
+    });
 
-        // Adicionar Resumo no PDF
-        let finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(14);
-        doc.text("RESUMO DE PAGAMENTOS:", 14, finalY);
-        for (let p in resumoPorPessoa) {
-            finalY += 7;
-            doc.setFontSize(11);
-            doc.text(`${p}: R$ ${resumoPorPessoa[p].total.toFixed(2)} (${resumoPorPessoa[p].carros} Carros)`, 14, finalY);
-        }
+    // --- SEÇÃO: RESUMO DE PAGAMENTOS (COM TIPOS DE VEÍCULOS) ---
+    let finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text("RESUMO DE PAGAMENTOS CONSOLIDADO:", 14, finalY);
+    
+    finalY += 8;
+    for (let p in resumoPorPessoa) {
+        const r = resumoPorPessoa[p];
+        const detalhe = r.detalheVeiculos;
+        
+        // Monta a string: 3 Carretas, 2 Truck...
+        const frotaStr = [
+            detalhe.CARRETA ? `${detalhe.CARRETA} Carreta(s)` : "",
+            detalhe.TRUCK ? `${detalhe.TRUCK} Truck(s)` : "",
+            detalhe.TOCO ? `${detalhe.TOCO} Toco(s)` : "",
+            detalhe['CARRO 3/4'] ? `${detalhe['CARRO 3/4']} 3/4` : ""
+        ].filter(Boolean).join(", ");
 
-        doc.save("Fechamento_Simonetti.pdf");
-    };
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${p}:`, 14, finalY);
+        doc.setFont(undefined, 'normal');
+        doc.text(`R$ ${r.total.toFixed(2)} | Total: ${r.carros} carro(s) [ ${frotaStr} ]`, 60, finalY);
+        
+        finalY += 6;
+        if (finalY > 190) { doc.addPage(); finalY = 20; } // Evita quebra de página feia
+    }
+
+    doc.save(`Fechamento_Simonetti_${new Date().toLocaleDateString('pt-BR')}.pdf`);
+};
 </script>
 </body>
 </html>
