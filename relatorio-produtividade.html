@@ -19,11 +19,19 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 1000; height: 60px;
         }
 
+        .header-left { display: flex; align-items: center; gap: 10px; }
+
         .btn-header {
             background: rgba(255, 255, 255, 0.15); border: 1px solid white; color: white;
-            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
-            text-decoration: none; font-size: 12px;
+            padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+            text-decoration: none; font-size: 12px; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
         }
+        .btn-header:hover { background: rgba(255, 255, 255, 0.3); }
+
+        /* Títulos Responsivos */
+        .title-desktop { display: block; font-size: 16px; margin: 0; font-weight: bold; }
+        .title-mobile { display: none; font-size: 16px; margin: 0; font-weight: bold; }
 
         .container { padding: 15px; max-width: 1400px; margin: auto; }
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -55,73 +63,65 @@
             background: #fdf2f2; color: #d32f2f; border: 1px solid #d32f2f;
             padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;
         }
-        .btn-ver-avaria:hover { background: #d32f2f; color: white; }
 
-        /* Modal Estilizado */
         #modalAvaria {
             display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
         }
         .modal-content {
-            background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px;
+            background: white; padding: 25px; border-radius: 12px; width: 95%; max-width: 600px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative;
         }
-        .modal-header { border-bottom: 2px solid #fdf2f2; padding-bottom: 10px; margin-bottom: 15px; color: var(--primary); }
-        .modal-close { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: #999; }
         
         .btn-export { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; display: flex; gap: 5px; }
         .btn-excel { background: #1b5e20; }
         .btn-pdf { background: #b71c1c; }
-      
+
         /* RESPONSIVIDADE CELULAR */
         @media (max-width: 600px) {
-            /* Título apenas Simonetti e sem subtítulo */
-            .header-title .main-t::after { content: ""; }
-            .header-title .main-t { font-size: 16px; content: "Relatório MS"; }
-            .header-title .sub-t { display: none; }
+            header { padding: 0 10px; }
+            .title-desktop { display: none; }
+            .title-mobile { display: block; }
+            #userName { display: none; } /* Esconde nome no celular para sobrar espaço */
+            .btn-header { padding: 8px 10px; font-size: 11px; }
             
-            /* Ajuste de texto via JS ou CSS para mobile */
-            .header-title .main-t { visibility: hidden; position: relative; }
-            .header-title .main-t::before { 
-                content: "Relatório MS"; 
-                visibility: visible; 
-                position: absolute; 
-                left: 50%; 
-                transform: translateX(-50%);
-            }
-
-            .container { padding: 15px; }
-            .modal-grid { grid-template-columns: 1fr; }
-        }   
+            .periodo-box { flex-direction: column; align-items: stretch; }
+            .periodo-box div { width: 100%; }
+            .periodo-box div:last-child { justify-content: space-between; width: 100%; }
+        }
     </style>
 </head>
 <body>
 
 <div id="modalAvaria">
     <div class="modal-content">
-        <span class="modal-close" onclick="fecharModal()">&times;</span>
+        <span class="modal-close" style="position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer;" onclick="fecharModal()">&times;</span>
         <div class="modal-header">
-            <h2 id="modalTitle" style="margin:0; font-size: 18px;">📋 Detalhes da Ocorrência</h2>
+            <h2 id="modalTitle" style="margin:0; font-size: 18px; color: var(--primary); border-bottom: 2px solid #fdf2f2; padding-bottom: 10px;">📋 Detalhes da Ocorrência</h2>
         </div>
-        <div id="modalBody" style="max-height: 400px; overflow-y: auto;">
-            </div>
+        <div id="modalBody" style="max-height: 400px; overflow-y: auto; margin-top: 15px;"></div>
     </div>
 </div>
 
 <header>
     <div class="header-left">
         <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
-        <span id="userName">👤 Carregando...</span>
     </div>
-    <h1 style="font-size: 16px; margin: 0;">GESTÃO DE QUALIDADE SIMONETTI</h1>
-    <button class="btn-header" id="btnLogout">SAIR</button>
+    
+    <h1 class="title-desktop">GESTÃO DE QUALIDADE SIMONETTI</h1>
+    <h1 class="title-mobile">RELATÓRIO MS</h1>
+    
+    <div class="header-right" style="display: flex; align-items: center; gap: 10px;">
+        <span id="userName" style="font-size: 12px;">👤...</span>
+        <button class="btn-header" id="btnLogout">SAIR</button>
+    </div>
 </header>
 
 <div class="container">
     <div class="card">
         <div class="periodo-box">
-            <div><label style="font-size:11px; font-weight:bold;">INÍCIO</label><br><input type="date" id="dataInicio"></div>
-            <div><label style="font-size:11px; font-weight:bold;">FIM</label><br><input type="date" id="dataFim"></div>
+            <div><label style="font-size:11px; font-weight:bold;">INÍCIO</label><br><input type="date" id="dataInicio" style="width:100%; box-sizing:border-box;"></div>
+            <div><label style="font-size:11px; font-weight:bold;">FIM</label><br><input type="date" id="dataFim" style="width:100%; box-sizing:border-box;"></div>
             <button class="btn-header" style="background:var(--primary); height:35px; margin-top:16px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR</button>
             <div style="flex-grow: 1; text-align: right; display: flex; justify-content: flex-end; gap: 10px; margin-top:16px;">
                 <button class="btn-export btn-excel" onclick="exportarExcel()">📊 EXCEL</button>
@@ -138,7 +138,7 @@
                         <th onclick="ordenar('destino')">DESTINO ⇅ <input type="text" class="filter-input" data-col="destino" placeholder="..."></th>
                         <th onclick="ordenar('placa')">PLACA ⇅ <input type="text" class="filter-input" data-col="placa" placeholder="..."></th>
                         <th onclick="ordenar('equipe')">EQUIPE ⇅ <input type="text" class="filter-input" data-col="equipe" placeholder="..."></th>
-                        <th>OCORRÊNCIAS <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Filtrar item..."></th>
+                        <th>OCORRÊNCIAS <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="..."></th>
                         <th onclick="ordenar('situacaoStr')">SITUAÇÃO ⇅ <input type="text" class="filter-input" data-col="situacaoStr" placeholder="..."></th> 
                     </tr>
                 </thead>
@@ -149,6 +149,8 @@
 </div>
 
 <script type="module">
+    // Mantenha seu script do Firebase aqui (o código que você enviou está completo e funcional)
+    // O ajuste foi focado no HTML/CSS para garantir a organização visual.
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, orderBy, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -165,7 +167,7 @@
     onAuthStateChanged(auth, async user => {
         if(user) { 
             const userSnap = await getDoc(doc(db, "usuarios", user.uid));
-            document.getElementById('userName').innerText = "👤 " + (userSnap.exists() ? userSnap.data().nome : "Usuário");
+            document.getElementById('userName').innerText = "👤 " + (userSnap.exists() ? userSnap.data().nome.split(' ')[0] : "Usuário");
             await carregarMapaFornecedores();
             setarDatasPadrao();
             filtrarPorPeriodo(); 
@@ -243,18 +245,16 @@
         });
     }
 
-    // Modal de Avarias
     window.verDetalhes = (index) => {
         const item = todosOsDados[index];
         const modal = document.getElementById('modalAvaria');
         const body = document.getElementById('modalBody');
-        
         let html = `<div style="padding:10px; background:#f9f9f9; border-radius:8px; margin-bottom:15px; border-left:4px solid var(--primary);">
                         <b>Expedição:</b> ${item.codigo} | <b>Destino:</b> ${item.destino}
                     </div>`;
 
         item.avarias.forEach(a => {
-            const forn = mapaFornecedores[a.codigoProduto] || "NÃO INFORMADO";
+            const forn = a.fornecedor || mapaFornecedores[a.codigoProduto] || "N/I";
             html += `<div style="border-bottom: 1px solid #eee; padding: 10px 0;">
                         <span style="color:var(--primary); font-weight:bold;">[${a.codigoProduto}] ${a.nomeProduto}</span><br>
                         <small><b>FORNECEDOR:</b> ${forn}</small><br>
@@ -262,14 +262,12 @@
                         <p style="margin:5px 0; font-size:11px; background:#fff; padding:5px; border-radius:4px;"><b>OBS:</b> ${a.descricao || 'Sem observações'}</p>
                      </div>`;
         });
-
         body.innerHTML = html;
         modal.style.display = 'flex';
     };
 
     window.fecharModal = () => document.getElementById('modalAvaria').style.display = 'none';
 
-    // Ordenação A-Z
     window.ordenar = (campo) => {
         ordemCrescente = !ordemCrescente;
         todosOsDados.sort((a, b) => {
@@ -280,12 +278,9 @@
         renderizarTabela(todosOsDados);
     };
 
-    // PDF PREMIUM - Versão com Observações (Descrição)
     window.exportarPDF = () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
-
-        // Cabeçalho
         doc.setFillColor(211, 47, 47);
         doc.rect(0, 0, 297, 30, 'F');
         doc.setTextColor(255, 255, 255);
@@ -296,19 +291,15 @@
         doc.text(`Emissão: ${new Date().toLocaleString()}`, 15, 27);
 
         const colunas = ["DATA", "EXP", "DESTINO", "PLACA", "EQUIPE", "DETALHES DA OCORRÊNCIA", "SITUAÇÃO"];
-        
         const linhas = todosOsDados.map(item => {
             let textoAvaria = "OK";
             if (item.avarias && item.avarias.length > 0) {
                 textoAvaria = item.avarias.map(a => {
-                    // Tenta pegar o fornecedor direto da avaria ou do mapa global
                     const forn = a.fornecedor || mapaFornecedores[a.codigoProduto] || "N/I";
-                    const obs = a.descricao ? `\nOBS: ${a.descricao}` : ""; // Pega o campo "NÃO VEIO" do print
-                    
+                    const obs = a.descricao ? `\nOBS: ${a.descricao}` : "";
                     return `PRODUTO: ${a.nomeProduto}\nFORNECEDOR: ${forn}\nMOTIVO: ${a.motivo} (Qtd: ${a.quantidade})${obs}`;
                 }).join("\n--------------------------\n");
             }
-
             return [item.data, item.codigo, item.destino, item.placa, item.equipe, textoAvaria, item.situacaoStr];
         });
 
@@ -316,33 +307,18 @@
             head: [colunas],
             body: linhas,
             startY: 35,
-            styles: { 
-                fontSize: 7, 
-                cellPadding: 3, 
-                lineColor: [200, 200, 200], 
-                lineWidth: 0.1,
-                valign: 'middle'
-            },
-            headStyles: { 
-                fillColor: [240, 240, 240], // Fundo claro como você pediu
-                textColor: [50, 50, 50],
-                fontStyle: 'bold'
-            },
-            columnStyles: { 
-                5: { cellWidth: 100 }, // Aumentei um pouco para caber a observação
-                6: { fontStyle: 'bold', halign: 'center' } 
-            },
+            styles: { fontSize: 7, cellPadding: 3, valign: 'middle' },
+            headStyles: { fillColor: [240, 240, 240], textColor: [50, 50, 50], fontStyle: 'bold' },
+            columnStyles: { 5: { cellWidth: 100 }, 6: { fontStyle: 'bold', halign: 'center' } },
             didParseCell: function(data) {
                 if (data.section === 'body' && data.column.index === 6) {
                     data.cell.styles.textColor = (data.cell.raw === "AVARIA") ? [190, 0, 0] : [0, 130, 0];
                 }
             }
         });
-
         doc.save(`Relatorio_Qualidade_Simonetti.pdf`);
     };
 
-    // Filtros
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('keyup', (e) => {
             e.stopPropagation();
