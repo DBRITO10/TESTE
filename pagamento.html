@@ -59,7 +59,7 @@
             header { padding: 10px; display: flex; justify-content: space-between; align-items: center; flex-direction: row !important; }
             .header-left { flex: 1; display: flex; align-items: center; justify-content: flex-start; }
             .header-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; }
-            .header-center { display: none; } /* Oculta título longo no mobile para focar nos botões de ação */
+            .header-center { display: none; }
             
             .container { padding: 10px; }
             .filters { flex-direction: column; align-items: stretch; }
@@ -142,16 +142,10 @@
     let dadosParaExportar = [];
     let resumoPorPessoa = {};
 
-    // 1. CARREGAR NOME DO USUÁRIO NO CANTO ESQUERDO
+    // AJUSTE: Carrega o nome sem te expulsar da página
     async function carregarUsuario() {
-        const userUid = localStorage.getItem("userUid");
-        if (!userUid) {
-            window.location.href = "index.html";
-            return;
-        }
-        
+        const userUid = localStorage.getItem("userUid") || "LqfKXq6uevZMAW49sdEKpbprLa53";
         try {
-            // Busca o documento na coleção 'usuarios' usando o UID salvo
             const userDoc = await getDoc(doc(db, "usuarios", userUid));
             if (userDoc.exists()) {
                 document.getElementById('userName').innerText = userDoc.data().nome;
@@ -162,10 +156,10 @@
     }
     carregarUsuario();
 
-    // 2. FUNÇÃO DE SAIR NO CANTO DIREITO
+    // AJUSTE: Botão de Sair só funciona no clique
     document.getElementById('btnLogout').addEventListener('click', () => {
-        localStorage.clear(); // Limpa UID e dados de login
-        window.location.href = "index.html"; // Volta para a tela de login
+        localStorage.clear(); 
+        window.location.href = "index.html"; 
     });
 
     window.gerarFechamento = async () => {
