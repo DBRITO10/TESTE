@@ -29,7 +29,6 @@
         .container { padding: 20px; max-width: 1600px; margin: auto; }
         .card-admin { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); margin-bottom: 25px; }
         
-        /* Alinhamento do valor e cifrão */
         .val-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .val-item { background: #fff8f8; border: 1px solid #ffcdd2; padding: 12px; border-radius: 8px; }
         .val-item label { font-size: 10px; font-weight: bold; color: var(--primary); display: block; margin-bottom: 4px; }
@@ -57,11 +56,11 @@
 
         /* Responsividade Celular */
         @media (max-width: 768px) {
-            header { flex-direction: column; gap: 10px; padding: 15px; }
-            .header-left, .header-right { width: 100%; text-align: center; justify-content: center; }
-            h2 { font-size: 16px; content: "Relatório Pagamento"; }
-            #main-title::after { content: "RELATÓRIO PAGAMENTO"; }
-            #main-title span { display: none; }
+            header { padding: 10px; display: flex; justify-content: space-between; align-items: center; flex-direction: row !important; }
+            .header-left { flex: 1; display: flex; align-items: center; justify-content: flex-start; }
+            .header-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; }
+            .header-center { display: none; } /* Oculta título longo no mobile para focar nos botões de ação */
+            
             .container { padding: 10px; }
             .filters { flex-direction: column; align-items: stretch; }
             .btn-actions { flex-direction: column; width: 100%; }
@@ -74,13 +73,13 @@
 <header>
     <div class="header-left">
         <a href="menu.html" class="btn-back">⬅️</a>
-        <span>Olá, <strong id="userName">...</strong></span>
+        <span style="font-size: 12px; margin-left: 5px;">Olá, <strong id="userName">...</strong></span>
     </div>
     <div class="header-center">
-        <h2 id="main-title"><span>RELATÓRIO DE PAGAMENTO EQUIPE</span></h2>
+        <h2 id="main-title">RELATÓRIO DE PAGAMENTO EQUIPE</h2>
     </div>
     <div class="header-right">
-        <button onclick="logout()" style="color:red; border:none; background:none; cursor:pointer; font-size:11px; font-weight: bold;">SAIR</button>
+        <button id="btnLogout" style="color:red; border:none; background:none; cursor:pointer; font-size:11px; font-weight: bold;">SAIR</button>
     </div>
 </header>
 
@@ -143,15 +142,31 @@
     let dadosParaExportar = [];
     let resumoPorPessoa = {};
 
-    // Carregar nome do usuário da coleção correta
+    // 1. CARREGAR NOME DO USUÁRIO NO CANTO ESQUERDO
     async function carregarUsuario() {
-        const userUid = localStorage.getItem("userUid") || "LqfKXq6uevZMAW49sdEKpbprLa53"; // Exemplo do snippet
-        const userDoc = await getDoc(doc(db, "usuarios", userUid));
-        if (userDoc.exists()) {
-            document.getElementById('adminName').innerText = `USUÁRIO: ${userDoc.data().nome}`;
+        const userUid = localStorage.getItem("userUid");
+        if (!userUid) {
+            window.location.href = "index.html";
+            return;
+        }
+        
+        try {
+            // Busca o documento na coleção 'usuarios' usando o UID salvo
+            const userDoc = await getDoc(doc(db, "usuarios", userUid));
+            if (userDoc.exists()) {
+                document.getElementById('userName').innerText = userDoc.data().nome;
+            }
+        } catch (error) {
+            console.error("Erro ao carregar usuário:", error);
         }
     }
     carregarUsuario();
+
+    // 2. FUNÇÃO DE SAIR NO CANTO DIREITO
+    document.getElementById('btnLogout').addEventListener('click', () => {
+        localStorage.clear(); // Limpa UID e dados de login
+        window.location.href = "index.html"; // Volta para a tela de login
+    });
 
     window.gerarFechamento = async () => {
         const d1 = document.getElementById('dataIni').value;
@@ -241,7 +256,6 @@
             });
         });
 
-        // Resumo na parte de baixo da tabela
         corpo.innerHTML += `<tr style="background:#444; color:white;"><td colspan="9" style="text-align:center; font-size:11px;">RESUMO CONSOLIDADO</td></tr>`;
         for (let p in resumoPorPessoa) {
             corpo.innerHTML += `
@@ -266,13 +280,9 @@
     
        const { jsPDF } = window.jspdf;
        const doc = new jsPDF('l', 'mm', 'a4');
-       const totalPagesExp = "{total_pages_count_string}";
+       const corPrimaria = [183, 28, 28];
+       const corTextoHeader = [255, 255, 255];
 
-       // CONFIGURAÇÃO DE CORES E ESTILO
-       const corPrimaria = [183, 28, 28]; // Vermelho Simonetti
-       const corTextoHeader = [255, 255, 255]; // Branco
-
-       // 1. CABEÇALHO ESTILIZADO (RETÂNGULO VERMELHO)
        doc.setFillColor(...corPrimaria);
        doc.rect(0, 0, 297, 25, 'F'); 
     
@@ -286,54 +296,30 @@
        const dataEmissao = new Date().toLocaleString('pt-BR');
        doc.text(`Emissão: ${dataEmissao}`, 15, 19);
 
-       // 2. TABELA DE DADOS
        let lastDate = "";
        let useGray = false;
 
        doc.autoTable({
            head: [['DATA', 'PLACA', 'VEÍCULO', 'EXPEDIÇÕES', 'NOME', 'VÍNCULO', 'BASE', 'INSS', 'TOTAL']],
            body: dadosParaExportar.map(d => [
-               d.data, 
-               d.placa, 
-               d.veiculo, 
-               d.exps, 
-               d.nome, 
-               d.vinculo, 
-               `R$ ${d.base.toFixed(2)}`, 
-               `R$ ${d.inss.toFixed(2)}`, 
-               `R$ ${d.total.toFixed(2)}`
+               d.data, d.placa, d.veiculo, d.exps, d.nome, d.vinculo, 
+               `R$ ${d.base.toFixed(2)}`, `R$ ${d.inss.toFixed(2)}`, `R$ ${d.total.toFixed(2)}`
            ]),
            startY: 30,
-           theme: 'plain', // Usamos plain para controlar a cor manualmente
-           headStyles: { 
-               fillColor: [51, 51, 51], // Cinza escuro para o topo da tabela
-               textColor: 255, 
-               fontStyle: 'bold',
-               fontSize: 9
-           },
+           theme: 'plain',
+           headStyles: { fillColor: [51, 51, 51], textColor: 255, fontStyle: 'bold', fontSize: 9 },
            styles: { fontSize: 8, cellPadding: 3 },
            didParseCell: function(data) {
                if (data.section === 'body') {
-                   const rowDate = data.row.raw[0]; // Pega a data da linha
-                   if (rowDate !== lastDate) {
-                       useGray = !useGray;
-                       lastDate = rowDate;
-                   }
-                   if (useGray) {
-                       data.cell.styles.fillColor = [242, 242, 242]; // Salteado cinza claro
-                   }
+                   const rowDate = data.row.raw[0];
+                   if (rowDate !== lastDate) { useGray = !useGray; lastDate = rowDate; }
+                   if (useGray) { data.cell.styles.fillColor = [242, 242, 242]; }
                }
            }
        });
 
-       // 3. RESUMO DE PAGAMENTOS (LOGICA DE POSICIONAMENTO)
        let finalY = doc.lastAutoTable.finalY + 10;
-    
-       // Verifica se o resumo cabe na página, se não, adiciona nova página
-       if (finalY > 160) {
-           doc.addPage();
-           finalY = 20;
-       }
+       if (finalY > 160) { doc.addPage(); finalY = 20; }
 
        doc.setTextColor(0, 0, 0);
        doc.setFontSize(12);
@@ -342,25 +328,17 @@
     
        finalY += 2;
        doc.setDrawColor(...corPrimaria);
-       doc.line(14, finalY, 80, finalY); // Linha decorativa abaixo do título
+       doc.line(14, finalY, 80, finalY);
 
        for (let p in resumoPorPessoa) {
            finalY += 8;
            doc.setFontSize(10);
            doc.setFont("helvetica", "bold");
            doc.text(`${p}:`, 14, finalY);
-        
            doc.setFont("helvetica", "normal");
            const textoValor = `R$ ${resumoPorPessoa[p].total.toFixed(2)} (${resumoPorPessoa[p].carros} Carros)`;
            doc.text(textoValor, 80, finalY);
-        
-           // Linha pontilhada entre nome e valor (opcional para estilo)
-           doc.setDrawColor(200, 200, 200);
-           doc.setLineDash([1, 1], 0);
-           doc.line(14 + doc.getTextWidth(p) + 2, finalY, 78, finalY);
-           doc.setLineDash([], 0);
        }
-
        doc.save(`Fechamento_Simonetti_${new Date().getTime()}.pdf`);
    };
 </script>
