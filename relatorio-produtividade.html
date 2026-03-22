@@ -229,7 +229,7 @@
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
         lista.forEach((item, index) => {
-            const statusBadge = item.avarias ? `<span class="status-badge bg-avaria">⚠️ AVARIA</span>` : `<span class="status-badge bg-ok">✅ OK</span>`;
+            const statusBadge = item.avarias ? `<span class="status-badge bg-avaria">⚠️ DIVERGÊNCIA</span>` : `<span class="status-badge bg-ok">✅ OK</span>`;
             const btnAvaria = item.avarias ? `<button class="btn-ver-avaria" onclick="verDetalhes(${index})">🔎 VER DETALHES (${item.avarias.length})</button>` : `<span style="color:#999">Sem ocorrências</span>`;
             
             corpo.innerHTML += `
