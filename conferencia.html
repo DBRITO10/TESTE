@@ -130,10 +130,9 @@
     let cargaSelecionadaId = null;
     let listaProdutosDB = [];
 
-    // CORREÇÃO DATA BRASIL
     const obterDataBR = () => {
         const d = new Date();
-        const offset = -3; // UTC-3
+        const offset = -3;
         const dataBR = new Date(d.getTime() + (offset * 3600000));
         return dataBR.toISOString().split('T')[0];
     };
@@ -170,7 +169,6 @@
                 const data = d.data();
                 if (usuarioDados.nivel === 'admin' || (usuarioDados.central && usuarioDados.central.includes(data.destino))) {
                     temCarga = true;
-                    let dtExp = data.dataExpedicao?.toDate ? data.dataExpedicao.toDate().toLocaleDateString('pt-BR') : '---';
                     container.innerHTML += `
                         <div class="item-carga">
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
@@ -233,9 +231,11 @@
     window.abrirModal = (id, data, exp, placa, veiculo) => {
         cargaSelecionadaId = id;
         document.getElementById('listaItensAvaria').innerHTML = "";
+        // Ajustando data dentro do modal para 21/03/2026 formatada
+        const dataFormatadaModal = data.split('-').reverse().join('/');
         document.getElementById('detalheCarga').innerHTML = `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <span><strong>📅 DATA:</strong> ${data}</span>
+                <span><strong>📅 DATA:</strong> ${dataFormatadaModal}</span>
                 <span><strong>📦 EXPEDIÇÃO:</strong> ${exp}</span>
                 <span><strong>🚛 PLACA:</strong> ${placa}</span>
                 <span><strong>🚚 VEÍCULO:</strong> ${veiculo}</span>
@@ -253,13 +253,18 @@
 
     const adicionarItemAvaria = () => {
         const idUnico = Date.now();
-        const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
+        const optsCod = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
+        const optsNome = listaProdutosDB.map(p => `<option value="${p.nome}">${p.codigo}</option>`).join('');
+        
         const itemHtml = `
             <div class="item-avaria-card" id="item_${idUnico}">
                 <span class="remove-item" onclick="document.getElementById('item_${idUnico}').remove()">X REMOVER</span>
-                <input type="text" class="p-cod" placeholder="Código do Produto" list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
-                <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
-                <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" required>
+                <input type="text" class="p-cod" placeholder="Código do Produto" list="dl_cod_${idUnico}" oninput="buscarPorDados(this, ${idUnico}, 'codigo')" required>
+                <datalist id="dl_cod_${idUnico}">${optsCod}</datalist>
+                
+                <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" list="dl_nome_${idUnico}" oninput="buscarPorDados(this, ${idUnico}, 'nome')" required>
+                <datalist id="dl_nome_${idUnico}">${optsNome}</datalist>
+
                 <input type="text" class="p-forn" id="forn_${idUnico}" placeholder="Fornecedor" readonly style="background:#f5f5f5; font-size:11px;">
                 <div style="display: flex; gap: 8px;">
                     <input type="number" class="p-qtd" placeholder="Qtd" style="flex: 1;" required>
@@ -272,6 +277,27 @@
                 <textarea class="p-obs" placeholder="Observações..."></textarea>
             </div>`;
         document.getElementById('listaItensAvaria').insertAdjacentHTML('beforeend', itemHtml);
+    };
+
+    window.buscarPorDados = (input, id, tipo) => {
+        const valor = input.value.trim();
+        const p = tipo === 'codigo' 
+            ? listaProdutosDB.find(x => x.codigo == valor)
+            : listaProdutosDB.find(x => x.nome == valor);
+
+        const fieldCod = document.querySelector(`#item_${id} .p-cod`);
+        const fieldNome = document.getElementById(`nome_${id}`);
+        const fieldForn = document.getElementById(`forn_${id}`);
+
+        if(p) {
+            fieldCod.value = p.codigo;
+            fieldNome.value = p.nome;
+            fieldForn.value = p.fornecedor || "NÃO VINCULADO";
+        } else if (valor === "") {
+            if(tipo === 'codigo') fieldNome.value = "";
+            else fieldCod.value = "";
+            fieldForn.value = "";
+        }
     };
 
     document.getElementById('btnFinalizar').onclick = async () => {
@@ -312,33 +338,25 @@
         loading.style.display = 'none';
     };
 
-    window.buscarDescricao = (input, id) => {
-        const p = listaProdutosDB.find(x => x.codigo == input.value.trim());
-        const fieldNome = document.getElementById(`nome_${id}`);
-        const fieldForn = document.getElementById(`forn_${id}`);
-        if(p) { 
-            fieldNome.value = p.nome; fieldNome.readOnly = true; fieldNome.style.background = "#eee"; 
-            fieldForn.value = p.fornecedor || "NÃO VINCULADO";
-        }
-        else { 
-            fieldNome.value = ""; fieldNome.readOnly = false; fieldNome.style.background = "#fff"; 
-            fieldForn.value = "";
-        }
-    };
-
     window.imprimirResumo = async (id) => {
         const q = query(collection(db, "avarias"), where("expedicaoId", "==", id));
         const snap = await getDocs(q);
         let htmlItens = "";
+        
         snap.forEach(doc => {
             const a = doc.data();
-            htmlItens += `<tr><td>${a.dataRegistro}</td><td>${a.codigoProduto}</td><td>${a.nomeProduto}</td><td>${a.fornecedor}</td><td>${a.quantidade}</td><td>${a.motivo}</td><td>${a.descricao}</td></tr>`;
+            // Formatando data no PDF para 21/03/2026 hora às 19:37:49
+            const dt = a.dataRegistro?.toDate();
+            const dtFormatada = dt ? `${dt.toLocaleDateString('pt-BR')} hora às ${dt.toLocaleTimeString('pt-BR')}` : '---';
+            
+            htmlItens += `<tr><td>${dtFormatada}</td><td>${a.codigoProduto}</td><td>${a.nomeProduto}</td><td>${a.fornecedor}</td><td>${a.quantidade}</td><td>${a.motivo}</td><td>${a.descricao}</td></tr>`;
         });
 
         const win = window.open('', 'PRINT', 'height=600,width=800');
-        win.document.write(`<html><head><title>Resumo de Conferência</title><style>table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:12px;}</style></head><body>`);
+        // Adicionando @page para forçar Landscape (Horizontal)
+        win.document.write(`<html><head><title>Resumo de Conferência</title><style>@page { size: landscape; } table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:11px;}</style></head><body>`);
         win.document.write(`<h3>RESUMO DE DIVERGÊNCIAS - SIMONETTI</h3>`);
-        win.document.write(`<table><thead><tr><th>DATA</th><th>CÓDIGO</th><th>PRODUTO</th><th>FORNECEDOR</th><th>QTD</th><th>MOTIVO</th><th>OBSERVAÇÃO</th></tr></thead><tbody>${htmlItens}</tbody></table>`);
+        win.document.write(`<table><thead><tr><th>DATA/HORA REGISTRO</th><th>CÓDIGO</th><th>PRODUTO</th><th>FORNECEDOR</th><th>QTD</th><th>MOTIVO</th><th>OBSERVAÇÃO</th></tr></thead><tbody>${htmlItens}</tbody></table>`);
         win.document.write(`</body></html>`);
         win.document.close();
         win.print();
