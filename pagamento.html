@@ -3,196 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Pagamentos - Logística</title>
+    <title>Fechamento Financeiro - Simonetti</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
     <style>
-        :root { --primary: #c62828; --secondary: #2e7d32; --bg: #f5f5f5; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .container { padding: 20px; max-width: 1200px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        :root { --primary: #0d47a1; --accent: #d32f2f; --bg: #f8f9fa; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
         
-        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .config-item { background: #fff5f5; padding: 10px; border: 1px solid #ffcdd2; border-radius: 4px; }
-        .config-item label { font-size: 12px; font-weight: bold; color: #c62828; display: block; }
-        .config-item input { width: 100%; border: none; background: transparent; font-size: 16px; font-weight: bold; outline: none; }
+        header { 
+            background: #fff; border-bottom: 2px solid var(--primary); padding: 10px 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
 
-        .filters { display: flex; gap: 10px; flex-wrap: wrap; background: #eee; padding: 15px; border-radius: 4px; align-items: flex-end; }
-        .filters div { flex: 1; min-width: 150px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th { background: #333; color: white; padding: 10px; text-align: left; font-size: 12px; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 13px; }
-        
-        .row-total { background: #e8f5e9; font-weight: bold; }
-        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-calc { background: var(--primary); color: white; }
-        .btn-xls { background: var(--secondary); color: white; }
-        
-        .summary-box { display: flex; justify-content: flex-end; margin-top: 15px; font-size: 18px; font-weight: bold; color: var(--secondary); }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .btn-nav { 
+            text-decoration: none; color: var(--primary); font-weight: bold; border: 1.5px solid var(--primary);
+            padding: 8px 15px; border-radius: 6px; transition: 0.3s; font-size: 13px;
+        }
+        .btn-nav:hover { background: var(--primary); color: white; }
+
+        .btn-sair { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 30px; max-width: 1500px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px; }
+
+        .admin-config { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; padding: 15px; background: #e3f2fd; border-radius: 8px; }
+        .admin-config label { font-size: 11px; font-weight: bold; color: var(--primary); display: block; margin-bottom: 5px; }
+        .admin-config input { width: 90%; padding: 8px; border: 1px solid #bbdefb; border-radius: 4px; font-weight: bold; }
+
+        .filter-bar { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 25px; }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-size: 12px; font-weight: bold; }
+        .filter-group input, .filter-group select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+
+        .btn-exec { background: var(--primary); color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-export { background: #2e7d32; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f1f3f5; color: #495057; padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #dee2e6; }
+        td { padding: 15px; border-bottom: 1px solid #eee; font-size: 13px; }
+
+        .row-total-colab { background: #fff9db; font-weight: bold; color: #856404; }
+        .badge-tipo { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge-mei { background: #e3f2fd; color: #0d47a1; }
+        .badge-ter { background: #fff3e0; color: #e65100; }
+
+        @media (max-width: 768px) {
+            header { padding: 10px; flex-direction: column; height: auto; gap: 10px; }
+            .container { padding: 15px; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <span>Logística MS - Painel Admin</span>
-    <button onclick="window.print()" style="background:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">IMPRIMIR PDF</button>
+    <div class="header-left">
+        <a href="menu.html" class="btn-nav">⬅ VOLTAR MENU</a>
+        <h2 style="margin: 0; color: var(--primary); letter-spacing: -0.5px;">FINANCEIRO | GESTÃO DE CARREGAMENTOS</h2>
+    </div>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span id="userName" style="font-weight: 600; font-size: 14px; color: #666;">👤 Carregando...</span>
+        <button class="btn-sair" id="btnLogout">SAIR</button>
+    </div>
 </header>
 
 <div class="container">
     <div class="card">
-        <h4 style="margin-top:0;">VALORES POR CARREGAMENTO (R$)</h4>
-        <div class="config-grid">
-            <div class="config-item"><label>CARRETA</label><input type="number" id="v_CARRETA" value="300"></div>
-            <div class="config-item"><label>TRUCK / TOCO</label><input type="number" id="v_TRUCK" value="250"></div>
-            <div class="config-item"><label>CARRO 3/4</label><input type="number" id="v_34" value="150"></div>
+        <h4 style="margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">⚙️ TABELA DE VALORES BASE</h4>
+        <div class="admin-config">
+            <div><label>CARRETA (R$)</label><input type="number" id="v_CARRETA" value="300"></div>
+            <div><label>TRUCK (R$)</label><input type="number" id="v_TRUCK" value="250"></div>
+            <div><label>TOCO (R$)</label><input type="number" id="v_TOCO" value="250"></div>
+            <div><label>3/4 (R$)</label><input type="number" id="v_34" value="150"></div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-group"><label>DATA INICIAL</label><input type="date" id="dataIni"></div>
+            <div class="filter-group"><label>DATA FINAL</label><input type="date" id="dataFim"></div>
+            <div class="filter-group">
+                <label>VÍNCULO</label>
+                <select id="tipoFiltro">
+                    <option value="TODOS">TODOS OS COLABORADORES</option>
+                    <option value="MEI">APENAS MEI</option>
+                    <option value="TERCEIRIZADO">APENAS TERCEIRIZADOS</option>
+                </select>
+            </div>
+            <button class="btn-exec" onclick="processarRelatorio()">🔍 GERAR RELATÓRIO</button>
+            <button class="btn-export" onclick="exportarExcel()">📊 EXCEL</button>
+            <button class="btn-export" style="background:#c62828" onclick="exportarPDF()">📄 PDF</button>
         </div>
     </div>
 
-    <div class="card">
-        <div class="filters">
-            <div><label>Início</label><input type="date" id="dataIni" style="width:100%; padding:8px;"></div>
-            <div><label>Fim</label><input type="date" id="dataFim" style="width:100%; padding:8px;"></div>
-            <div>
-                <label>Filtro Vínculo</label>
-                <select id="fVinculo" style="width:100%; padding:8px;">
-                    <option value="TODOS">TODOS</option>
-                    <option value="MEI">SÓ MEI</option>
-                    <option value="TERCEIRIZADO">SÓ TERCEIRIZADO</option>
-                </select>
-            </div>
-            <button class="btn btn-calc" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
-            <button class="btn btn-xls" onclick="exportarExcel()">EXPORTAR EXCEL</button>
-        </div>
-
-        <table id="tabelaPagamentos">
+    <div class="card" style="overflow-x: auto;">
+        <table id="tabelaFinanceira">
             <thead>
                 <tr>
+                    <th>DATA</th>
+                    <th>PLACA</th>
+                    <th>EXPEDIÇÃO(S)</th>
                     <th>COLABORADOR</th>
                     <th>VÍNCULO</th>
-                    <th>DATA</th>
-                    <th>VEÍCULO</th>
-                    <th>PESSOAS</th>
+                    <th>DIVISÃO (Nº)</th>
                     <th>VALOR BASE</th>
                     <th>INSS (20%)</th>
                     <th>TOTAL A PAGAR</th>
                 </tr>
             </thead>
-            <tbody id="corpoTabela">
-                </tbody>
+            <tbody id="corpoRelatorio">
+                <tr><td colspan="9" style="text-align:center; padding:50px; color:#999;">Defina o período e clique em Gerar Relatório</td></tr>
+            </tbody>
         </table>
-        
-        <div class="summary-box" id="totalGeralPeriodo"></div>
     </div>
 </div>
 
-<script>
-    // Simulação de dados baseada nos seus prints de Firestore
-    // Na sua aplicação real, você usaria o getDocs do Firebase aqui
-    const mockEquipe = [
-        { nome: "DOUGLAS BRITO DA ROCHA", vinculo: "TERCEIRIZADO" },
-        { nome: "PAULO ROBERTO", vinculo: "MEI" },
-        { nome: "ADILSON SILVA PEREIRA", vinculo: "TERCEIRIZADO" }
-    ];
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const mockExpedicoes = [
-        { data: "2026-03-21", placa: "FFP-6892", tipo: "CARRETA", equipe: ["PAULO ROBERTO", "ADILSON SILVA PEREIRA"], status: "FINALIZADO" },
-        { data: "2026-03-21", placa: "OYH-8H90", tipo: "TOCO", equipe: ["DOUGLAS BRITO DA ROCHA", "PAULO ROBERTO"], status: "FINALIZADO" }
-    ];
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    let globalRelatorio = [];
+    let dadosProcessados = [];
+    let mapaVinculos = {};
 
-    function gerarRelatorio() {
+    onAuthStateChanged(auth, async user => {
+        if(user) { 
+            const userSnap = await getDoc(doc(db, "usuarios", user.uid));
+            document.getElementById('userName').innerText = "👤 " + (userSnap.exists() ? userSnap.data().nome : "Admin");
+            await carregarVinculos();
+        } else { window.location.href = "index.html"; }
+    });
+
+    document.getElementById('btnLogout').onclick = () => signOut(auth);
+
+    async function carregarVinculos() {
+        const snap = await getDocs(collection(db, "equipe"));
+        snap.forEach(d => { mapaVinculos[d.data().nome] = d.data().vinculo; });
+    }
+
+    window.processarRelatorio = async () => {
+        const dIni = document.getElementById('dataIni').value;
+        const dFim = document.getElementById('dataFim').value;
+        const tipoFiltro = document.getElementById('tipoFiltro').value;
+        
+        if(!dIni || !dFim) return alert("Selecione o período!");
+
         const precos = {
             "CARRETA": parseFloat(document.getElementById('v_CARRETA').value),
             "TRUCK": parseFloat(document.getElementById('v_TRUCK').value),
-            "TOCO": parseFloat(document.getElementById('v_TRUCK').value),
+            "TOCO": parseFloat(document.getElementById('v_TOCO').value),
             "CARRO 3/4": parseFloat(document.getElementById('v_34').value)
         };
 
-        const vinculoFiltro = document.getElementById('fVinculo').value;
-        const corpo = document.getElementById('corpoTabela');
+        const expSnap = await getDocs(query(collection(db, "expedicoes"), where("status", "==", "FINALIZADO"), where("data", ">=", dIni), where("data", "<=", dFim)));
+        
+        // Agrupar por Placa + Data
+        let cargas = {};
+        expSnap.forEach(doc => {
+            const d = doc.data();
+            const chave = `${d.placa}_${d.data}`;
+            if(!cargas[chave]) {
+                cargas[chave] = { data: d.data, placa: d.placa, tipo: d.tipo || "TOCO", exps: [], equipe: d.equipe_carregamento || [] };
+            }
+            cargas[chave].exps.push(d.codigo || d.expedicao);
+        });
+
+        const corpo = document.getElementById('corpoRelatorio');
         corpo.innerHTML = "";
-        globalRelatorio = [];
-        let somaTotalEmpresa = 0;
+        dadosProcessados = [];
+        let resumoFinanceiro = {};
 
-        // Agrupar totais por pessoa para o resumo final
-        let resumoPessoas = {};
+        Object.values(cargas).forEach(c => {
+            const valorTotalCarga = precos[c.tipo] || 0;
+            const qtdEquipe = c.equipe.length;
+            const valorBaseIndividual = valorTotalCarga / (qtdEquipe || 1);
 
-        mockExpedicoes.forEach(exp => {
-            const valorCarro = precos[exp.tipo] || 0;
-            const qtdPessoas = exp.equipe.length;
-            const valorPorPessoa = valorCarro / qtdPessoas;
+            c.equipe.forEach(nomeColab => {
+                const vinculo = mapaVinculos[nomeColab] || "MEI";
+                if(tipoFiltro !== "TODOS" && vinculo !== tipoFiltro) return;
 
-            exp.equipe.forEach(nome => {
-                const colab = mockEquipe.find(c => c.nome === nome) || { vinculo: "MEI" };
-                
-                if (vinculoFiltro !== "TODOS" && colab.vinculo !== vinculoFiltro) return;
+                let inss = 0;
+                if(vinculo === "TERCEIRIZADO") inss = valorBaseIndividual * 0.20;
 
-                let valorInss = 0;
-                if (colab.vinculo === "TERCEIRIZADO") {
-                    valorInss = valorPorPessoa * 0.20; // Lógica: Valor + 20% pro Terceirizado
-                }
-
-                const totalLinha = valorPorPessoa + valorInss;
-                somaTotalEmpresa += totalLinha;
+                const totalPagar = valorBaseIndividual + inss;
+                const dataBR = c.data.split('-').reverse().join('/');
 
                 const item = {
-                    nome: nome,
-                    vinculo: colab.vinculo,
-                    data: exp.data,
-                    veiculo: exp.tipo,
-                    qtd: qtdPessoas,
-                    base: valorPorPessoa,
-                    inss: valorInss,
-                    total: totalLinha
+                    data: dataBR,
+                    placa: c.placa,
+                    exps: [...new Set(c.exps)].join(" | "),
+                    colaborador: nomeColab,
+                    vinculo: vinculo,
+                    divisao: qtdEquipe,
+                    base: valorBaseIndividual,
+                    inss: inss,
+                    total: totalPagar
                 };
 
-                globalRelatorio.push(item);
-                
-                // Acumular total por pessoa
-                if(!resumoPessoas[nome]) resumoPessoas[nome] = 0;
-                resumoPessoas[nome] += totalLinha;
+                dadosProcessados.push(item);
 
-                corpo.innerHTML += `
-                    <tr>
-                        <td>${item.nome}</td>
-                        <td>${item.vinculo}</td>
-                        <td>${item.data}</td>
-                        <td>${item.veiculo}</td>
-                        <td>${item.qtd}</td>
-                        <td>R$ ${item.base.toFixed(2)}</td>
-                        <td>${item.inss > 0 ? '+ R$ ' + item.inss.toFixed(2) : '-'}</td>
-                        <td><b>R$ ${item.total.toFixed(2)}</b></td>
-                    </tr>
-                `;
+                // Acumular Resumo
+                if(!resumoFinanceiro[nomeColab]) resumoFinanceiro[nomeColab] = { carros: 0, total: 0, vinculo: vinculo };
+                resumoFinanceiro[nomeColab].carros++;
+                resumoFinanceiro[nomeColab].total += totalPagar;
             });
         });
 
-        // Adicionar linhas de Total por Pessoa no final da tabela
-        corpo.innerHTML += `<tr style="background:#333; color:white;"><td colspan="8">RESUMO DE PAGAMENTO POR COLABORADOR</td></tr>`;
-        for (let pessoa in resumoPessoas) {
+        // Renderizar na Tabela
+        dadosProcessados.forEach(d => {
             corpo.innerHTML += `
-                <tr class="row-total">
-                    <td colspan="7">TOTAL A PAGAR PARA: ${pessoa}</td>
-                    <td>R$ ${resumoPessoas[pessoa].toFixed(2)}</td>
+                <tr>
+                    <td>${d.data}</td>
+                    <td><b>${d.placa}</b></td>
+                    <td><small>${d.exps}</small></td>
+                    <td>${d.colaborador}</td>
+                    <td><span class="badge-tipo ${d.vinculo === 'MEI' ? 'badge-mei' : 'badge-ter'}">${d.vinculo}</span></td>
+                    <td style="text-align:center;">1/${d.divisao}</td>
+                    <td>R$ ${d.base.toFixed(2)}</td>
+                    <td style="color:#c62828">+ R$ ${d.inss.toFixed(2)}</td>
+                    <td style="font-weight:bold; color:#2e7d32">R$ ${d.total.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        // Rodapé de Resumo por Colaborador
+        corpo.innerHTML += `<tr style="background:#f1f3f5"><td colspan="9" style="text-align:center; font-weight:bold;">RESUMO FINAL DE PAGAMENTOS</td></tr>`;
+        for (let nome in resumoFinanceiro) {
+            corpo.innerHTML += `
+                <tr class="row-total-colab">
+                    <td colspan="4">TOTAL PARA: ${nome} (${resumoFinanceiro[nome].vinculo})</td>
+                    <td colspan="2" style="text-align:right;">CARROS CARREGADOS: ${resumoFinanceiro[nome].carros}</td>
+                    <td colspan="3" style="text-align:right; font-size:16px;">VALOR TOTAL A PAGAR: R$ ${resumoFinanceiro[nome].total.toFixed(2)}</td>
                 </tr>
             `;
         }
+    };
 
-        document.getElementById('totalGeralPeriodo').innerText = `TOTAL GERAL A PAGAR: R$ ${somaTotalEmpresa.toFixed(2)}`;
-    }
-
-    function exportarExcel() {
-        const ws = XLSX.utils.json_to_sheet(globalRelatorio);
+    window.exportarExcel = () => {
+        const ws = XLSX.utils.json_to_sheet(dadosProcessados);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Pagamentos");
-        XLSX.writeFile(wb, "Relatorio_Pagamento_MS.xlsx");
-    }
-</script>
+        XLSX.writeFile(wb, `Relatorio_Financeiro_Simonetti.xlsx`);
+    };
 
+    window.exportarPDF = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        doc.text("Relatório de Pagamentos - Logística Simonetti", 14, 15);
+        
+        const colunas = ["DATA", "PLACA", "COLABORADOR", "VÍNCULO", "BASE", "INSS", "TOTAL"];
+        const linhas = dadosProcessados.map(d => [d.data, d.placa, d.colaborador, d.vinculo, d.base.toFixed(2), d.inss.toFixed(2), d.total.toFixed(2)]);
+        
+        doc.autoTable({ head: [colunas], body: linhas, startY: 20, theme: 'grid' });
+        doc.save("Financeiro_Simonetti.pdf");
+    };
+</script>
 </body>
 </html>
