@@ -284,7 +284,7 @@
                     const forn = a.fornecedor || mapaFornecedores[a.codigoProduto] || "N/I";
                     const obs = a.descricao ? `\nOBS: ${a.descricao}` : ""; // Pega o campo "NÃO VEIO" do print
                     
-                    return `PRODUTO: ${a.nomeProduto}\n🏭: ${forn}\nMOTIVO: ${a.motivo} (Qtd: ${a.quantidade})${obs}`;
+                    return `PROD: ${a.nomeProduto}\nFORN: ${forn}\nMOTIVO: ${a.motivo} (Qtd: ${a.quantidade})${obs}`;
                 }).join("\n--------------------------\n");
             }
 
