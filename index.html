@@ -49,6 +49,9 @@
             const userCredential = await signInWithEmailAndPassword(auth, email, senha);
             const user = userCredential.user;
 
+            // ESTA LINHA É A CHAVE: Salva o ID para as outras páginas usarem
+            localStorage.setItem("userUid", user.uid);
+
             // Verifica se o perfil já existe no Firestore
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             
