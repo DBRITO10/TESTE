@@ -72,6 +72,27 @@
         .btn-export { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; display: flex; gap: 5px; }
         .btn-excel { background: #1b5e20; }
         .btn-pdf { background: #b71c1c; }
+      
+        /* RESPONSIVIDADE CELULAR */
+        @media (max-width: 600px) {
+            /* Título apenas Simonetti e sem subtítulo */
+            .header-title .main-t::after { content: ""; }
+            .header-title .main-t { font-size: 16px; content: "Relatório MS"; }
+            .header-title .sub-t { display: none; }
+            
+            /* Ajuste de texto via JS ou CSS para mobile */
+            .header-title .main-t { visibility: hidden; position: relative; }
+            .header-title .main-t::before { 
+                content: "Relatório MS"; 
+                visibility: visible; 
+                position: absolute; 
+                left: 50%; 
+                transform: translateX(-50%);
+            }
+
+            .container { padding: 15px; }
+            .modal-grid { grid-template-columns: 1fr; }
+        }   
     </style>
 </head>
 <body>
