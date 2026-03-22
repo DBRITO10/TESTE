@@ -312,7 +312,7 @@
             columnStyles: { 5: { cellWidth: 100 }, 6: { fontStyle: 'bold', halign: 'center' } },
             didParseCell: function(data) {
                 if (data.section === 'body' && data.column.index === 6) {
-                    data.cell.styles.textColor = (data.cell.raw === "AVARIA") ? [190, 0, 0] : [0, 130, 0];
+                    data.cell.styles.textColor = (data.cell.raw === "DIVERGÊNCIA") ? [190, 0, 0] : [0, 130, 0];
                 }
             }
         });
