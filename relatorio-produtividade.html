@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Qualidade - Simonetti</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --danger: #c62828; --success: #2e7d32; }
@@ -14,7 +16,7 @@
             background: var(--primary); color: white; padding: 0 15px; 
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 1000;
-            height: 60px; /* Altura fixa para alinhar melhor os itens */
+            height: 60px;
         }
 
         .header-left { display: flex; align-items: center; gap: 10px; }
@@ -26,27 +28,19 @@
         }
         .btn-header:hover { background: white; color: var(--primary); }
 
-        .user-badge { font-weight: bold; font-size: 14px; white-space: nowrap; }
-
-        /* Esconde o título no celular para não amontoar os botões */
-        @media (max-width: 600px) {
-            .header-center { display: none; }
-            .user-badge { font-size: 12px; }
-        }
-
-        .container { padding: 15px; max-width: 1300px; margin: auto; }
+        .container { padding: 15px; max-width: 1400px; margin: auto; }
         .card { background: var(--white); padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
         .periodo-box { 
             display: flex; gap: 10px; align-items: center; margin-bottom: 20px; 
             padding: 15px; background: #f8f9fa; border-radius: 6px; border: 1px solid #ddd;
-            flex-wrap: wrap; /* Garante ajuste no celular */
+            flex-wrap: wrap;
         }
         .periodo-box input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
 
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; min-width: 1100px; }
         th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 11px; color: #333; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: top; }
 
         .filter-input {
             width: 100%; padding: 5px; margin-top: 5px; border: 1px solid #ccc;
@@ -62,6 +56,7 @@
         
         .detalhe-avaria { font-size: 10px; color: #b71c1c; display: block; margin-top: 2px; }
         .btn-excel { background: #1b5e20; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-pdf { background: #b71c1c; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -69,33 +64,28 @@
 <header>
     <div class="header-left">
         <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
-        <span class="user-badge" id="userName">Carregando...</span>
+        <span class="btn-header" style="border:none;" id="userName">Carregando...</span>
     </div>
-    
-    <div class="header-center">
-        <h1 style="font-size: 16px; margin: 0; text-transform: uppercase;">Relatório de Qualidade</h1>
-    </div>
-
-    <div class="header-right">
-        <button class="btn-header" id="btnLogout">SAIR</button>
-    </div>
+    <div class="header-center"><h1 style="font-size: 16px; margin: 0;">RELATÓRIO DE QUALIDADE</h1></div>
+    <div class="header-right"><button class="btn-header" id="btnLogout">SAIR</button></div>
 </header>
 
 <div class="container">
     <div class="card">
-        
         <div class="periodo-box">
             <div>
-                <label style="font-size: 12px; font-weight: bold; display: block;">Data Inicial:</label>
+                <label style="font-size: 11px; font-weight: bold; display: block;">INÍCIO:</label>
                 <input type="date" id="dataInicio">
             </div>
             <div>
-                <label style="font-size: 12px; font-weight: bold; display: block;">Data Final:</label>
+                <label style="font-size: 11px; font-weight: bold; display: block;">FIM:</label>
                 <input type="date" id="dataFim">
             </div>
             <button class="btn-header" style="background: var(--primary); border: none; height: 35px; margin-top: 15px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR</button>
-            <div style="flex-grow: 1; text-align: right; margin-top: 15px;">
-                <button class="btn-excel" id="btnExportExcel">📊 EXCEL</button>
+            
+            <div style="flex-grow: 1; text-align: right; margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-excel" onclick="exportarExcel()">📊 EXCEL</button>
+                <button class="btn-pdf" onclick="exportarPDF()">📄 PDF ALTO NÍVEL</button>
             </div>
         </div>
 
@@ -103,17 +93,17 @@
             <table id="tabelaQualidade">
                 <thead>
                     <tr>
-                        <th style="width: 100px;">DATA <input type="text" class="filter-input" data-col="data" placeholder="Filtrar..."></th>
-                        <th style="width: 100px;">EXPEDIÇÃO <input type="text" class="filter-input" data-col="codigo" placeholder="Filtrar..."></th>
-                        <th>DESTINO <input type="text" class="filter-input" data-col="destino" placeholder="Filtrar..."></th>
-                        <th>PLACA <input type="text" class="filter-input" data-col="placa" placeholder="Filtrar..."></th>
-                        <th>EQUIPE <input type="text" class="filter-input" data-col="equipe" placeholder="Filtrar..."></th>
-                        <th>PRODUTOS / MOTIVOS <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Filtrar..."></th>
-                        <th style="width: 120px;">SITUAÇÃO <input type="text" class="filter-input" data-col="situacaoStr" placeholder="OK ou AVARIA"></th>    
+                        <th style="width: 90px;">DATA <input type="text" class="filter-input" data-col="data" placeholder="Filtro"></th>
+                        <th style="width: 90px;">EXP <input type="text" class="filter-input" data-col="codigo" placeholder="Filtro"></th>
+                        <th>DESTINO <input type="text" class="filter-input" data-col="destino" placeholder="Filtro"></th>
+                        <th>PLACA <input type="text" class="filter-input" data-col="placa" placeholder="Filtro"></th>
+                        <th>EQUIPE <input type="text" class="filter-input" data-col="equipe" placeholder="Filtro"></th>
+                        <th style="width: 350px;">PRODUTOS / FORNECEDOR / MOTIVO <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Busca item..."></th>
+                        <th>SITUAÇÃO <input type="text" class="filter-input" data-col="situacaoStr" placeholder="OK/AVARIA"></th>
                     </tr>
                 </thead>
                 <tbody id="corpoTabela">
-                    <tr><td colspan="7" style="text-align:center;">Aguardando...</td></tr>
+                    <tr><td colspan="7" style="text-align:center;">Carregando dados de hoje...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -131,171 +121,158 @@
     const db = getFirestore(app);
 
     let todosOsDados = [];
+    let mapaProdutos = {}; // Para armazenar fornecedores
 
     onAuthStateChanged(auth, async user => {
         if(user) { 
-            // BUSCA NOME DO USUÁRIO NO BANCO
-            try {
-                const userRef = doc(db, "usuarios", user.uid);
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    document.getElementById('userName').innerText = "👤 " + userSnap.data().nome;
-                } else {
-                    document.getElementById('userName').innerText = "👤 " + user.email.split('@')[0].toUpperCase();
-                }
-            } catch (e) {
-                document.getElementById('userName').innerText = "👤 Usuário";
-            }
+            // Carregar mapa de produtos/fornecedores primeiro
+            const prodSnap = await getDocs(collection(db, "produtos_lista"));
+            prodSnap.forEach(d => { mapaProdutos[d.data().codigo] = d.data().fornecedor || "N/I"; });
+
+            // Nome do usuário
+            const userSnap = await getDoc(doc(db, "usuarios", user.uid));
+            document.getElementById('userName').innerText = "👤 " + (userSnap.exists() ? userSnap.data().nome : "Usuário");
 
             setarDatasPadrao();
-            carregarDadosAutomatico(); 
-        } 
-        else { window.location.href = "index.html"; }
+            filtrarPorPeriodo(); // Inicia com o filtro de hoje
+        } else { window.location.href = "index.html"; }
     });
 
     document.getElementById('btnLogout').onclick = () => signOut(auth);
 
     function setarDatasPadrao() {
-        const hoje = new Date().toISOString().split('T')[0];
+        const agora = new Date();
+        const dataBR = new Date(agora.getTime() - (3 * 3600000)); // UTC-3
+        const hoje = dataBR.toISOString().split('T')[0];
         document.getElementById('dataInicio').value = hoje;
         document.getElementById('dataFim').value = hoje;
-    }
-
-    async function carregarDadosAutomatico() {
-        const hoje = new Date().toISOString().split('T')[0];
-        const q = query(
-            collection(db, "expedicoes"), 
-            where("status", "==", "FINALIZADO"),
-            where("data", "==", hoje)
-        );
-        await carregarDados(q);
     }
 
     window.filtrarPorPeriodo = async () => {
         const dIni = document.getElementById('dataInicio').value;
         const dFim = document.getElementById('dataFim').value;
-
-        const q = query(
-            collection(db, "expedicoes"), 
-            where("status", "==", "FINALIZADO"),
-            where("data", ">=", dIni),
-            where("data", "<=", dFim),
-            orderBy("data", "desc")
-        );
-        await carregarDados(q);
-    };
-
-    async function carregarDados(customQuery) {
         const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando dados...</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando...</td></tr>';
 
         try {
-            const [equipeSnap, avariasSnap, expSnap] = await Promise.all([
-                getDocs(collection(db, "equipe")),
+            const [avSnap, expSnap] = await Promise.all([
                 getDocs(collection(db, "avarias")),
-                getDocs(customQuery)
+                getDocs(query(collection(db, "expedicoes"), where("status", "==", "FINALIZADO"), where("data", ">=", dIni), where("data", "<=", dFim)))
             ]);
 
-            let vinculos = {};
-            equipeSnap.forEach(d => vinculos[d.data().nome] = d.data().vinculo || "TERCEIRO");
-
             let mapaAvarias = {};
-            avariasSnap.forEach(docA => {
-                const av = docA.data();
-                if (av.expedicaoId) {
-                    if (!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
-                    mapaAvarias[av.expedicaoId].push(av);
-                }
+            avSnap.forEach(d => {
+                const av = d.data();
+                if(!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
+                mapaAvarias[av.expedicaoId].push(av);
             });
 
             todosOsDados = [];
-
-            if (expSnap.empty) {
-                corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum dado encontrado.</td></tr>';
-                return;
-            }
-
             expSnap.forEach(docExp => {
                 const exp = docExp.data();
-                const avariasDaExp = mapaAvarias[docExp.id] || null;
-                const infoEquipe = (exp.equipe_carregamento || []).map(nome => `${nome} (${vinculos[nome] || 'TERCEIRO'})`);
+                const avarias = mapaAvarias[docExp.id] || null;
                 
-                let detalhesBusca = avariasDaExp ? avariasDaExp.map(a => `${a.codigoProduto} ${a.nomeProduto} ${a.motivo}`).join(" ") : "";
+                // Consolida detalhes para busca
+                let detalhesBusca = avarias ? avarias.map(a => `${a.codigoProduto} ${a.nomeProduto} ${mapaProdutos[a.codigoProduto] || ''}`).join(" ") : "";
 
                 todosOsDados.push({
-                    data: exp.data ? exp.data.split('-').reverse().join('/') : '-',
-                    codigo: exp.codigo || exp.expedicao || 'N/A',
-                    destino: exp.destino || '-',
-                    placa: exp.placa || '-',
-                    equipe: infoEquipe.join(', '),
-                    avarias: avariasDaExp,
+                    data: exp.data.split('-').reverse().join('/'),
+                    codigo: exp.codigo || exp.expedicao,
+                    destino: exp.destino,
+                    placa: exp.placa,
+                    equipe: (exp.equipe_carregamento || []).join(', '),
+                    avarias: avarias,
                     detalhesAvaria: detalhesBusca,
-                    situacaoStr: avariasDaExp ? "AVARIA" : "OK"
+                    situacaoStr: avarias ? "AVARIA" : "OK"
                 });
             });
 
+            todosOsDados.sort((a,b) => b.data.localeCompare(a.data));
             renderizarTabela(todosOsDados);
-
-        } catch (error) {
-            console.error(error);
-            corpo.innerHTML = `<tr><td colspan="7" style="color:red;">Erro: ${error.message}</td></tr>`;
-        }
-    }
+        } catch (e) { corpo.innerHTML = "Erro ao carregar."; }
+    };
 
     function renderizarTabela(lista) {
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
-
         lista.forEach(item => {
-            let statusHtml = item.avarias ? `<span class="status-badge bg-avaria">⚠️ AVARIA</span>` : `<span class="status-badge bg-ok">✅ OK</span>`;
-            let avariaDetalhadaHtml = "";
-
-            if (item.avarias) {
+            let avHtml = "";
+            if(item.avarias) {
                 item.avarias.forEach(a => {
-                    avariaDetalhadaHtml += `
-                        <div style="border-bottom: 1px dashed #ddd; margin-bottom: 5px; padding-bottom: 2px;">
-                            <span class="detalhe-avaria" style="color:#000; font-size:11px;">
-                                <strong>Cod: ${a.codigoProduto}</strong> - ${a.nomeProduto}
-                            </span>
-                            <span class="detalhe-avaria">
-                                <b>Motivo:</b> ${a.motivo} | <b>Detalhe:</b> ${a.descricao} | <b>Qtd:</b> ${a.quantidade}
-                            </span>
-                        </div>`;
+                    const fornecedor = mapaProdutos[a.codigoProduto] || "Não Informado";
+                    avHtml += `<div style="margin-bottom:8px; border-bottom:1px solid #f0f0f0;">
+                        <b>${a.codigoProduto} - ${a.nomeProduto}</b><br>
+                        <span style="color:blue">🏭 Fornecedor: ${fornecedor}</span><br>
+                        <span class="detalhe-avaria">Motivo: ${a.motivo} | Qtd: ${a.quantidade}</span>
+                    </div>`;
                 });
-            } else {
-                avariaDetalhadaHtml = `<span style="color:#999; font-size:11px;">Sem ocorrências</span>`;
-            }
+            } else { avHtml = '<span style="color:#999">Sem ocorrências</span>'; }
 
-            corpo.innerHTML += `
-                <tr>
-                    <td>${item.data}</td>
-                    <td><strong>${item.codigo}</strong></td>
-                    <td>${item.destino}</td>
-                    <td>${item.placa}</td>
-                    <td><small>${item.equipe}</small></td>
-                    <td>${avariaDetalhadaHtml}</td>
-                    <td>${statusHtml}</td>
-                </tr>`;
+            corpo.innerHTML += `<tr>
+                <td>${item.data}</td>
+                <td><b>${item.codigo}</b></td>
+                <td>${item.destino}</td>
+                <td>${item.placa}</td>
+                <td><small>${item.equipe}</small></td>
+                <td>${avHtml}</td>
+                <td><span class="status-badge ${item.avarias?'bg-avaria':'bg-ok'}">${item.situacaoStr}</span></td>
+            </tr>`;
         });
     }
 
+    // Filtros de Coluna
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('keyup', () => {
             const filtros = {};
-            document.querySelectorAll('.filter-input').forEach(i => {
-                if (i.value) filtros[i.dataset.col] = i.value.toLowerCase();
-            });
-            const dadosFiltrados = todosOsDados.filter(item => {
-                return Object.keys(filtros).every(coluna => String(item[coluna]).toLowerCase().includes(filtros[coluna]));
-            });
-            renderizarTabela(dadosFiltrados);
+            document.querySelectorAll('.filter-input').forEach(i => { if(i.value) filtros[i.dataset.col] = i.value.toLowerCase(); });
+            const filtrados = todosOsDados.filter(item => Object.keys(filtros).every(c => String(item[c]).toLowerCase().includes(filtros[c])));
+            renderizarTabela(filtrados);
         });
     });
 
-    document.getElementById('btnExportExcel').onclick = () => {
-        const table = document.getElementById("tabelaQualidade");
-        const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `Relatorio_Qualidade_Simonetti.xlsx`);
+    // EXPORTAÇÃO PDF ALTO NÍVEL
+    window.exportarPDF = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+
+        // Design do Cabeçalho
+        doc.setFillColor(211, 47, 47); // Vermelho Simonetti
+        doc.rect(0, 0, 297, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("RELATÓRIO DE QUALIDADE E AVARIAS", 15, 20);
+        doc.setFontSize(10);
+        doc.text(`Período: ${document.getElementById('dataInicio').value} até ${document.getElementById('dataFim').value}`, 15, 30);
+        doc.text(`Emitido em: ${new Date().toLocaleString()}`, 230, 30);
+
+        const rows = [];
+        todosOsDados.forEach(item => {
+            let avText = "";
+            if(item.avarias){
+                item.avarias.forEach(a => {
+                    avText += `Item: ${a.codigoProduto} | Forn: ${mapaProdutos[a.codigoProduto]||'N/I'} | Motivo: ${a.motivo}\n`;
+                });
+            } else { avText = "OK"; }
+
+            rows.push([item.data, item.codigo, item.destino, item.placa, item.equipe, avText, item.situacaoStr]);
+        });
+
+        doc.autoTable({
+            head: [['DATA', 'EXP', 'DESTINO', 'PLACA', 'EQUIPE', 'DETALHES DA AVARIA / FORNECEDOR', 'SITUAÇÃO']],
+            body: rows,
+            startY: 45,
+            theme: 'grid',
+            headStyles: { fillColor: [183, 28, 28], fontSize: 8 },
+            columnStyles: { 5: { cellWidth: 80, fontSize: 7 } },
+            styles: { fontSize: 8, valign: 'middle' }
+        });
+
+        doc.save("Relatorio_Qualidade_Simonetti.pdf");
+    };
+
+    window.exportarExcel = () => {
+        const wb = XLSX.utils.table_to_book(document.getElementById("tabelaQualidade"));
+        XLSX.writeFile(wb, "Relatorio_Qualidade.xlsx");
     };
 </script>
 </body>
