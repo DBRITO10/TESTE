@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Qualidade - Simonetti</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --danger: #c62828; --success: #2e7d32; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-body); margin: 0; }
         
         header { 
             background: var(--primary); color: white; padding: 0 15px; 
@@ -20,27 +21,26 @@
         }
 
         .header-left { display: flex; align-items: center; gap: 10px; }
-
         .btn-header {
             background: rgba(255, 255, 255, 0.15); border: 1px solid white; color: white;
             padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
-            text-decoration: none; font-size: 13px; display: inline-flex; align-items: center;
+            text-decoration: none; font-size: 12px; display: inline-flex; align-items: center;
         }
         .btn-header:hover { background: white; color: var(--primary); }
 
         .container { padding: 15px; max-width: 1400px; margin: auto; }
-        .card { background: var(--white); padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
         .periodo-box { 
-            display: flex; gap: 10px; align-items: center; margin-bottom: 20px; 
+            display: flex; gap: 15px; align-items: center; margin-bottom: 20px; 
             padding: 15px; background: #f8f9fa; border-radius: 6px; border: 1px solid #ddd;
             flex-wrap: wrap;
         }
         .periodo-box input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
 
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; min-width: 1100px; }
-        th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 11px; color: #333; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: top; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; min-width: 1000px; }
+        th { background: #f1f1f1; padding: 12px 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 11px; color: #333; }
+        td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: top; }
 
         .filter-input {
             width: 100%; padding: 5px; margin-top: 5px; border: 1px solid #ccc;
@@ -54,9 +54,12 @@
         .bg-ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
         .bg-avaria { background: #ffebee; color: #c62828; border: 1px solid #c62828; }
         
-        .detalhe-avaria { font-size: 10px; color: #b71c1c; display: block; margin-top: 2px; }
-        .btn-excel { background: #1b5e20; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .btn-pdf { background: #b71c1c; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .detalhe-avaria { font-size: 10px; color: #555; display: block; margin-top: 2px; }
+        .fornecedor-tag { color: #d32f2f; font-weight: bold; font-size: 10px; }
+
+        .btn-export { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; gap: 5px; }
+        .btn-excel { background: #1b5e20; }
+        .btn-pdf { background: #b71c1c; }
     </style>
 </head>
 <body>
@@ -64,28 +67,32 @@
 <header>
     <div class="header-left">
         <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
-        <span class="btn-header" style="border:none;" id="userName">Carregando...</span>
+        <span class="user-badge" id="userName">Carregando...</span>
     </div>
-    <div class="header-center"><h1 style="font-size: 16px; margin: 0;">RELATÓRIO DE QUALIDADE</h1></div>
-    <div class="header-right"><button class="btn-header" id="btnLogout">SAIR</button></div>
+    <div class="header-center">
+        <h1 style="font-size: 16px; margin: 0;">RELATÓRIO DE QUALIDADE E AVARIAS</h1>
+    </div>
+    <div class="header-right">
+        <button class="btn-header" id="btnLogout">SAIR</button>
+    </div>
 </header>
 
 <div class="container">
     <div class="card">
         <div class="periodo-box">
             <div>
-                <label style="font-size: 11px; font-weight: bold; display: block;">INÍCIO:</label>
+                <label style="font-size: 11px; font-weight: bold; display: block;">INÍCIO</label>
                 <input type="date" id="dataInicio">
             </div>
             <div>
-                <label style="font-size: 11px; font-weight: bold; display: block;">FIM:</label>
+                <label style="font-size: 11px; font-weight: bold; display: block;">FIM</label>
                 <input type="date" id="dataFim">
             </div>
-            <button class="btn-header" style="background: var(--primary); border: none; height: 35px; margin-top: 15px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR</button>
+            <button class="btn-header" style="background: var(--primary); height: 35px; margin-top: 15px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR</button>
             
-            <div style="flex-grow: 1; text-align: right; margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn-excel" onclick="exportarExcel()">📊 EXCEL</button>
-                <button class="btn-pdf" onclick="exportarPDF()">📄 PDF ALTO NÍVEL</button>
+            <div style="flex-grow: 1; text-align: right; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn-export btn-excel" onclick="exportarExcel()">📊 EXCEL</button>
+                <button class="btn-export btn-pdf" onclick="exportarPDF()">📄 PDF PREMIUM</button>
             </div>
         </div>
 
@@ -93,17 +100,17 @@
             <table id="tabelaQualidade">
                 <thead>
                     <tr>
-                        <th style="width: 90px;">DATA <input type="text" class="filter-input" data-col="data" placeholder="Filtro"></th>
-                        <th style="width: 90px;">EXP <input type="text" class="filter-input" data-col="codigo" placeholder="Filtro"></th>
-                        <th>DESTINO <input type="text" class="filter-input" data-col="destino" placeholder="Filtro"></th>
-                        <th>PLACA <input type="text" class="filter-input" data-col="placa" placeholder="Filtro"></th>
-                        <th>EQUIPE <input type="text" class="filter-input" data-col="equipe" placeholder="Filtro"></th>
-                        <th style="width: 350px;">PRODUTOS / FORNECEDOR / MOTIVO <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Busca item..."></th>
-                        <th>SITUAÇÃO <input type="text" class="filter-input" data-col="situacaoStr" placeholder="OK/AVARIA"></th>
+                        <th style="width: 90px;">DATA <input type="text" class="filter-input" data-col="data" placeholder="..."></th>
+                        <th style="width: 80px;">EXP <input type="text" class="filter-input" data-col="codigo" placeholder="..."></th>
+                        <th>DESTINO <input type="text" class="filter-input" data-col="destino" placeholder="..."></th>
+                        <th style="width: 90px;">PLACA <input type="text" class="filter-input" data-col="placa" placeholder="..."></th>
+                        <th>EQUIPE <input type="text" class="filter-input" data-col="equipe" placeholder="..."></th>
+                        <th>PRODUTOS / FORNECEDOR / MOTIVO <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Busca item/fornecedor..."></th>
+                        <th style="width: 100px;">SITUAÇÃO <input type="text" class="filter-input" data-col="situacaoStr" placeholder="..."></th> 
                     </tr>
                 </thead>
                 <tbody id="corpoTabela">
-                    <tr><td colspan="7" style="text-align:center;">Carregando dados de hoje...</td></tr>
+                    <tr><td colspan="7" style="text-align:center;">Selecione um período ou aguarde o carregamento...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -121,38 +128,45 @@
     const db = getFirestore(app);
 
     let todosOsDados = [];
-    let mapaProdutos = {}; // Para armazenar fornecedores
+    let mapaFornecedores = {};
 
     onAuthStateChanged(auth, async user => {
         if(user) { 
-            // Carregar mapa de produtos/fornecedores primeiro
-            const prodSnap = await getDocs(collection(db, "produtos_lista"));
-            prodSnap.forEach(d => { mapaProdutos[d.data().codigo] = d.data().fornecedor || "N/I"; });
-
-            // Nome do usuário
             const userSnap = await getDoc(doc(db, "usuarios", user.uid));
             document.getElementById('userName').innerText = "👤 " + (userSnap.exists() ? userSnap.data().nome : "Usuário");
-
+            
+            await carregarMapaFornecedores();
             setarDatasPadrao();
-            filtrarPorPeriodo(); // Inicia com o filtro de hoje
-        } else { window.location.href = "index.html"; }
+            filtrarPorPeriodo(); 
+        } 
+        else { window.location.href = "index.html"; }
     });
 
     document.getElementById('btnLogout').onclick = () => signOut(auth);
 
+    // 1. DATA BRASILEIRA (CORREÇÃO FUSO)
     function setarDatasPadrao() {
-        const agora = new Date();
-        const dataBR = new Date(agora.getTime() - (3 * 3600000)); // UTC-3
+        const dataAtual = new Date();
+        const offset = -3; // Brasil UTC-3
+        const dataBR = new Date(dataAtual.getTime() + (offset * 3600000));
         const hoje = dataBR.toISOString().split('T')[0];
         document.getElementById('dataInicio').value = hoje;
         document.getElementById('dataFim').value = hoje;
+    }
+
+    async function carregarMapaFornecedores() {
+        const snap = await getDocs(collection(db, "produtos_lista"));
+        snap.forEach(d => {
+            const p = d.data();
+            mapaFornecedores[p.codigo] = p.fornecedor || "NÃO INFORMADO";
+        });
     }
 
     window.filtrarPorPeriodo = async () => {
         const dIni = document.getElementById('dataInicio').value;
         const dFim = document.getElementById('dataFim').value;
         const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando...</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">🔍 Processando dados...</td></tr>';
 
         try {
             const [avSnap, expSnap] = await Promise.all([
@@ -161,118 +175,152 @@
             ]);
 
             let mapaAvarias = {};
-            avSnap.forEach(d => {
-                const av = d.data();
-                if(!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
+            avSnap.forEach(docA => {
+                const av = docA.data();
+                if (!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
                 mapaAvarias[av.expedicaoId].push(av);
             });
 
             todosOsDados = [];
             expSnap.forEach(docExp => {
                 const exp = docExp.data();
-                const avarias = mapaAvarias[docExp.id] || null;
+                const avariasDaExp = mapaAvarias[docExp.id] || null;
                 
-                // Consolida detalhes para busca
-                let detalhesBusca = avarias ? avarias.map(a => `${a.codigoProduto} ${a.nomeProduto} ${mapaProdutos[a.codigoProduto] || ''}`).join(" ") : "";
+                let detalhesBusca = "";
+                if(avariasDaExp) {
+                    detalhesBusca = avariasDaExp.map(a => `${a.codigoProduto} ${a.nomeProduto} ${mapaFornecedores[a.codigoProduto] || ''} ${a.motivo}`).join(" ");
+                }
 
                 todosOsDados.push({
-                    data: exp.data.split('-').reverse().join('/'),
-                    codigo: exp.codigo || exp.expedicao,
-                    destino: exp.destino,
-                    placa: exp.placa,
+                    data: exp.data ? exp.data.split('-').reverse().join('/') : '-',
+                    codigo: exp.codigo || exp.expedicao || 'N/A',
+                    destino: exp.destino || '-',
+                    placa: exp.placa || '-',
                     equipe: (exp.equipe_carregamento || []).join(', '),
-                    avarias: avarias,
+                    avarias: avariasDaExp,
                     detalhesAvaria: detalhesBusca,
-                    situacaoStr: avarias ? "AVARIA" : "OK"
+                    situacaoStr: avariasDaExp ? "AVARIA" : "OK"
                 });
             });
 
-            todosOsDados.sort((a,b) => b.data.localeCompare(a.data));
+            todosOsDados.sort((a,b) => b.codigo.localeCompare(a.codigo));
             renderizarTabela(todosOsDados);
-        } catch (e) { corpo.innerHTML = "Erro ao carregar."; }
+
+        } catch (error) {
+            corpo.innerHTML = `<tr><td colspan="7" style="color:red;">Erro: ${error.message}</td></tr>`;
+        }
     };
 
     function renderizarTabela(lista) {
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
-        lista.forEach(item => {
-            let avHtml = "";
-            if(item.avarias) {
-                item.avarias.forEach(a => {
-                    const fornecedor = mapaProdutos[a.codigoProduto] || "Não Informado";
-                    avHtml += `<div style="margin-bottom:8px; border-bottom:1px solid #f0f0f0;">
-                        <b>${a.codigoProduto} - ${a.nomeProduto}</b><br>
-                        <span style="color:blue">🏭 Fornecedor: ${fornecedor}</span><br>
-                        <span class="detalhe-avaria">Motivo: ${a.motivo} | Qtd: ${a.quantidade}</span>
-                    </div>`;
-                });
-            } else { avHtml = '<span style="color:#999">Sem ocorrências</span>'; }
 
-            corpo.innerHTML += `<tr>
-                <td>${item.data}</td>
-                <td><b>${item.codigo}</b></td>
-                <td>${item.destino}</td>
-                <td>${item.placa}</td>
-                <td><small>${item.equipe}</small></td>
-                <td>${avHtml}</td>
-                <td><span class="status-badge ${item.avarias?'bg-avaria':'bg-ok'}">${item.situacaoStr}</span></td>
-            </tr>`;
+        lista.forEach(item => {
+            let statusHtml = item.avarias ? `<span class="status-badge bg-avaria">⚠️ AVARIA</span>` : `<span class="status-badge bg-ok">✅ OK</span>`;
+            let avariaHtml = "";
+
+            if (item.avarias) {
+                item.avarias.forEach(a => {
+                    const forn = mapaFornecedores[a.codigoProduto] || "FORNECEDOR N/I";
+                    avariaHtml += `
+                        <div style="margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #f0f0f0;">
+                            <span style="font-size:11px;"><b>${a.codigoProduto}</b> - ${a.nomeProduto}</span><br>
+                            <span class="fornecedor-tag">🏭 ${forn}</span><br>
+                            <span class="detalhe-avaria">Motivo: ${a.motivo} | Qtd: ${a.quantidade}</span>
+                        </div>`;
+                });
+            } else {
+                avariaHtml = `<span style="color:#999; font-size:11px;">Sem ocorrências</span>`;
+            }
+
+            corpo.innerHTML += `
+                <tr>
+                    <td>${item.data}</td>
+                    <td><strong>${item.codigo}</strong></td>
+                    <td>${item.destino}</td>
+                    <td>${item.placa}</td>
+                    <td><small>${item.equipe}</small></td>
+                    <td>${avariaHtml}</td>
+                    <td>${statusHtml}</td>
+                </tr>`;
         });
     }
 
-    // Filtros de Coluna
+    // Filtros dinâmicos
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('keyup', () => {
             const filtros = {};
-            document.querySelectorAll('.filter-input').forEach(i => { if(i.value) filtros[i.dataset.col] = i.value.toLowerCase(); });
-            const filtrados = todosOsDados.filter(item => Object.keys(filtros).every(c => String(item[c]).toLowerCase().includes(filtros[c])));
+            document.querySelectorAll('.filter-input').forEach(i => {
+                if (i.value) filtros[i.dataset.col] = i.value.toLowerCase();
+            });
+            const filtrados = todosOsDados.filter(item => {
+                return Object.keys(filtros).every(col => String(item[col]).toLowerCase().includes(filtros[col]));
+            });
             renderizarTabela(filtrados);
         });
     });
 
-    // EXPORTAÇÃO PDF ALTO NÍVEL
+    // 2. EXPORTAÇÃO EXCEL
+    window.exportarExcel = () => {
+        const wb = XLSX.utils.table_to_book(document.getElementById("tabelaQualidade"));
+        XLSX.writeFile(wb, `Qualidade_Simonetti_${new Date().toLocaleDateString()}.xlsx`);
+    };
+
+    // 3. EXPORTAÇÃO PDF PREMIUM (ALTO NÍVEL)
     window.exportarPDF = () => {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4');
+        const doc = new jsPDF('l', 'mm', 'a4'); // Paisagem
 
-        // Design do Cabeçalho
-        doc.setFillColor(211, 47, 47); // Vermelho Simonetti
-        doc.rect(0, 0, 297, 40, 'F');
+        // Estilização do Título/Cabeçalho do PDF
+        doc.setFillColor(211, 47, 47);
+        doc.rect(0, 0, 297, 35, 'F');
+        
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("RELATÓRIO DE QUALIDADE E AVARIAS", 15, 20);
+        doc.setFontSize(20);
+        doc.text("SIMONETTI - RELATÓRIO DE QUALIDADE", 15, 18);
         doc.setFontSize(10);
-        doc.text(`Período: ${document.getElementById('dataInicio').value} até ${document.getElementById('dataFim').value}`, 15, 30);
-        doc.text(`Emitido em: ${new Date().toLocaleString()}`, 230, 30);
+        doc.text(`Período: ${document.getElementById('dataInicio').value} à ${document.getElementById('dataFim').value}`, 15, 28);
+        doc.text(`Gerado em: ${new Date().toLocaleString()}`, 230, 28);
 
-        const rows = [];
+        const colunas = ["DATA", "EXP", "DESTINO", "PLACA", "EQUIPE", "ITENS / FORNECEDOR / MOTIVO", "SITUAÇÃO"];
+        const linhas = [];
+
         todosOsDados.forEach(item => {
             let avText = "";
-            if(item.avarias){
+            if(item.avarias) {
                 item.avarias.forEach(a => {
-                    avText += `Item: ${a.codigoProduto} | Forn: ${mapaProdutos[a.codigoProduto]||'N/I'} | Motivo: ${a.motivo}\n`;
+                    const f = mapaFornecedores[a.codigoProduto] || "N/I";
+                    avText += `• ${a.nomeProduto} (${f})\n  Motivo: ${a.motivo} (Qtd: ${a.quantidade})\n`;
                 });
-            } else { avText = "OK"; }
+            } else {
+                avText = "CONFERÊNCIA OK";
+            }
 
-            rows.push([item.data, item.codigo, item.destino, item.placa, item.equipe, avText, item.situacaoStr]);
+            linhas.push([
+                item.data,
+                item.codigo,
+                item.destino,
+                item.placa,
+                item.equipe,
+                avText,
+                item.situacaoStr
+            ]);
         });
 
         doc.autoTable({
-            head: [['DATA', 'EXP', 'DESTINO', 'PLACA', 'EQUIPE', 'DETALHES DA AVARIA / FORNECEDOR', 'SITUAÇÃO']],
-            body: rows,
-            startY: 45,
-            theme: 'grid',
-            headStyles: { fillColor: [183, 28, 28], fontSize: 8 },
-            columnStyles: { 5: { cellWidth: 80, fontSize: 7 } },
-            styles: { fontSize: 8, valign: 'middle' }
+            head: [colunas],
+            body: linhas,
+            startY: 40,
+            styles: { fontSize: 8, cellPadding: 3 },
+            headStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            columnStyles: {
+                5: { cellWidth: 80 }, // Coluna dos produtos mais larga
+                6: { fontStyle: 'bold' }
+            }
         });
 
-        doc.save("Relatorio_Qualidade_Simonetti.pdf");
-    };
-
-    window.exportarExcel = () => {
-        const wb = XLSX.utils.table_to_book(document.getElementById("tabelaQualidade"));
-        XLSX.writeFile(wb, "Relatorio_Qualidade.xlsx");
+        doc.save(`Relatorio_Qualidade_Simonetti.pdf`);
     };
 </script>
 </body>
