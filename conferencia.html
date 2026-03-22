@@ -99,10 +99,10 @@
         <div id="detalheCarga" style="font-size: 12px; color: #444; background: #f5f5f5; padding: 12px; border-radius: 6px; line-height: 1.6;"></div>
         
         <div style="margin-top: 15px;">
-            <label style="font-size: 14px; font-weight: bold;">Status da Entrega:</label>
+            <label style="font-size: 14px; font-weight: bold;">Status da Carga:</label>
             <select id="selectAvaria" onchange="toggleCamposAvaria()">
                 <option value="nao">✅ CARGA 100% OK</option>
-                <option value="sim">⚠️ POSSUI AVARIA / FALTA / SOBRA</option>
+                <option value="sim">⚠️ POSSUI DIVERGÊNCIA</option>
             </select>
         </div>
 
@@ -170,13 +170,13 @@
                     container.innerHTML += `
                         <div class="item-carga">
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span class="badge-data">📅 ${dtExp}</span>
+                                <span class="badge-data">📅 ${data.data}</span>
                                 <strong style="color:var(--primary)">Exp: ${data.codigo || data.expedicao}</strong>
                             </div>
                             <p class="info-p"><strong>🚛 Placa:</strong> ${data.placa}</p>
                             <p class="info-p"><strong>📦 Veículo:</strong> ${data.tipo || data.tipoVeiculo || '---'}</p>
                             <p class="info-p"><strong>📍 Destino:</strong> ${data.destino}</p>
-                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${dtExp}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.tipo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
+                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${data.data}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.tipo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
                         </div>`;
                 }
             });
@@ -247,13 +247,15 @@
 
     const adicionarItemAvaria = () => {
         const idUnico = Date.now();
-        const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
+        const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}>${p.fornecedor}</option>`).join('');
         const itemHtml = `
             <div class="item-avaria-card" id="item_${idUnico}">
                 <span class="remove-item" onclick="document.getElementById('item_${idUnico}').remove()">X REMOVER</span>
                 <input type="text" class="p-cod" placeholder="Código do Produto" list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
                 <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
                 <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" required>
+                <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
+                <input type="text" class="p.fornecedor" id="nome_${idUnico}" placeholder="Nome do Fornecedor" required>                
                 <div style="display: flex; gap: 8px;">
                     <input type="number" class="p-qtd" placeholder="Qtd" style="flex: 1;" required>
                     <select class="p-motivo" style="flex: 2;" required>
@@ -280,6 +282,7 @@
                         expedicaoId: cargaSelecionadaId,
                         codigoProduto: card.querySelector('.p-cod').value,
                         nomeProduto: card.querySelector('.p-nome').value.toUpperCase(),
+                        nomeFornecedor: card.querySelector('.p.fornecedor').value.toUpperCase(),                        
                         quantidade: card.querySelector('.p-qtd').value,
                         motivo: card.querySelector('.p-motivo').value,
                         descricao: card.querySelector('.p-obs').value.toUpperCase(),
@@ -307,6 +310,7 @@
     window.buscarDescricao = (input, id) => {
         const p = listaProdutosDB.find(x => x.codigo == input.value.trim());
         const field = document.getElementById(`nome_${id}`);
+        const field = document.getElementById(`fornecedor_${id}`);        
         if(p) { field.value = p.nome; field.readOnly = true; field.style.background = "#eee"; }
         else { field.value = ""; field.readOnly = false; field.style.background = "#fff"; }
     };
