@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Pagamentos - Logística</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        :root { --primary: #c62828; --secondary: #2e7d32; --bg: #f5f5f5; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 20px; max-width: 1200px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .config-item { background: #fff5f5; padding: 10px; border: 1px solid #ffcdd2; border-radius: 4px; }
+        .config-item label { font-size: 12px; font-weight: bold; color: #c62828; display: block; }
+        .config-item input { width: 100%; border: none; background: transparent; font-size: 16px; font-weight: bold; outline: none; }
+
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; background: #eee; padding: 15px; border-radius: 4px; align-items: flex-end; }
+        .filters div { flex: 1; min-width: 150px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th { background: #333; color: white; padding: 10px; text-align: left; font-size: 12px; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 13px; }
+        
+        .row-total { background: #e8f5e9; font-weight: bold; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-calc { background: var(--primary); color: white; }
+        .btn-xls { background: var(--secondary); color: white; }
+        
+        .summary-box { display: flex; justify-content: flex-end; margin-top: 15px; font-size: 18px; font-weight: bold; color: var(--secondary); }
+    </style>
+</head>
+<body>
+
+<header>
+    <span>Logística MS - Painel Admin</span>
+    <button onclick="window.print()" style="background:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">IMPRIMIR PDF</button>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h4 style="margin-top:0;">VALORES POR CARREGAMENTO (R$)</h4>
+        <div class="config-grid">
+            <div class="config-item"><label>CARRETA</label><input type="number" id="v_CARRETA" value="300"></div>
+            <div class="config-item"><label>TRUCK / TOCO</label><input type="number" id="v_TRUCK" value="250"></div>
+            <div class="config-item"><label>CARRO 3/4</label><input type="number" id="v_34" value="150"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="filters">
+            <div><label>Início</label><input type="date" id="dataIni" style="width:100%; padding:8px;"></div>
+            <div><label>Fim</label><input type="date" id="dataFim" style="width:100%; padding:8px;"></div>
+            <div>
+                <label>Filtro Vínculo</label>
+                <select id="fVinculo" style="width:100%; padding:8px;">
+                    <option value="TODOS">TODOS</option>
+                    <option value="MEI">SÓ MEI</option>
+                    <option value="TERCEIRIZADO">SÓ TERCEIRIZADO</option>
+                </select>
+            </div>
+            <button class="btn btn-calc" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
+            <button class="btn btn-xls" onclick="exportarExcel()">EXPORTAR EXCEL</button>
+        </div>
+
+        <table id="tabelaPagamentos">
+            <thead>
+                <tr>
+                    <th>COLABORADOR</th>
+                    <th>VÍNCULO</th>
+                    <th>DATA</th>
+                    <th>VEÍCULO</th>
+                    <th>PESSOAS</th>
+                    <th>VALOR BASE</th>
+                    <th>INSS (20%)</th>
+                    <th>TOTAL A PAGAR</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                </tbody>
+        </table>
+        
+        <div class="summary-box" id="totalGeralPeriodo"></div>
+    </div>
+</div>
+
+<script>
+    // Simulação de dados baseada nos seus prints de Firestore
+    // Na sua aplicação real, você usaria o getDocs do Firebase aqui
+    const mockEquipe = [
+        { nome: "DOUGLAS BRITO DA ROCHA", vinculo: "TERCEIRIZADO" },
+        { nome: "PAULO ROBERTO", vinculo: "MEI" },
+        { nome: "ADILSON SILVA PEREIRA", vinculo: "TERCEIRIZADO" }
+    ];
+
+    const mockExpedicoes = [
+        { data: "2026-03-21", placa: "FFP-6892", tipo: "CARRETA", equipe: ["PAULO ROBERTO", "ADILSON SILVA PEREIRA"], status: "FINALIZADO" },
+        { data: "2026-03-21", placa: "OYH-8H90", tipo: "TOCO", equipe: ["DOUGLAS BRITO DA ROCHA", "PAULO ROBERTO"], status: "FINALIZADO" }
+    ];
+
+    let globalRelatorio = [];
+
+    function gerarRelatorio() {
+        const precos = {
+            "CARRETA": parseFloat(document.getElementById('v_CARRETA').value),
+            "TRUCK": parseFloat(document.getElementById('v_TRUCK').value),
+            "TOCO": parseFloat(document.getElementById('v_TRUCK').value),
+            "CARRO 3/4": parseFloat(document.getElementById('v_34').value)
+        };
+
+        const vinculoFiltro = document.getElementById('fVinculo').value;
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+        globalRelatorio = [];
+        let somaTotalEmpresa = 0;
+
+        // Agrupar totais por pessoa para o resumo final
+        let resumoPessoas = {};
+
+        mockExpedicoes.forEach(exp => {
+            const valorCarro = precos[exp.tipo] || 0;
+            const qtdPessoas = exp.equipe.length;
+            const valorPorPessoa = valorCarro / qtdPessoas;
+
+            exp.equipe.forEach(nome => {
+                const colab = mockEquipe.find(c => c.nome === nome) || { vinculo: "MEI" };
+                
+                if (vinculoFiltro !== "TODOS" && colab.vinculo !== vinculoFiltro) return;
+
+                let valorInss = 0;
+                if (colab.vinculo === "TERCEIRIZADO") {
+                    valorInss = valorPorPessoa * 0.20; // Lógica: Valor + 20% pro Terceirizado
+                }
+
+                const totalLinha = valorPorPessoa + valorInss;
+                somaTotalEmpresa += totalLinha;
+
+                const item = {
+                    nome: nome,
+                    vinculo: colab.vinculo,
+                    data: exp.data,
+                    veiculo: exp.tipo,
+                    qtd: qtdPessoas,
+                    base: valorPorPessoa,
+                    inss: valorInss,
+                    total: totalLinha
+                };
+
+                globalRelatorio.push(item);
+                
+                // Acumular total por pessoa
+                if(!resumoPessoas[nome]) resumoPessoas[nome] = 0;
+                resumoPessoas[nome] += totalLinha;
+
+                corpo.innerHTML += `
+                    <tr>
+                        <td>${item.nome}</td>
+                        <td>${item.vinculo}</td>
+                        <td>${item.data}</td>
+                        <td>${item.veiculo}</td>
+                        <td>${item.qtd}</td>
+                        <td>R$ ${item.base.toFixed(2)}</td>
+                        <td>${item.inss > 0 ? '+ R$ ' + item.inss.toFixed(2) : '-'}</td>
+                        <td><b>R$ ${item.total.toFixed(2)}</b></td>
+                    </tr>
+                `;
+            });
+        });
+
+        // Adicionar linhas de Total por Pessoa no final da tabela
+        corpo.innerHTML += `<tr style="background:#333; color:white;"><td colspan="8">RESUMO DE PAGAMENTO POR COLABORADOR</td></tr>`;
+        for (let pessoa in resumoPessoas) {
+            corpo.innerHTML += `
+                <tr class="row-total">
+                    <td colspan="7">TOTAL A PAGAR PARA: ${pessoa}</td>
+                    <td>R$ ${resumoPessoas[pessoa].toFixed(2)}</td>
+                </tr>
+            `;
+        }
+
+        document.getElementById('totalGeralPeriodo').innerText = `TOTAL GERAL A PAGAR: R$ ${somaTotalEmpresa.toFixed(2)}`;
+    }
+
+    function exportarExcel() {
+        const ws = XLSX.utils.json_to_sheet(globalRelatorio);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pagamentos");
+        XLSX.writeFile(wb, "Relatorio_Pagamento_MS.xlsx");
+    }
+</script>
+
+</body>
+</html>
