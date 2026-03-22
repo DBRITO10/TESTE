@@ -17,22 +17,21 @@
         
         h2 { color: var(--primary); margin-top: 0; font-size: 16px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
 
-        /* Estilo dos Filtros */
         .filter-group { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
         .filter-group div { flex: 1; }
         .filter-group label { font-size: 11px; font-weight: bold; color: #666; display: block; }
         .filter-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
         .btn-search { background: var(--primary); color: white; border: none; padding: 9px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        /* Grid de Cards */
         .grid-cargas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .item-carga { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); }
+        .item-carga { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); position: relative; }
         .item-carga.finalizado { border-left: 5px solid var(--success); opacity: 0.9; }
         
         .info-p { margin: 4px 0; font-size: 13px; }
         .badge-data { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
 
         .btn-confirmar { width: 100%; background: var(--success); color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-print { background: #333; color: white; border: none; padding: 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
 
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
@@ -72,7 +71,6 @@
 
     <div class="card">
         <h2>✅ HISTÓRICO DE RECEBIMENTOS</h2>
-        
         <div class="filter-group">
             <div>
                 <label>Data Inicial:</label>
@@ -84,9 +82,8 @@
             </div>
             <button class="btn-search" id="btnFiltrarHistorico">🔍 BUSCAR</button>
         </div>
-
         <div class="grid-cargas" id="listaHistorico">
-            <p style="text-align:center; width:100%; color: #999;">Selecione o período para visualizar.</p>
+            <p style="text-align:center; width:100%; color: #999;">Selecione o período.</p>
         </div>
     </div>
 </div>
@@ -94,7 +91,6 @@
 <div class="modal" id="modalConferencia">
     <div class="modal-content">
         <div class="loading-overlay" id="loadingModal">PROCESSANDO...</div>
-        
         <h3 style="margin-top:0; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 10px;">Conferência de Recebimento</h3>
         <div id="detalheCarga" style="font-size: 12px; color: #444; background: #f5f5f5; padding: 12px; border-radius: 6px; line-height: 1.6;"></div>
         
@@ -102,7 +98,7 @@
             <label style="font-size: 14px; font-weight: bold;">Status da Carga:</label>
             <select id="selectAvaria" onchange="toggleCamposAvaria()">
                 <option value="nao">✅ CARGA 100% OK</option>
-                <option value="sim">⚠️ POSSUI DIVERGÊNCIA</option>
+                <option value="sim">⚠️ POSSUI DIVERGÊNCIA (AVARIA/FALTA/SOBRA)</option>
             </select>
         </div>
 
@@ -121,7 +117,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, addDoc, onSnapshot, query, where, serverTimestamp, orderBy, startAt, endAt } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, addDoc, onSnapshot, query, where, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
@@ -132,8 +128,15 @@
     let cargaSelecionadaId = null;
     let listaProdutosDB = [];
 
-    // CONFIGURAÇÃO INICIAL DE DATAS (HOJE)
-    const hoje = new Date().toISOString().split('T')[0];
+    // --- CORREÇÃO DE DATA BRASIL ---
+    function getDataBrasil() {
+        const data = new Date();
+        const fuso = -3; 
+        const dataBrasil = new Date(data.getTime() + (fuso * 3600000));
+        return dataBrasil.toISOString().split('T')[0];
+    }
+
+    const hoje = getDataBrasil();
     document.getElementById('dataInicio').value = hoje;
     document.getElementById('dataFim').value = hoje;
 
@@ -155,7 +158,6 @@
         listaProdutosDB = snap.docs.map(d => d.data());
     }
 
-    // CARGAS EM TRÂNSITO
     function carregarCargasPendentes() {
         const q = query(collection(db, "expedicoes"), where("status", "==", "CARREGADO/EM VIAGEM"));
         onSnapshot(q, (snap) => {
@@ -170,21 +172,20 @@
                     container.innerHTML += `
                         <div class="item-carga">
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span class="badge-data">📅 ${data.data}</span>
+                                <span class="badge-data">📅 ${dtExp}</span>
                                 <strong style="color:var(--primary)">Exp: ${data.codigo || data.expedicao}</strong>
                             </div>
                             <p class="info-p"><strong>🚛 Placa:</strong> ${data.placa}</p>
-                            <p class="info-p"><strong>📦 Veículo:</strong> ${data.tipo || data.tipoVeiculo || '---'}</p>
+                            <p class="info-p"><strong>📦 Veículo:</strong> ${data.veiculo || data.tipoVeiculo || '---'}</p>
                             <p class="info-p"><strong>📍 Destino:</strong> ${data.destino}</p>
-                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${data.data}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.tipo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
+                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${dtExp}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.veiculo || data.tipoVeiculo || '---'}')">CONFERIR</button>
                         </div>`;
                 }
             });
-            if(!temCarga) container.innerHTML = "<p style='text-align:center; width:100%; color:#999;'>Nenhuma carga em trânsito para sua central.</p>";
+            if(!temCarga) container.innerHTML = "<p style='text-align:center; width:100%; color:#999;'>Nenhuma carga em trânsito.</p>";
         });
     }
 
-    // CARGAS JÁ RECEBIDAS (HISTÓRICO)
     async function carregarHistorico() {
         const container = document.getElementById('listaHistorico');
         container.innerHTML = "<p style='text-align:center; width:100%;'>Buscando...</p>";
@@ -202,26 +203,25 @@
 
         const snap = await getDocs(q);
         container.innerHTML = "";
-        let encontrou = false;
-
         snap.forEach(d => {
             const data = d.data();
             if (usuarioDados.nivel === 'admin' || (usuarioDados.central && usuarioDados.central.includes(data.destino))) {
-                encontrou = true;
                 let dtRec = data.dataRecebimento?.toDate().toLocaleString('pt-BR');
+                let btnImprimir = data.teveOcorrencia ? `<button class="btn-print" onclick="imprimirResumo('${d.id}')">🖨️ IMPRIMIR RESUMO</button>` : '';
+                
                 container.innerHTML += `
                     <div class="item-carga finalizado">
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                             <span class="badge-data" style="background:#e8f5e9; color:#2e7d32;">✅ RECEBIDO</span>
                             <strong>Exp: ${data.codigo || data.expedicao}</strong>
                         </div>
-                        <p class="info-p"><strong>Recebido em:</strong> ${dtRec}</p>
+                        <p class="info-p"><strong>Data:</strong> ${dtRec}</p>
                         <p class="info-p"><strong>Placa:</strong> ${data.placa}</p>
                         <p class="info-p"><strong>Ocorrências:</strong> ${data.teveOcorrencia ? '⚠️ SIM' : '✅ NÃO'}</p>
+                        ${btnImprimir}
                     </div>`;
             }
         });
-        if(!encontrou) container.innerHTML = "<p style='text-align:center; width:100%; color:#999;'>Nenhum registro encontrado neste período.</p>";
     }
 
     window.abrirModal = (id, data, exp, placa, veiculo) => {
@@ -229,10 +229,10 @@
         document.getElementById('listaItensAvaria').innerHTML = "";
         document.getElementById('detalheCarga').innerHTML = `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <span><strong>📅 DATA:</strong> ${data}</span>
-                <span><strong>📦 EXPEDIÇÃO:</strong> ${exp}</span>
-                <span><strong>🚛 PLACA:</strong> ${placa}</span>
-                <span><strong>🚚 VEÍCULO:</strong> ${veiculo}</span>
+                <span>📅 DATA: ${data}</span>
+                <span>📦 EXP: ${exp}</span>
+                <span>🚛 PLACA: ${placa}</span>
+                <span>🚚 VEÍCULO: ${veiculo}</span>
             </div>`;
         document.getElementById('modalConferencia').style.display = 'flex';
         document.getElementById('selectAvaria').value = 'nao';
@@ -247,26 +247,43 @@
 
     const adicionarItemAvaria = () => {
         const idUnico = Date.now();
-        const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}>${p.fornecedor}</option>`).join('');
+        const optionsHtml = listaProdutosDB.map(p => `<option value="${p.codigo}">${p.nome}</option>`).join('');
         const itemHtml = `
             <div class="item-avaria-card" id="item_${idUnico}">
                 <span class="remove-item" onclick="document.getElementById('item_${idUnico}').remove()">X REMOVER</span>
-                <input type="text" class="p-cod" placeholder="Código do Produto" list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
+                
+                <input type="text" class="p-cod" placeholder="Código" list="dl_${idUnico}" oninput="buscarDescricao(this, ${idUnico})" required>
                 <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
-                <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Nome do Produto" required>
-                <datalist id="dl_${idUnico}">${optionsHtml}</datalist>
-                <input type="text" class="p.fornecedor" id="fornecedor_${idUnico}" placeholder="Nome do Fornecedor" required>                
+
+                <input type="text" class="p-nome" id="nome_${idUnico}" placeholder="Produto" readonly style="background:#f9f9f9">
+                <input type="text" class="p-forn" id="forn_${idUnico}" placeholder="Fornecedor" readonly style="background:#f9f9f9; font-size: 11px; color: #666;">
+                
                 <div style="display: flex; gap: 8px;">
                     <input type="number" class="p-qtd" placeholder="Qtd" style="flex: 1;" required>
                     <select class="p-motivo" style="flex: 2;" required>
                         <option value="">Motivo...</option>
-                        <optgroup label="AVARIAS"><option value="Danificado">Danificado</option><option value="Amassado">Amassado</option><option value="Quebrado">Quebrado</option><option value="Molhado">Molhado</option></optgroup>
-                        <optgroup label="FALTAS/SOBRAS"><option value="Falta de Produto">Falta de Produto</option><option value="Falta de Volume">Falta de Volume</option><option value="Sobra de Produto">Sobra de Produto</option><option value="Sobra de Volume">Sobra de Volume</option></optgroup>
+                        <optgroup label="DIVERGÊNCIAS">
+                            <option value="Danificado">Danificado</option>
+                            <option value="Falta de Produto">Falta de Produto</option>
+                            <option value="Sobra de Produto">Sobra de Produto</option>
+                            <option value="Volume Molhado">Volume Molhado</option>
+                        </optgroup>
                     </select>
                 </div>
                 <textarea class="p-obs" placeholder="Observações..."></textarea>
             </div>`;
         document.getElementById('listaItensAvaria').insertAdjacentHTML('beforeend', itemHtml);
+    };
+
+    window.buscarDescricao = (input, id) => {
+        const p = listaProdutosDB.find(x => x.codigo == input.value.trim());
+        if(p) {
+            document.getElementById(`nome_${id}`).value = p.nome;
+            document.getElementById(`forn_${id}`).value = p.fornecedor || "NÃO INFORMADO";
+        } else {
+            document.getElementById(`nome_${id}`).value = "";
+            document.getElementById(`forn_${id}`).value = "";
+        }
     };
 
     document.getElementById('btnFinalizar').onclick = async () => {
@@ -281,8 +298,8 @@
                     await addDoc(collection(db, "avarias"), {
                         expedicaoId: cargaSelecionadaId,
                         codigoProduto: card.querySelector('.p-cod').value,
-                        nomeProduto: card.querySelector('.p-nome').value.toUpperCase(),
-                        nomeFornecedor: card.querySelector('.p.fornecedor').value.toUpperCase(),                        
+                        nomeProduto: card.querySelector('.p-nome').value,
+                        fornecedor: card.querySelector('.p-forn').value,
                         quantidade: card.querySelector('.p-qtd').value,
                         motivo: card.querySelector('.p-motivo').value,
                         descricao: card.querySelector('.p-obs').value.toUpperCase(),
@@ -300,26 +317,66 @@
                 teveOcorrencia: (valAvaria === 'sim')
             });
 
-            alert("Recebimento finalizado!");
+            alert("Baixa concluída com sucesso!");
             document.getElementById('modalConferencia').style.display = 'none';
-            carregarHistorico(); // Atualiza a lista de baixo
+            carregarHistorico();
         } catch (e) { alert("Erro ao salvar."); }
         loading.style.display = 'none';
     };
 
-    window.buscarDescricao = (input, id) => {
-        const p = listaProdutosDB.find(x => x.codigo == input.value.trim());
-        const field = document.getElementById(`nome_${id}`);
-        const field = document.getElementById(`fornecedor_${id}`);        
-        if(p) { field.value = p.nome; field.readOnly = true; field.style.background = "#eee"; }
-        else { field.value = ""; field.readOnly = false; field.style.background = "#fff"; }
+    window.imprimirResumo = async (id) => {
+        const cargaDoc = await getDoc(doc(db, "expedicoes", id));
+        const avariasSnap = await getDocs(query(collection(db, "avarias"), where("expedicaoId", "==", id)));
+        
+        const carga = cargaDoc.data();
+        let itensHtml = "";
+        
+        avariasSnap.forEach(av => {
+            const a = av.data();
+            itensHtml += `
+                <tr>
+                    <td>${a.codigoProduto}</td>
+                    <td>${a.nomeProduto}<br><small>Forn: ${a.fornecedor}</small></td>
+                    <td>${a.quantidade}</td>
+                    <td>${a.motivo}</td>
+                    <td>${a.descricao}</td>
+                </tr>`;
+        });
+
+        const janela = window.open('', '', 'width=800,height=600');
+        janela.document.write(`
+            <html><head><title>Resumo Divergência</title>
+            <style>
+                body { font-family: sans-serif; padding: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                th { background: #eee; }
+                .footer { margin-top: 50px; display: flex; justify-content: space-between; }
+                .assinatura { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 12px; }
+            </style></head><body>
+            <div class="header">
+                <h2>RELATÓRIO DE DIVERGÊNCIAS - SIMONETTI</h2>
+                <p>Expedição: ${carga.codigo || carga.expedicao} | Placa: ${carga.placa}</p>
+            </div>
+            <p><strong>Destino:</strong> ${carga.destino} | <strong>Recebido em:</strong> ${carga.dataRecebimento.toDate().toLocaleString()}</p>
+            <table>
+                <thead><tr><th>Cód</th><th>Produto</th><th>Qtd</th><th>Motivo</th><th>Obs</th></tr></thead>
+                <tbody>${itensHtml}</tbody>
+            </table>
+            <div class="footer">
+                <div class="assinatura">Motorista</div>
+                <div class="assinatura">Conferente: ${carga.recebidoPor}</div>
+            </div>
+            <script>window.onload = function() { window.print(); window.close(); }</script>
+            </body></html>
+        `);
     };
 
     document.getElementById('btnFiltrarHistorico').onclick = carregarHistorico;
     document.getElementById('btnCancelar').onclick = () => document.getElementById('modalConferencia').style.display = 'none';
     document.getElementById('btnAddItem').onclick = adicionarItemAvaria;
     document.getElementById('btnSair').onclick = () => signOut(auth);
-    window.abrirModal = abrirModal;
     window.toggleCamposAvaria = toggleCamposAvaria;
 </script>
 </body>
