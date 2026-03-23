@@ -51,7 +51,7 @@
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
         
         .row-even { background-color: #ffffff; }
-        .row-odd { background-color: #f9f9f9; }
+        .row-odd { background-color: #2D2D31; }
         .summary-row { background: #e8f5e9 !important; font-weight: bold; color: #1b5e20; }
         /* Nova classe para o total geral */
         .total-geral-row { background: #b71c1c !important; color: white !important; font-weight: 900; font-size: 15px; }
@@ -78,7 +78,7 @@
         <span style="font-size: 12px; margin-left: 5px;">Olá, <strong id="userName">...</strong></span>
     </div>
     <div class="header-center">
-        <h2 id="main-title">RELATÓRIO DE PAGAMENTO EQUIPE</h2>
+        <h2 id="main-title">RELATÓRIO DE PAGAMENTO</h2>
     </div>
     <div class="header-right">
         <button id="btnLogout" style="color:red; border:none; background:none; cursor:pointer; font-size:11px; font-weight: bold;">SAIR</button>
@@ -279,7 +279,7 @@
         // LINHA DO TOTAL GERAL NA TELA
         corpo.innerHTML += `
             <tr class="total-geral-row">
-                <td colspan="6" style="text-align:right;">VALOR TOTAL GERAL (TODOS):</td>
+                <td colspan="6" style="text-align:right;">VALOR TOTAL GERAL:</td>
                 <td colspan="3" style="text-align:right;">R$ ${fmtBRL(valorTotalGeral)}</td>
             </tr>`;
     };
