@@ -53,6 +53,8 @@
         .row-even { background-color: #ffffff; }
         .row-odd { background-color: #f9f9f9; }
         .summary-row { background: #e8f5e9 !important; font-weight: bold; color: #1b5e20; }
+        /* Nova classe para o total geral */
+        .total-geral-row { background: #b71c1c !important; color: white !important; font-weight: 900; font-size: 15px; }
 
         /* Responsividade Celular */
         @media (max-width: 768px) {
@@ -86,10 +88,10 @@
 <div class="container">
     <div class="card-admin">
         <div class="val-grid">
-            <div class="val-item"><label>VALOR CARRETA</label><div class="input-row">R$ <input type="number" id="v_CARRETA" value="300"></div></div>
-            <div class="val-item"><label>VALOR TRUCK</label><div class="input-row">R$ <input type="number" id="v_TRUCK" value="250"></div></div>
-            <div class="val-item"><label>VALOR TOCO</label><div class="input-row">R$ <input type="number" id="v_TOCO" value="250"></div></div>
-            <div class="val-item"><label>VALOR CARRO 3/4</label><div class="input-row">R$ <input type="number" id="v_34" value="150"></div></div>
+            <div class="val-item"><label>VALOR CARRETA</label><div class="input-row">R$ <input type="number" id="v_CARRETA" value="230"></div></div>
+            <div class="val-item"><label>VALOR TRUCK</label><div class="input-row">R$ <input type="number" id="v_TRUCK" value="180"></div></div>
+            <div class="val-item"><label>VALOR TOCO</label><div class="input-row">R$ <input type="number" id="v_TOCO" value="180"></div></div>
+            <div class="val-item"><label>VALOR CARRO 3/4</label><div class="input-row">R$ <input type="number" id="v_34" value="60"></div></div>
         </div>
 
         <div class="filters">
@@ -145,42 +147,30 @@
 
     let dadosParaExportar = [];
     let resumoPorPessoa = {};
+    let valorTotalGeral = 0; // Variável para o total de tudo
 
-    // FUNÇÃO PARA VALIDAR ADMIN E CARREGAR NOME
+    // Formatador de Moeda Brasileira
+    const fmtBRL = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     async function verificarAcesso() {
         const userUid = localStorage.getItem("userUid");
-        
-        // Se não tiver UID, volta pro login
-        if (!userUid) {
-            window.location.href = "index.html";
-            return;
-        }
-
+        if (!userUid) { window.location.href = "index.html"; return; }
         try {
             const userDoc = await getDoc(doc(db, "usuarios", userUid));
-            
             if (userDoc.exists()) {
                 const dados = userDoc.data();
-                
-                // Valida se é admin conforme sua imagem (nivel: "admin")
                 if (dados.nivel === "admin") {
                     document.getElementById('userName').innerText = dados.nome;
                 } else {
                     alert("Acesso restrito a administradores!");
                     window.location.href = "menu.html";
                 }
-            } else {
-                window.location.href = "index.html";
-            }
-        } catch (error) {
-            console.error("Erro na verificação:", error);
-        }
+            } else { window.location.href = "index.html"; }
+        } catch (error) { console.error("Erro na verificação:", error); }
     }
 
-    // Executa ao abrir a página
     verificarAcesso();
 
-    // BOTÃO SAIR (Só desloga se clicar)
     document.getElementById('btnLogout').addEventListener('click', () => {
         localStorage.removeItem("userUid");
         window.location.href = "index.html";
@@ -222,6 +212,7 @@
         corpo.innerHTML = "";
         dadosParaExportar = [];
         resumoPorPessoa = {};
+        valorTotalGeral = 0;
 
         let lastDate = "";
         let isGray = false;
@@ -232,8 +223,8 @@
                 lastDate = item.data;
             }
 
-            const valorTotal = parseFloat(precos[item.tipo] || 0);
-            const baseIndiv = valorTotal / (item.equipe.length || 1);
+            const valorTotalVei = parseFloat(precos[item.tipo] || 0);
+            const baseIndiv = valorTotalVei / (item.equipe.length || 1);
 
             item.equipe.forEach(nome => {
                 const vnc = vinculos[nome] || "MEI";
@@ -258,6 +249,7 @@
                 if(!resumoPorPessoa[nome]) resumoPorPessoa[nome] = { total: 0, carros: 0 };
                 resumoPorPessoa[nome].total += total;
                 resumoPorPessoa[nome].carros++;
+                valorTotalGeral += total; // Soma ao totalzão
 
                 corpo.innerHTML += `
                     <tr class="${isGray ? 'row-odd' : 'row-even'}">
@@ -267,9 +259,9 @@
                         <td><small>${linha.exps}</small></td>
                         <td>${linha.nome}</td>
                         <td style="color:${vnc === 'MEI' ? 'blue' : 'orange'}"><b>${vnc}</b></td>
-                        <td>R$ ${linha.base.toFixed(2)}</td>
-                        <td>R$ ${linha.inss.toFixed(2)}</td>
-                        <td style="font-weight:bold;">R$ ${linha.total.toFixed(2)}</td>
+                        <td>R$ ${fmtBRL(linha.base)}</td>
+                        <td>R$ ${fmtBRL(linha.inss)}</td>
+                        <td style="font-weight:bold;">R$ ${fmtBRL(linha.total)}</td>
                     </tr>`;
             });
         });
@@ -280,15 +272,48 @@
                 <tr class="summary-row">
                     <td colspan="4">COLABORADOR: ${p}</td>
                     <td colspan="2">QTD CARROS: ${resumoPorPessoa[p].carros}</td>
-                    <td colspan="3" style="text-align:right;">TOTAL A PAGAR: R$ ${resumoPorPessoa[p].total.toFixed(2)}</td>
+                    <td colspan="3" style="text-align:right;">TOTAL: R$ ${fmtBRL(resumoPorPessoa[p].total)}</td>
                 </tr>`;
         }
+
+        // LINHA DO TOTAL GERAL NA TELA
+        corpo.innerHTML += `
+            <tr class="total-geral-row">
+                <td colspan="6" style="text-align:right;">VALOR TOTAL GERAL (TODOS):</td>
+                <td colspan="3" style="text-align:right;">R$ ${fmtBRL(valorTotalGeral)}</td>
+            </tr>`;
     };
 
     window.exportExcel = () => {
         if(dadosParaExportar.length === 0) return alert("Gere o relatório!");
+        
+        // Preparar dados formatados para Excel
+        const dadosExcel = dadosParaExportar.map(d => ({
+            "DATA": d.data, "PLACA": d.placa, "VEÍCULO": d.veiculo, "EXPEDIÇÕES": d.exps,
+            "NOME": d.nome, "VÍNCULO": d.vinculo, "BASE (R$)": fmtBRL(d.base), "INSS (R$)": fmtBRL(d.inss), "TOTAL (R$)": fmtBRL(d.total)
+        }));
+
+        // Adiciona linha vazia
+        dadosExcel.push({});
+        dadosExcel.push({ "DATA": "RESUMO POR COLABORADOR" });
+
+        for (let p in resumoPorPessoa) {
+            dadosExcel.push({
+                "DATA": "COLABORADOR: " + p,
+                "PLACA": "CARROS: " + resumoPorPessoa[p].carros,
+                "TOTAL (R$)": "TOTAL: R$ " + fmtBRL(resumoPorPessoa[p].total)
+            });
+        }
+
+        // ADICIONA TOTAL GERAL NO EXCEL
+        dadosExcel.push({});
+        dadosExcel.push({
+            "NOME": "VALOR TOTAL GERAL ACUMULADO:",
+            "TOTAL (R$)": "R$ " + fmtBRL(valorTotalGeral)
+        });
+
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(dadosParaExportar);
+        const ws = XLSX.utils.json_to_sheet(dadosExcel);
         XLSX.utils.book_append_sheet(wb, ws, "Fechamento");
         XLSX.writeFile(wb, "Fechamento_Simonetti.xlsx");
     };
@@ -321,7 +346,7 @@
            head: [['DATA', 'PLACA', 'VEÍCULO', 'EXPEDIÇÕES', 'NOME', 'VÍNCULO', 'BASE', 'INSS', 'TOTAL']],
            body: dadosParaExportar.map(d => [
                d.data, d.placa, d.veiculo, d.exps, d.nome, d.vinculo, 
-               `R$ ${d.base.toFixed(2)}`, `R$ ${d.inss.toFixed(2)}`, `R$ ${d.total.toFixed(2)}`
+               `R$ ${fmtBRL(d.base)}`, `R$ ${fmtBRL(d.inss)}`, `R$ ${fmtBRL(d.total)}`
            ]),
            startY: 30,
            theme: 'plain',
@@ -337,26 +362,37 @@
        });
 
        let finalY = doc.lastAutoTable.finalY + 10;
-       if (finalY > 160) { doc.addPage(); finalY = 20; }
+       if (finalY > 150) { doc.addPage(); finalY = 20; }
 
        doc.setTextColor(0, 0, 0);
        doc.setFontSize(12);
        doc.setFont("helvetica", "bold");
-       doc.text("RESUMO DE PAGAMENTOS:", 14, finalY);
+       doc.text("RESUMO DE PAGAMENTOS POR COLABORADOR:", 14, finalY);
     
        finalY += 2;
        doc.setDrawColor(...corPrimaria);
-       doc.line(14, finalY, 80, finalY);
+       doc.line(14, finalY, 100, finalY);
 
        for (let p in resumoPorPessoa) {
            finalY += 8;
+           if (finalY > 185) { doc.addPage(); finalY = 20; }
            doc.setFontSize(10);
            doc.setFont("helvetica", "bold");
            doc.text(`${p}:`, 14, finalY);
            doc.setFont("helvetica", "normal");
-           const textoValor = `R$ ${resumoPorPessoa[p].total.toFixed(2)} (${resumoPorPessoa[p].carros} Carros)`;
+           const textoValor = `R$ ${fmtBRL(resumoPorPessoa[p].total)} (${resumoPorPessoa[p].carros} Carros)`;
            doc.text(textoValor, 80, finalY);
        }
+
+       // TOTAL GERAL NO PDF
+       finalY += 12;
+       doc.setFillColor(240, 240, 240);
+       doc.rect(14, finalY - 5, 270, 10, 'F');
+       doc.setFontSize(12);
+       doc.setFont("helvetica", "bold");
+       doc.setTextColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]);
+       doc.text(`VALOR TOTAL GERAL A SER PAGO (SOMA DE TODOS): R$ ${fmtBRL(valorTotalGeral)}`, 16, finalY);
+
        doc.save(`Fechamento_Simonetti_${new Date().getTime()}.pdf`);
    };
 </script>
