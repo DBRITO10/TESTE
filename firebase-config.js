@@ -1,11 +1,11 @@
 // Configuração do Firebase que você enviou
 const firebaseConfig = {
-  apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg",
-  authDomain: "logistica-exp.firebaseapp.com",
-  projectId: "logistica-exp",
-  storageBucket: "logistica-exp.firebasestorage.app",
-  messagingSenderId: "850466911484",
-  appId: "1:850466911484:web:5c2902e4662912e6465379"
+  apiKey: "AIzaSyAKRgavF1F0P7NUq6jGsUcPTFU_JA1erDM",
+  authDomain: "logistica-e2b0b.firebaseapp.com",
+  projectId: "logistica-e2b0b",
+  storageBucket: "logistica-e2b0b.firebasestorage.app",
+  messagingSenderId: "877060824520",
+  appId: "1:877060824520:web:f477f542d689d2b8b5f4fd"
 };
 
 // Inicialização (Importando via CDN para facilitar)
