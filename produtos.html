@@ -30,13 +30,22 @@
         .btn-add { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; transition: 0.3s; }
         .btn-add:hover { background: #b71c1c; }
 
-        /* Estilo Importação */
         .import-section { border: 2px dashed #ccc; padding: 15px; text-align: center; border-radius: 8px; margin-top: 10px; background: #fafafa; }
         .btn-import { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
 
         .table-wrapper { overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
-        th { background: #f8f8f8; padding: 12px; text-align: left; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
+        
+        /* AJUSTE SOLICITADO: Cabeçalho Vermelho com Texto Branco */
+        th { 
+            background: var(--primary); 
+            padding: 12px; 
+            text-align: left; 
+            color: white; 
+            border-bottom: 2px solid #b71c1c; 
+            text-transform: uppercase; 
+        }
+        
         td { padding: 12px; border-bottom: 1px solid #eee; }
 
         .btn-edit { color: #fbc02d; cursor: pointer; margin-right: 15px; font-size: 18px; }
@@ -108,7 +117,6 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let produtos = [];
     let editandoId = null;
 
     onAuthStateChanged(auth, async (user) => {
@@ -121,6 +129,7 @@
         } else { window.location.href = "index.html"; }
     });
 
+    // FUNÇÃO ATUALIZADA: Ordenação de A a Z
     async function carregarProdutos() {
         const snap = await getDocs(collection(db, "produtos_lista"));
         const tbody = document.getElementById('listaProdutos');
@@ -131,8 +140,25 @@
             return;
         }
 
+        let listaTemp = [];
         snap.forEach(d => {
-            const p = { id: d.id, ...d.data() };
+            listaTemp.push({ id: d.id, ...d.data() });
+        });
+
+        // Ordenação por Fornecedor > Código > Nome
+        listaTemp.sort((a, b) => {
+            const fornA = (a.fornecedor || "").toUpperCase();
+            const fornB = (b.fornecedor || "").toUpperCase();
+            if (fornA !== fornB) return fornA.localeCompare(fornB);
+
+            const codA = String(a.codigo || "").toUpperCase();
+            const codB = String(b.codigo || "").toUpperCase();
+            if (codA !== codB) return codA.localeCompare(codB);
+
+            return (a.nome || "").toUpperCase().localeCompare((b.nome || "").toUpperCase());
+        });
+
+        listaTemp.forEach(p => {
             tbody.innerHTML += `
                 <tr>
                     <td style="color:#d32f2f; font-weight:bold;">${p.fornecedor || '---'}</td>
@@ -146,7 +172,6 @@
         });
     }
 
-    // Salvar Manual
     document.getElementById('btnSalvar').onclick = async () => {
         const forn = document.getElementById('prodFornecedor').value.trim().toUpperCase();
         const cod = document.getElementById('prodCodigo').value.trim();
@@ -171,7 +196,6 @@
         btn.innerText = "SALVAR PRODUTO";
     };
 
-    // Lógica de Importação de Planilha
     document.getElementById('btnProcessar').onclick = () => {
         const file = document.getElementById('inputPlanilha').files[0];
         if (!file) return alert("Selecione um arquivo!");
@@ -189,7 +213,6 @@
 
             let contador = 0;
             for (const item of lista) {
-                // Tenta mapear os nomes das colunas (aceita variações)
                 const f = item["Fornecedor"] || item["fornecedor"] || item["FORNECEDOR"];
                 const c = item["Código"] || item["Codigo"] || item["codigo"] || item["CODIGO"];
                 const d_item = item["Descrição"] || item["Descricao"] || item["nome"] || item["NOME"];

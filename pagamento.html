@@ -136,6 +136,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    // ADICIONADO: Import do Auth
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", 
@@ -144,36 +146,47 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app); // Inicializa o motor de autenticação
 
     let dadosParaExportar = [];
     let resumoPorPessoa = {};
-    let valorTotalGeral = 0; // Variável para o total de tudo
+    let valorTotalGeral = 0;
 
-    // Formatador de Moeda Brasileira
     const fmtBRL = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    async function verificarAcesso() {
-        const userUid = localStorage.getItem("userUid");
-        if (!userUid) { window.location.href = "index.html"; return; }
+    // FUNÇÃO DE ACESSO CORRIGIDA (SEM LOCALSTORAGE)
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { 
+            window.location.href = "index.html"; 
+            return; 
+        }
+        
         try {
-            const userDoc = await getDoc(doc(db, "usuarios", userUid));
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) {
                 const dados = userDoc.data();
-                if (dados.nivel === "admin") {
+                // Verifica se é admin conforme sua ideia de nuvens de acesso
+                if (dados.nivel === "admin" || dados.funcao === "admin") {
                     document.getElementById('userName').innerText = dados.nome;
                 } else {
                     alert("Acesso restrito a administradores!");
                     window.location.href = "menu.html";
                 }
-            } else { window.location.href = "index.html"; }
-        } catch (error) { console.error("Erro na verificação:", error); }
-    }
+            } else {
+                window.location.href = "index.html";
+            }
+        } catch (error) {
+            console.error("Erro na verificação:", error);
+            // Se der erro de permissão aqui, é porque as regras do Firebase precisam ser publicadas
+        }
+    });
 
-    verificarAcesso();
-
+    // Ajuste no botão de sair para usar o método do Firebase
     document.getElementById('btnLogout').addEventListener('click', () => {
-        localStorage.removeItem("userUid");
-        window.location.href = "index.html";
+        signOut(auth).then(() => {
+            localStorage.removeItem("userUid");
+            window.location.href = "index.html";
+        });
     });
 
     window.gerarFechamento = async () => {

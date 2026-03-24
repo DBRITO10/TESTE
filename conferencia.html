@@ -169,13 +169,10 @@
                 const data = d.data();
                 if (usuarioDados.nivel === 'admin' || (usuarioDados.central && usuarioDados.central.includes(data.destino))) {
                     temCarga = true;
-                    // AJUSTE DE EXIBIÇÃO DA DATA NA LISTA DE FORA
-                    const dataExibicao = data.data.split('-').reverse().join('/');
-                    
                     container.innerHTML += `
                         <div class="item-carga">
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span class="badge-data">📅 ${dataExibicao}</span>
+                                <span class="badge-data">📅 ${data.data}</span>
                                 <strong style="color:var(--primary)">Exp: ${data.codigo || data.expedicao}</strong>
                             </div>
                             <p class="info-p"><strong>🚛 Placa:</strong> ${data.placa}</p>
@@ -234,6 +231,7 @@
     window.abrirModal = (id, data, exp, placa, veiculo) => {
         cargaSelecionadaId = id;
         document.getElementById('listaItensAvaria').innerHTML = "";
+        // Ajustando data dentro do modal para 21/03/2026 formatada
         const dataFormatadaModal = data.split('-').reverse().join('/');
         document.getElementById('detalheCarga').innerHTML = `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -347,6 +345,7 @@
         
         snap.forEach(doc => {
             const a = doc.data();
+            // Formatando data no PDF para 21/03/2026 hora às 19:37:49
             const dt = a.dataRegistro?.toDate();
             const dtFormatada = dt ? `${dt.toLocaleDateString('pt-BR')} hora às ${dt.toLocaleTimeString('pt-BR')}` : '---';
             
@@ -354,6 +353,7 @@
         });
 
         const win = window.open('', 'PRINT', 'height=600,width=800');
+        // Adicionando @page para forçar Landscape (Horizontal)
         win.document.write(`<html><head><title>Resumo de Conferência</title><style>@page { size: landscape; } table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:11px;}</style></head><body>`);
         win.document.write(`<h3>RESUMO DE DIVERGÊNCIAS - SIMONETTI</h3>`);
         win.document.write(`<table><thead><tr><th>DATA/HORA REGISTRO</th><th>CÓDIGO</th><th>PRODUTO</th><th>FORNECEDOR</th><th>QTD</th><th>MOTIVO</th><th>OBSERVAÇÃO</th></tr></thead><tbody>${htmlItens}</tbody></table>`);
