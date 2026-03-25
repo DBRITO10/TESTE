@@ -10,115 +10,102 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
     <style>
-        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --danger: #c62828; --success: #2e7d32; --dark: #333; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; }
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; color: #333; }
         
         header { 
-            background: var(--primary); color: white; padding: 0 15px; 
+            background: var(--primary); color: white; padding: 10px 15px; 
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 1000; height: 60px;
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-
-        .btn-header {
-            background: rgba(255, 255, 255, 0.15); border: 1px solid white; color: white;
-            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
-            text-decoration: none; font-size: 12px;
-        }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 
         .container { padding: 15px; max-width: 1400px; margin: auto; }
-        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* Totalizadores (KPIs) */
+        .dashboard-resumo { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .kpi-card { 
+            background: var(--white); padding: 15px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid var(--primary); 
+            flex: 1; min-width: 150px; text-align: center;
+        }
+        .kpi-card span { display: block; font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase; }
+        .kpi-card strong { font-size: 22px; color: var(--primary); }
+
+        .card { background: var(--white); padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        .periodo-box { 
-            display: flex; gap: 15px; align-items: center; margin-bottom: 20px; 
-            padding: 15px; background: #f8f9fa; border-radius: 6px; border: 1px solid #ddd; flex-wrap: wrap;
-        }
+        .filtros-topo { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+        .campo-data { display: flex; flex-direction: column; gap: 5px; }
+        .campo-data input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-filtrar { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; min-width: 1000px; }
-        th { 
-            background: #f1f1f1; padding: 12px 10px; text-align: left; 
-            border-bottom: 2px solid #ddd; font-size: 11px; color: var(--dark);
-            cursor: pointer; position: relative;
-        }
-        th:hover { background: #e5e5e5; }
-        td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: middle; }
-
-        .filter-input { width: 100%; padding: 4px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 10px; }
-
-        .status-badge {
-            display: inline-block; padding: 5px 10px; border-radius: 15px;
-            font-size: 10px; font-weight: bold; text-transform: uppercase;
-        }
-        .bg-ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
-        .bg-avaria { background: #ffebee; color: #c62828; border: 1px solid #c62828; }
+        /* Tabela Responsiva */
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; border-radius: 4px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; background: white; }
+        thead th { background: #f5f5f5; padding: 12px 8px; font-size: 11px; text-transform: uppercase; border: 1px solid #ddd; cursor: pointer; }
+        tbody td { padding: 10px 8px; border: 1px solid #eee; font-size: 12px; text-align: center; }
         
-        .btn-ver-avaria { 
-            background: #fdf2f2; color: #d32f2f; border: 1px solid #d32f2f;
-            padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;
-        }
-        .btn-ver-avaria:hover { background: #d32f2f; color: white; }
-
-        /* Modal Estilizado */
-        #modalAvaria {
-            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
-        }
-        .modal-content {
-            background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative;
-        }
-        .modal-header { border-bottom: 2px solid #fdf2f2; padding-bottom: 10px; margin-bottom: 15px; color: var(--primary); }
-        .modal-close { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: #999; }
+        .filter-input { width: 90%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px; margin-top: 5px; }
         
-        .btn-export { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; display: flex; gap: 5px; }
-        .btn-excel { background: #1b5e20; }
-        .btn-pdf { background: #b71c1c; }
+        /* Badges e Botões */
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; color: white; }
+        .bg-avaria { background: #d32f2f; }
+        .bg-ok { background: #2e7d32; }
+        .btn-ver-avaria { background: #0d47a1; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+
+        /* Modal */
+        #modalAvaria { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 15px; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 100%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+
+        @media (max-width: 600px) {
+            .btn-export { width: 100%; margin-top: 5px; }
+            .kpi-card { padding: 10px; }
+        }
     </style>
 </head>
 <body>
 
-<div id="modalAvaria">
-    <div class="modal-content">
-        <span class="modal-close" onclick="fecharModal()">&times;</span>
-        <div class="modal-header">
-            <h2 id="modalTitle" style="margin:0; font-size: 18px;">📋 Detalhes da Ocorrência</h2>
-        </div>
-        <div id="modalBody" style="max-height: 400px; overflow-y: auto;">
-            </div>
-    </div>
-</div>
-
 <header>
     <div class="header-left">
-        <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
-        <span id="userName">👤 Carregando...</span>
+        <a href="menu.html" style="color:white; text-decoration:none; font-size:18px;">⬅️</a>
+        <span id="userName">Carregando...</span>
     </div>
-    <h1 style="font-size: 16px; margin: 0;">GESTÃO DE QUALIDADE SIMONETTI</h1>
-    <button class="btn-header" id="btnLogout">SAIR</button>
+    <button class="btn-sair" id="btnLogout">SAIR</button>
 </header>
 
 <div class="container">
+    <div class="dashboard-resumo">
+        <div class="kpi-card"><span>Total Expedições</span><strong id="totalExp">0</strong></div>
+        <div class="kpi-card"><span>Total de Veículos</span><strong id="totalCarros">0</strong></div>
+        <div class="kpi-card"><span>Com Divergência</span><strong id="totalAvarias">0</strong></div>
+    </div>
+
     <div class="card">
-        <div class="periodo-box">
-            <div><label style="font-size:11px; font-weight:bold;">INÍCIO</label><br><input type="date" id="dataInicio"></div>
-            <div><label style="font-size:11px; font-weight:bold;">FIM</label><br><input type="date" id="dataFim"></div>
-            <button class="btn-header" style="background:var(--primary); height:35px; margin-top:16px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR</button>
-            <div style="flex-grow: 1; text-align: right; display: flex; justify-content: flex-end; gap: 10px; margin-top:16px;">
-                <button class="btn-export btn-excel" onclick="exportarExcel()">📊 EXCEL</button>
-                <button class="btn-export btn-pdf" onclick="exportarPDF()">📄 PDF PREMIUM</button>
+        <div class="filtros-topo">
+            <div class="campo-data">
+                <label style="font-size:11px; font-weight:bold;">INÍCIO:</label>
+                <input type="date" id="dataInicio">
             </div>
+            <div class="campo-data">
+                <label style="font-size:11px; font-weight:bold;">FIM:</label>
+                <input type="date" id="dataFim">
+            </div>
+            <button class="btn-filtrar" onclick="filtrarPorPeriodo()">BUSCAR DADOS</button>
+            <button onclick="exportarPDF()" style="background:#444; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer;">PDF</button>
         </div>
 
-        <div style="overflow-x: auto;">
-            <table id="tabelaQualidade">
+        <div class="table-wrapper">
+            <table id="tabelaMaster">
                 <thead>
                     <tr>
-                        <th onclick="ordenar('data')">DATA ⇅ <input type="text" class="filter-input" data-col="data" placeholder="..."></th>
-                        <th onclick="ordenar('codigo')">EXP ⇅ <input type="text" class="filter-input" data-col="codigo" placeholder="..."></th>
-                        <th onclick="ordenar('destino')">DESTINO ⇅ <input type="text" class="filter-input" data-col="destino" placeholder="..."></th>
-                        <th onclick="ordenar('placa')">PLACA ⇅ <input type="text" class="filter-input" data-col="placa" placeholder="..."></th>
-                        <th onclick="ordenar('equipe')">EQUIPE ⇅ <input type="text" class="filter-input" data-col="equipe" placeholder="..."></th>
-                        <th>OCORRÊNCIAS <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Filtrar item..."></th>
-                        <th onclick="ordenar('situacaoStr')">SITUAÇÃO ⇅ <input type="text" class="filter-input" data-col="situacaoStr" placeholder="..."></th> 
+                        <th onclick="ordenar('data')">DATA<br><input type="text" class="filter-input" data-col="data" placeholder="Filtro..."></th>
+                        <th onclick="ordenar('codigo')">EXP<br><input type="text" class="filter-input" data-col="codigo" placeholder="Filtro..."></th>
+                        <th onclick="ordenar('destino')">DESTINO<br><input type="text" class="filter-input" data-col="destino" placeholder="Filtro..."></th>
+                        <th onclick="ordenar('placa')">PLACA<br><input type="text" class="filter-input" data-col="placa" placeholder="Filtro..."></th>
+                        <th>EQUIPE<br><input type="text" class="filter-input" data-col="equipe" placeholder="Filtro..."></th>
+                        <th>OCORRÊNCIA</th>
+                        <th onclick="ordenar('situacaoStr')">SITUAÇÃO</th>
                     </tr>
                 </thead>
                 <tbody id="corpoTabela"></tbody>
@@ -127,212 +114,14 @@
     </div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, orderBy, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<div id="modalAvaria">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:var(--primary);">Detalhes da Ocorrência</h3>
+        <div id="modalBody"></div>
+        <button onclick="fecharModal()" style="width:100%; margin-top:15px; padding:10px; background:#666; color:white; border:none; border-radius:4px; cursor:pointer;">FECHAR</button>
+    </div>
+</div>
 
-    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let todosOsDados = [];
-    let mapaFornecedores = {};
-    let ordemCrescente = true;
-
-    onAuthStateChanged(auth, async user => {
-        if(user) { 
-            const userSnap = await getDoc(doc(db, "usuarios", user.uid));
-            document.getElementById('userName').innerText = "👤 " + (userSnap.exists() ? userSnap.data().nome : "Usuário");
-            await carregarMapaFornecedores();
-            setarDatasPadrao();
-            filtrarPorPeriodo(); 
-        } else { window.location.href = "index.html"; }
-    });
-
-    document.getElementById('btnLogout').onclick = () => signOut(auth);
-
-    function setarDatasPadrao() {
-        const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('dataInicio').value = hoje;
-        document.getElementById('dataFim').value = hoje;
-    }
-
-    async function carregarMapaFornecedores() {
-        const snap = await getDocs(collection(db, "produtos_lista"));
-        snap.forEach(d => { mapaFornecedores[d.data().codigo] = d.data().fornecedor || "N/I"; });
-    }
-
-    window.filtrarPorPeriodo = async () => {
-        const dIni = document.getElementById('dataInicio').value;
-        const dFim = document.getElementById('dataFim').value;
-        const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Processando...</td></tr>';
-
-        try {
-            const [avSnap, expSnap] = await Promise.all([
-                getDocs(collection(db, "avarias")),
-                getDocs(query(collection(db, "expedicoes"), where("status", "==", "FINALIZADO"), where("data", ">=", dIni), where("data", "<=", dFim)))
-            ]);
-
-            let mapaAvarias = {};
-            avSnap.forEach(docA => {
-                const av = docA.data();
-                if (!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
-                mapaAvarias[av.expedicaoId].push(av);
-            });
-
-            todosOsDados = [];
-            expSnap.forEach(docExp => {
-                const exp = docExp.data();
-                const avarias = mapaAvarias[docExp.id] || null;
-                todosOsDados.push({
-                    data: exp.data ? exp.data.split('-').reverse().join('/') : '-',
-                    codigo: exp.codigo || exp.expedicao || 'N/A',
-                    destino: exp.destino || '-',
-                    placa: exp.placa || '-',
-                    equipe: (exp.equipe_carregamento || []).join(', '),
-                    avarias: avarias,
-                    detalhesAvaria: avarias ? avarias.map(a => `${a.codigoProduto} ${a.nomeProduto}`).join(" ") : "",
-                    situacaoStr: avarias ? "AVARIA" : "OK"
-                });
-            });
-            renderizarTabela(todosOsDados);
-        } catch (e) { console.error(e); }
-    };
-
-    function renderizarTabela(lista) {
-        const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = "";
-        lista.forEach((item, index) => {
-            const statusBadge = item.avarias ? `<span class="status-badge bg-avaria">⚠️ DIVERGÊNCIA</span>` : `<span class="status-badge bg-ok">✅ OK</span>`;
-            const btnAvaria = item.avarias ? `<button class="btn-ver-avaria" onclick="verDetalhes(${index})">🔎 VER DETALHES (${item.avarias.length})</button>` : `<span style="color:#999">Sem ocorrências</span>`;
-            
-            corpo.innerHTML += `
-                <tr>
-                    <td>${item.data}</td>
-                    <td><b>${item.codigo}</b></td>
-                    <td>${item.destino}</td>
-                    <td>${item.placa}</td>
-                    <td><small>${item.equipe}</small></td>
-                    <td>${btnAvaria}</td>
-                    <td>${statusBadge}</td>
-                </tr>`;
-        });
-    }
-
-    // Modal de Avarias
-    window.verDetalhes = (index) => {
-        const item = todosOsDados[index];
-        const modal = document.getElementById('modalAvaria');
-        const body = document.getElementById('modalBody');
-        
-        let html = `<div style="padding:10px; background:#f9f9f9; border-radius:8px; margin-bottom:15px; border-left:4px solid var(--primary);">
-                        <b>Expedição:</b> ${item.codigo} | <b>Destino:</b> ${item.destino}
-                    </div>`;
-
-        item.avarias.forEach(a => {
-            const forn = mapaFornecedores[a.codigoProduto] || "NÃO INFORMADO";
-            html += `<div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-                        <span style="color:var(--primary); font-weight:bold;">[${a.codigoProduto}] ${a.nomeProduto}</span><br>
-                        <small><b>FORNECEDOR:</b> ${forn}</small><br>
-                        <small><b>MOTIVO:</b> ${a.motivo} | <b>QTD:</b> ${a.quantidade}</small><br>
-                        <p style="margin:5px 0; font-size:11px; background:#fff; padding:5px; border-radius:4px;"><b>OBS:</b> ${a.descricao || 'Sem observações'}</p>
-                     </div>`;
-        });
-
-        body.innerHTML = html;
-        modal.style.display = 'flex';
-    };
-
-    window.fecharModal = () => document.getElementById('modalAvaria').style.display = 'none';
-
-    // Ordenação A-Z
-    window.ordenar = (campo) => {
-        ordemCrescente = !ordemCrescente;
-        todosOsDados.sort((a, b) => {
-            let valA = String(a[campo]).toLowerCase();
-            let valB = String(b[campo]).toLowerCase();
-            return ordemCrescente ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        });
-        renderizarTabela(todosOsDados);
-    };
-
-    // PDF PREMIUM - Versão com Observações (Descrição)
-    window.exportarPDF = () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4');
-
-        // Cabeçalho
-        doc.setFillColor(211, 47, 47);
-        doc.rect(0, 0, 297, 30, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.text("RELATÓRIO DE QUALIDADE - SIMONETTI", 15, 15);
-        doc.setFontSize(10);
-        doc.text(`Período: ${document.getElementById('dataInicio').value} até ${document.getElementById('dataFim').value}`, 15, 22);
-        doc.text(`Emissão: ${new Date().toLocaleString()}`, 15, 27);
-
-        const colunas = ["DATA", "EXP", "DESTINO", "PLACA", "EQUIPE", "DETALHES DA OCORRÊNCIA", "SITUAÇÃO"];
-        
-        const linhas = todosOsDados.map(item => {
-            let textoAvaria = "OK";
-            if (item.avarias && item.avarias.length > 0) {
-                textoAvaria = item.avarias.map(a => {
-                    // Tenta pegar o fornecedor direto da avaria ou do mapa global
-                    const forn = a.fornecedor || mapaFornecedores[a.codigoProduto] || "N/I";
-                    const obs = a.descricao ? `\nOBS: ${a.descricao}` : ""; // Pega o campo "NÃO VEIO" do print
-                    
-                    return `PRODUTO: ${a.nomeProduto}\nFORNECEDOR: ${forn}\nMOTIVO: ${a.motivo} (Qtd: ${a.quantidade})${obs}`;
-                }).join("\n--------------------------\n");
-            }
-
-            return [item.data, item.codigo, item.destino, item.placa, item.equipe, textoAvaria, item.situacaoStr];
-        });
-
-        doc.autoTable({
-            head: [colunas],
-            body: linhas,
-            startY: 35,
-            styles: { 
-                fontSize: 7, 
-                cellPadding: 3, 
-                lineColor: [200, 200, 200], 
-                lineWidth: 0.1,
-                valign: 'middle'
-            },
-            headStyles: { 
-                fillColor: [240, 240, 240], // Fundo claro como você pediu
-                textColor: [50, 50, 50],
-                fontStyle: 'bold'
-            },
-            columnStyles: { 
-                5: { cellWidth: 100 }, // Aumentei um pouco para caber a observação
-                6: { fontStyle: 'bold', halign: 'center' } 
-            },
-            didParseCell: function(data) {
-                if (data.section === 'body' && data.column.index === 6) {
-                    data.cell.styles.textColor = (data.cell.raw === "AVARIA") ? [190, 0, 0] : [0, 130, 0];
-                }
-            }
-        });
-
-        doc.save(`Relatorio_Qualidade_Simonetti.pdf`);
-    };
-
-    // Filtros
-    document.querySelectorAll('.filter-input').forEach(input => {
-        input.addEventListener('keyup', (e) => {
-            e.stopPropagation();
-            const filtros = {};
-            document.querySelectorAll('.filter-input').forEach(i => { if (i.value) filtros[i.dataset.col] = i.value.toLowerCase(); });
-            const filtrados = todosOsDados.filter(item => {
-                return Object.keys(filtros).every(col => String(item[col]).toLowerCase().includes(filtros[col]));
-            });
-            renderizarTabela(filtrados);
-        });
-    });
-</script>
+<script type="module" src="js/relatorio-produtividade.js"></script>
 </body>
 </html>

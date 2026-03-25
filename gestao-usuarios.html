@@ -22,23 +22,26 @@
         th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
 
-        /* Estilo dos Níveis */
         .badge { padding: 5px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block; }
         .admin { background: #fee2e2; color: #b91c1c; border: 1px solid #f87171; }
         .colaborador { background: #dbeafe; color: #1e40af; border: 1px solid #60a5fa; }
         .usuario { background: #dcfce7; color: #166534; border: 1px solid #4ade80; }
         .leitor { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
-
-        .btn-edit { background: #fbc02d; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; transition: 0.2s; }
-        .btn-edit:hover { background: #f9a825; }
+        
+        .btn-edit { background: #fbc02d; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
         .btn-del { background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; position: relative; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; position: relative; }
         .modal-content label { display: block; margin-top: 15px; font-weight: bold; font-size: 12px; color: #555; }
         .modal-content input, .modal-content select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         
+        /* Grid de Centrais */
+        .grid-centrais { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee; }
+        .central-item { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+        .central-item input { width: auto; margin: 0; cursor: pointer; }
+
         .btn-save { width: 100%; background: #2e7d32; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 25px; font-size: 14px; }
         .btn-cancel { width: 100%; background: transparent; color: #666; border: none; padding: 10px; margin-top: 10px; cursor: pointer; font-size: 13px; text-decoration: underline; }
     </style>
@@ -55,15 +58,15 @@
 
 <div class="container">
     <div class="card">
-        <h2>👥 GESTÃO DE ACESSOS E USUÁRIOS</h2>
+        <h2>👥 GESTÃO DE ACESSOS</h2>
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
                         <th>NOME</th>
                         <th>E-MAIL</th>
-                        <th>NÍVEL / FUNÇÃO</th>
-                        <th>CENTRAL VINCULADA</th>
+                        <th>NÍVEL</th>
+                        <th>CENTRAIS VINCULADAS</th>
                         <th>AÇÕES</th>
                     </tr>
                 </thead>
@@ -81,148 +84,25 @@
         <input type="hidden" id="editUserId">
         
         <label>NOME COMPLETO</label>
-        <input type="text" id="editNome" placeholder="Nome do usuário">
+        <input type="text" id="editNome">
 
         <label>NÍVEL DE ACESSO</label>
         <select id="editNivel">
             <option value="admin">Administrador (Acesso Total)</option>
-            <option value="colaborador">Colaborador (Expedição / Carregamento)</option>
-            <option value="usuario">Usuário (Conferência na Central)</option>
+            <option value="colaborador">Colaborador (Expedição)</option>
+            <option value="usuario">Usuário (Conferência Central)</option>
             <option value="leitor">Leitor (Apenas relatório)</option>
         </select>
 
-        <label>CENTRAL VINCULADA</label>
-        <select id="editCentral">
-            </select>
-        <small style="font-size: 10px; color: #888; display: block; margin-top: 5px;">
-            Define onde este usuário opera fisicamente.
-        </small>
+        <label>VINCULAR CENTRAIS (Selecione uma ou mais)</label>
+        <div id="gridCentrais" class="grid-centrais">
+            </div>
 
         <button class="btn-save" id="btnSalvarUser">SALVAR ALTERAÇÕES</button>
-        <button class="btn-cancel" onclick="fecharModal()">Voltar sem salvar</button>
+        <button class="btn-cancel" id="btnFecharModal">Voltar sem salvar</button>
     </div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    async function registrarLog(acao, detalhe) {
-        try {
-            await addDoc(collection(db, "historico"), {
-                usuario: auth.currentUser.email,
-                acao: acao,
-                detalhe: detalhe,
-                data: serverTimestamp()
-            });
-        } catch(e) { console.error("Erro log:", e); }
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-            if (userDoc.exists() && userDoc.data().nivel === 'admin') {
-                document.getElementById('userName').innerText = userDoc.data().nome;
-                carregarUsuarios();
-                carregarCentraisParaSelect();
-            } else {
-                alert("Acesso restrito a administradores.");
-                window.location.href = "menu.html";
-            }
-        } else { window.location.href = "index.html"; }
-    });
-
-    // Carrega a lista de centrais da coleção 'destinos' para o modal
-    async function carregarCentraisParaSelect() {
-        const select = document.getElementById('editCentral');
-        const q = query(collection(db, "destinos"), orderBy("nome"));
-        const snap = await getDocs(q);
-        
-        select.innerHTML = '<option value="TODAS">TODAS AS CENTRAIS (ADMIN)</option>';
-        snap.forEach(d => {
-            const nome = d.data().nome;
-            select.innerHTML += `<option value="${nome}">${nome}</option>`;
-        });
-    }
-
-    function carregarUsuarios() {
-        onSnapshot(collection(db, "usuarios"), (snap) => {
-            const corpo = document.getElementById('listaUsuarios');
-            corpo.innerHTML = "";
-            snap.forEach(d => {
-                const u = d.data();
-                corpo.innerHTML += `
-                    <tr>
-                        <td><strong>${u.nome || 'Sem Nome'}</strong></td>
-                        <td>${u.email}</td>
-                        <td><span class="badge ${u.nivel}">${u.nivel}</span></td>
-                        <td>${u.central || 'NÃO DEFINIDO'}</td>
-                        <td>
-                            <button class="btn-edit" onclick="abrirModal('${d.id}', '${u.nome}', '${u.nivel}', '${u.central}')">EDITAR</button>
-                            <button class="btn-del" onclick="deletarUsuario('${d.id}', '${u.nome}')">✖</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        });
-    }
-
-    window.abrirModal = (id, nome, nivel, central) => {
-        document.getElementById('editUserId').value = id;
-        document.getElementById('editNome').value = nome;
-        document.getElementById('editNivel').value = nivel;
-        document.getElementById('editCentral').value = central;
-        document.getElementById('modalUser').style.display = 'flex';
-    };
-
-    window.fecharModal = () => {
-        document.getElementById('modalUser').style.display = 'none';
-    };
-
-    window.deletarUsuario = async (id, nome) => {
-        if(confirm(`Deseja realmente remover o acesso de ${nome}?`)) {
-            await deleteDoc(doc(db, "usuarios", id));
-            registrarLog("GESTÃO USUÁRIO", `Removeu usuário: ${nome}`);
-        }
-    }
-
-    document.getElementById('btnSalvarUser').onclick = async () => {
-        const id = document.getElementById('editUserId').value;
-        const btn = document.getElementById('btnSalvarUser');
-        
-        btn.disabled = true;
-        btn.innerText = "SALVANDO...";
-
-        try {
-            const novoNivel = document.getElementById('editNivel').value;
-            const novaCentral = document.getElementById('editCentral').value;
-            const novoNome = document.getElementById('editNome').value;
-
-            await updateDoc(doc(db, "usuarios", id), {
-                nome: novoNome,
-                nivel: novoNivel,
-                funcao: novoNivel, // Mantém compatibilidade com sua ideia original
-                central: novaCentral
-            });
-
-            await registrarLog("GESTÃO USUÁRIO", `Editou: ${novoNome} | Nível: ${novoNivel} | Central: ${novaCentral}`);
-            alert("Usuário atualizado com sucesso!");
-            fecharModal();
-        } catch (e) { 
-            alert("Erro ao atualizar."); 
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "SALVAR ALTERAÇÕES";
-        }
-    };
-
-    document.getElementById('btnSair').onclick = () => signOut(auth);
-</script>
+<script type="module" src="js/gestao-usuarios.js"></script>
 </body>
 </html>

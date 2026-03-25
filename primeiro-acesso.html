@@ -37,6 +37,7 @@
             <option value="" disabled selected>Selecione seu perfil...</option>
             <option value="usuario">Usuário Central (Conferência / Destino)</option>
             <option value="leitor">Leitor (Apenas Relatórios)</option>
+            <option value="colaborador">Auxiliar de Expedição</option>
         </select>
 
         <label>Vínculo / Central</label>
@@ -49,88 +50,6 @@
     </form>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = { 
-        apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", 
-        authDomain: "logistica-exp.firebaseapp.com", 
-        projectId: "logistica-exp" 
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let currentUser = null;
-
-    onAuthStateChanged(auth, async (user) => {
-        if (user) { 
-            currentUser = user; 
-            await carregarDestinos();
-        } else { 
-            window.location.href = "index.html"; 
-        }
-    });
-
-    async function carregarDestinos() {
-        const select = document.getElementById('centralUser');
-        try {
-            const q = query(collection(db, "destinos"), orderBy("nome"));
-            const querySnapshot = await getDocs(q);
-            select.innerHTML = '<option value="" disabled selected>Selecione a Central</option>';
-            querySnapshot.forEach((doc) => {
-                const dados = doc.data();
-                if(dados.nome) {
-                    select.innerHTML += `<option value="${dados.nome}">${dados.nome}</option>`;
-                }
-            });
-        } catch (e) { console.error(e); }
-    }
-
-    document.getElementById('formPerfil').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btnFinalizar');
-        const novaSenha = document.getElementById('novaSenha').value;
-        const funcaoSelecionada = document.getElementById('funcaoUser').value;
-        
-        btn.innerText = "CONFIGURANDO...";
-        btn.disabled = true;
-
-        try {
-            // 1. Atualiza a senha
-            await updatePassword(currentUser, novaSenha);
-
-            // 2. Salva no Firestore com a lógica de níveis que você passou
-            await setDoc(doc(db, "usuarios", currentUser.uid), {
-                nome: document.getElementById('nomeUser').value.toUpperCase(),
-                funcao: funcaoSelecionada, // "admin", "colaborador", "usuario" ou "leitor"
-                nivel: funcaoSelecionada,  // Espelha a função no nível para facilitar o filtro
-                central: document.getElementById('centralUser').value,
-                email: currentUser.email,
-                dataConfiguracao: new Date().toISOString()
-            }, { merge: true });
-
-            alert("Perfil configurado! Redirecionando...");
-            
-            // Redirecionamento inteligente baseado no que você definiu:
-            if (funcaoSelecionada === "usuario") {
-                window.location.href = "menu.html";
-            } else if (funcaoSelecionada === "leitor") {
-                window.location.href = "menu.html";
-            } else {
-                window.location.href = "menu.html";
-            }
-
-        } catch (error) {
-            console.error(error);
-            alert("Erro: " + error.message);
-            btn.disabled = false;
-            btn.innerText = "FINALIZAR E ENTRAR";
-        }
-    });
-</script>
+<script type="module" src="js/primeiro-acesso.js"></script>
 </body>
 </html>

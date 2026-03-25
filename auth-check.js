@@ -37,6 +37,6 @@ export function initHeader(isMenu = false) {
 }
 
 function checkPermissions(user, path) {
-    // Lógica de bloqueio por nível (Ex: se for leitor e tentar entrar no cadastro, volta pro dash)
-    if (user.nivel === 'leitor' && !path.includes('dashboard.html')) window.location.href = 'dashboard.html';
+    // Lógica de bloqueio por nível (Ex: se for leitor e tentar entrar no cadastro, volta pro menu)
+    if (user.nivel === 'leitor' && !path.includes('menu.html')) window.location.href = 'menu.html';
 }
