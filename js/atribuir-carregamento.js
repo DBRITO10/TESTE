@@ -220,7 +220,7 @@ window.adicionarItemLista = () => {
     const mot = document.getElementById('oc_motivo').value;
     const seps = Array.from(document.querySelectorAll('input[name="sep_oc"]:checked')).map(i => i.value);
 
-    if(!cod || !qtd || !mot || seps.length === 0) return alert("Preencha Cód, Qtd, Motivo e Separadores!");
+    if(!cod || !qtd) return alert("Preencha pelo menos o Código e a Quantidade!");
 
     itensOcorrencia.push({
         codigo: cod,
