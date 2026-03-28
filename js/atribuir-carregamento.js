@@ -154,7 +154,7 @@ window.finalizarCarga = async (id, cod) => {
             status: "CARREGADO/EM VIAGEM", 
             fimCarregamento: serverTimestamp() 
         });
-        await registrarHistorico("Carga Finalizada", `Expedição ${cod} finalizada com sucesso`);
+        await registrarHistorico("Finalização Carga", `Expedição ${cod} finalizada com sucesso`);
         alert("Carga Finalizada!");
     }
 };
