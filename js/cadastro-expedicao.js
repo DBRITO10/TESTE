@@ -23,6 +23,7 @@ import {
 
 let dadosOriginais = [];
 let ordemDirecao = true;
+let nomeUsuarioLogado = "Usuário";
 
 const obterDataLocal = () => {
     const agora = new Date();
@@ -30,10 +31,29 @@ const obterDataLocal = () => {
     return new Date(agora - offset).toISOString().split('T')[0];
 };
 
+// Função para registrar no histórico (Banco de Dados)
+async function registrarHistorico(acao, detalhe, expedicaoId = "") {
+    try {
+        await addDoc(collection(db, "historico"), {
+            usuario: nomeUsuarioLogado,
+            acao: acao,
+            detalhe: detalhe,
+            expedicaoId: expedicaoId,
+            modulo: "Expedição",
+            data: serverTimestamp()
+        });
+    } catch (e) {
+        console.error("Erro ao registrar histórico: ", e);
+    }
+}
+
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
+        if (userDoc.exists()) {
+            nomeUsuarioLogado = userDoc.data().nome;
+            document.getElementById('userName').innerText = nomeUsuarioLogado;
+        }
         const hoje = obterDataLocal();
         document.getElementById('dataExp').value = hoje;
         document.getElementById('filtroInicio').value = hoje;
@@ -44,20 +64,6 @@ onAuthStateChanged(auth, async (user) => {
         listarExpedicoes(hoje, hoje); 
     } else { window.location.href = "index.html"; }
 });
-
-async function registrarLog(acao, detalhes, expedicaoId) {
-    try {
-        await addDoc(collection(db, "logs_acoes"), {
-            usuario: document.getElementById('userName').innerText,
-            acao: acao,
-            detalhes: detalhes,
-            expedicaoId: expedicaoId,
-            dataHora: serverTimestamp()
-        });
-    } catch (e) {
-        console.error("Erro ao registrar log: ", e);
-    }
-}
 
 function listarExpedicoes(inicio, fim) {
     const q = query(collection(db, "expedicoes"), where("data", ">=", inicio), where("data", "<=", fim));
@@ -89,7 +95,7 @@ function renderizarTabela(lista) {
                 <td>${item.destino}</td>
                 <td>${item.box}</td>
                 <td>${item.peso}</td>
-                <td>${item.conferente}</td>
+                <td>${item.conferente || '-'}</td>
                 <td><span class="badge ${getStatusClass(item.status)}">${item.status}</span></td>
                 <td style="white-space: nowrap;">
                     <button class="btn-acao b-sep" onclick="mudarStatus('${item.id}', 'EM SEPARAÇÃO')">SEP</button>
@@ -121,7 +127,7 @@ window.editar = async (id) => {
     document.getElementById('boxExp').value = data.box;
     document.getElementById('pesoExp').value = data.peso;
     document.getElementById('destinoExp').value = data.destino;
-    document.getElementById('conferenteExp').value = data.conferente;
+    document.getElementById('conferenteExp').value = data.conferente || "";
     document.getElementById('dataExp').value = data.data;
     document.getElementById('tituloForm').innerText = "EDITANDO EXPEDIÇÃO";
     document.getElementById('btnCancelar').style.display = "block";
@@ -142,16 +148,17 @@ document.getElementById('formExpedicao').onsubmit = async (e) => {
         data: document.getElementById('dataExp').value,
         atualizadoEm: serverTimestamp()
     };
+
     if (id) {
         await updateDoc(doc(db, "expedicoes", id), dados);
-        await registrarLog("EDIÇÃO", `Expedição ${dados.codigo} editada`, id);
+        await registrarHistorico("EDIÇÃO", `Expedição ${dados.codigo} editada`, id);
         alert("Atualizado!");
     }
     else {
         dados.status = "CRIADO";
         dados.criadoEm = serverTimestamp();
         const docRef = await addDoc(collection(db, "expedicoes"), dados);
-        await registrarLog("CRIAÇÃO", `Nova expedição ${dados.codigo} criada`, docRef.id);
+        await registrarHistorico("CRIAÇÃO", `Nova expedição ${dados.codigo} criada`, docRef.id);
         alert("Salvo!");
     }
     
@@ -177,8 +184,8 @@ window.ordenarTabela = (index) => {
     const chave = chaves[index];
     ordemDirecao = !ordemDirecao;
     dadosOriginais.sort((a, b) => {
-        let valA = a[chave].toString().toLowerCase();
-        let valB = b[chave].toString().toLowerCase();
+        let valA = (a[chave] || "").toString().toLowerCase();
+        let valB = (b[chave] || "").toString().toLowerCase();
         return ordemDirecao ? valA.localeCompare(valB, undefined, {numeric: true}) : valB.localeCompare(valA, undefined, {numeric: true});
     });
     renderizarTabela(dadosOriginais);
@@ -220,29 +227,41 @@ function getStatusClass(s) {
 }
 
 window.mudarStatus = async (id, novoStatus) => {
-    // Busca os dados atuais da expedição antes de mudar o status
     const docRef = doc(db, "expedicoes", id);
     const snap = await getDoc(docRef);
     
     if (snap.exists()) {
         const dados = snap.data();
 
-        // VALIDAÇÃO: Se tentar finalizar e não tiver conferente, bloqueia.
+        // VALIDAÇÃO: Bloqueia finalização sem conferente
         if (novoStatus === 'CONFERÊNCIA FINALIZADA') {
             if (!dados.conferente || dados.conferente === "" || dados.conferente === "Selecione...") {
                 alert("Erro: Você precisa editar a expedição e vincular um CONFERENTE antes de finalizar a conferência.");
-                return; // Interrompe a função
+                return;
             }
         }
 
-        // Se passar pela validação ou for outro status (SEP), atualiza normalmente
         await updateDoc(docRef, { status: novoStatus });
+        await registrarHistorico("STATUS", `Status da Exp ${dados.codigo} alterado para ${novoStatus}`, id);
     }
 };
 
-window.excluir = async (id) => { if(confirm("Excluir?")) await deleteDoc(doc(db, "expedicoes", id)); };
+window.excluir = async (id) => { 
+    if(confirm("Deseja realmente excluir esta expedição?")) {
+        const docRef = doc(db, "expedicoes", id);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+            const dados = snap.data();
+            await registrarHistorico("EXCLUSÃO", `Expedição ${dados.codigo} excluída permanentemente`, id);
+            await deleteDoc(docRef);
+            alert("Excluído com sucesso!");
+        }
+    } 
+};
+
 document.getElementById('btnSair').onclick = () => signOut(auth);
 
+// Funções de Estilo e Exportação (PDF/Excel) permanecem as mesmas
 const hexToRgb = (hex) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -305,13 +324,15 @@ window.exportarPDF = () => {
             item.destino,
             item.box,
             item.peso,
-            item.conferente,
+            item.conferente || '-',
             item.status
         ]);
         
-        const t = item.tipo.toUpperCase();
-        if (!contagemPorTipo[t]) contagemPorTipo[t] = new Set();
-        contagemPorTipo[t].add(item.placa + "_" + item.data);
+        const t = (item.tipo || "").toUpperCase();
+        if (t) {
+            if (!contagemPorTipo[t]) contagemPorTipo[t] = new Set();
+            contagemPorTipo[t].add(item.placa + "_" + item.data);
+        }
     });
 
     doc.autoTable({
@@ -324,14 +345,14 @@ window.exportarPDF = () => {
         didParseCell: (data) => {
             if (data.section === 'body') {
                 if (data.column.index === 3) {
-                    const tipo = data.cell.raw.toUpperCase();
+                    const tipo = (data.cell.raw || "").toUpperCase();
                     if (coresVeiculosPDF[tipo]) {
                         data.cell.styles.textColor = hexToRgb(coresVeiculosPDF[tipo]);
                         data.cell.styles.fontStyle = 'bold';
                     }
                 }
                 if (data.column.index === 8) {
-                    const status = data.cell.raw.toUpperCase();
+                    const status = (data.cell.raw || "").toUpperCase();
                     if (coresStatusPDF[status]) {
                         data.cell.styles.textColor = hexToRgb(coresStatusPDF[status]);
                         data.cell.styles.fontStyle = 'bold';
