@@ -45,6 +45,20 @@ onAuthStateChanged(auth, async (user) => {
     } else { window.location.href = "index.html"; }
 });
 
+async function registrarLog(acao, detalhes, expedicaoId) {
+    try {
+        await addDoc(collection(db, "logs_acoes"), {
+            usuario: document.getElementById('userName').innerText,
+            acao: acao,
+            detalhes: detalhes,
+            expedicaoId: expedicaoId,
+            dataHora: serverTimestamp()
+        });
+    } catch (e) {
+        console.error("Erro ao registrar log: ", e);
+    }
+}
+
 function listarExpedicoes(inicio, fim) {
     const q = query(collection(db, "expedicoes"), where("data", ">=", inicio), where("data", "<=", fim));
     onSnapshot(q, (snap) => {
@@ -128,8 +142,18 @@ document.getElementById('formExpedicao').onsubmit = async (e) => {
         data: document.getElementById('dataExp').value,
         atualizadoEm: serverTimestamp()
     };
-    if (id) { await updateDoc(doc(db, "expedicoes", id), dados); alert("Atualizado!"); }
-    else { dados.status = "CRIADO"; dados.criadoEm = serverTimestamp(); await addDoc(collection(db, "expedicoes"), dados); alert("Salvo!"); }
+    if (id) {
+        await updateDoc(doc(db, "expedicoes", id), dados);
+        await registrarLog("EDIÇÃO", `Expedição ${dados.codigo} editada`, id);
+        alert("Atualizado!");
+    }
+    else {
+        dados.status = "CRIADO";
+        dados.criadoEm = serverTimestamp();
+        const docRef = await addDoc(collection(db, "expedicoes"), dados);
+        await registrarLog("CRIAÇÃO", `Nova expedição ${dados.codigo} criada`, docRef.id);
+        alert("Salvo!");
+    }
     
     e.target.reset(); 
     document.getElementById('editId').value = ""; 
