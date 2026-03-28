@@ -141,7 +141,7 @@ document.getElementById('btnSalvar').onclick = async () => {
                     inicioCarregamento: serverTimestamp()
                 });
             }
-            await registrarHistorico("Início Carregamento", `Iniciado carregamento das Exps: ${codigos.join(', ')} com a equipe: ${equipe.join(', ')}`);
+            await registrarHistorico("Início Carregamento", `Iniciado carregamento da Exp: ${codigos.join(', ')} com a equipe: ${equipe.join(', ')}`);
         }
         alert("Sucesso!");
         location.reload();
@@ -154,7 +154,7 @@ window.finalizarCarga = async (id, cod) => {
             status: "CARREGADO/EM VIAGEM", 
             fimCarregamento: serverTimestamp() 
         });
-        await registrarHistorico("Finalização Carga", `Expedição ${cod} finalizada e marcada como EM VIAGEM.`);
+        await registrarHistorico("Carga Finalizada", `Expedição ${cod} finalizada com sucesso`);
         alert("Carga Finalizada!");
     }
 };
