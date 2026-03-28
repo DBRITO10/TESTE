@@ -3,11 +3,12 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { collection, doc, getDoc, updateDoc, onSnapshot, query, where, addDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let dadosTabela = [];
-let usuarioDados = null;
+let usuarioDados = { nome: "Sistema" };
 let produtosCache = [];
 let cargaFoco = null;
 let itensOcorrencia = [];
 
+// FUNÇÃO DE HISTÓRICO PADRONIZADA
 async function registrarHistorico(acao, detalhe) {
     try {
         await addDoc(collection(db, "historico"), {
@@ -37,16 +38,18 @@ async function carregarDadosAuxiliares() {
 
     const sSnap = await getDocs(collection(db, "equipe_separadores"));
     const cont = document.getElementById('containerCheckSeparadores');
-    // Renderização organizada para o Modal de Ocorrência
-    cont.innerHTML = sSnap.docs.map(d => `
-        <label class="pessoa-item-lista">
-            <input type="checkbox" name="sep_oc" value="${d.data().nome}"> 
-            <span>${d.data().nome}</span>
-        </label>
-    `).join('');
+    if(cont) {
+        cont.innerHTML = sSnap.docs.map(d => `
+            <label class="pessoa-item-lista">
+                <input type="checkbox" name="sep_oc" value="${d.data().nome}"> 
+                <span>${d.data().nome}</span>
+            </label>
+        `).join('');
+    }
 }
 
 function inicializar() {
+    // Escuta expedições prontas para carregar
     onSnapshot(query(collection(db, "expedicoes"), where("status", "==", "CONFERÊNCIA FINALIZADA")), (snap) => {
         const cont = document.getElementById('listaExpedicoesMulti');
         cont.innerHTML = "";
@@ -61,18 +64,22 @@ function inicializar() {
         });
     });
 
+    // Escuta membros da equipe
     onSnapshot(collection(db, "equipe"), (snap) => {
         const t = document.getElementById('listaTerceiro');
         const m = document.getElementById('listaMEI');
-        t.innerHTML = ""; m.innerHTML = "";
-        snap.forEach(d => {
-            const p = d.data();
-            const html = `<label class="pessoa-item-lista"><input type="checkbox" name="membros" value="${p.nome}"> <span>${p.nome}</span></label>`;
-            if (p.vinculo?.toUpperCase() === "MEI") m.innerHTML += html;
-            else t.innerHTML += html;
-        });
+        if(t && m) {
+            t.innerHTML = ""; m.innerHTML = "";
+            snap.forEach(d => {
+                const p = d.data();
+                const html = `<label class="pessoa-item-lista"><input type="checkbox" name="membros" value="${p.nome}"> <span>${p.nome}</span></label>`;
+                if (p.vinculo?.toUpperCase() === "MEI") m.innerHTML += html;
+                else t.innerHTML += html;
+            });
+        }
     });
 
+    // Escuta cargas em andamento
     onSnapshot(query(collection(db, "expedicoes"), where("status", "==", "EM CARREGAMENTO")), (snap) => {
         dadosTabela = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderizarTabela();
@@ -91,7 +98,7 @@ function renderizarTabela() {
                 <td>${item.data?.split('-').reverse().join('/')}</td>
                 <td><strong>${item.codigo}</strong></td>
                 <td>${item.placa}</td>
-                <td>${item.tipoVeiculo || 'N/A'}</td>
+                <td>${item.tipo || item.tipoVeiculo || 'N/A'}</td>
                 <td>${item.destino}</td>
                 <td>${item.box}</td>
                 <td><span style="background:#e65100; color:white; padding:3px 8px; border-radius:10px; font-size:10px;">${item.status}</span></td>
@@ -107,9 +114,11 @@ function renderizarTabela() {
     document.getElementById('kpiCarros').innerText = veiculosSet.size;
 }
 
+// SALVAR/INICIAR CARREGAMENTO
 document.getElementById('btnSalvar').onclick = async () => {
     const checks = Array.from(document.querySelectorAll('input[name="exp_check"]:checked'));
     const ids = checks.map(i => i.value);
+    const codigos = checks.map(i => i.getAttribute('data-cod'));
     const equipe = Array.from(document.querySelectorAll('input[name="membros"]:checked')).map(i => i.value);
     const editId = document.getElementById('editId').value;
 
@@ -117,22 +126,61 @@ document.getElementById('btnSalvar').onclick = async () => {
 
     try {
         if(editId) {
-            await updateDoc(doc(db, "expedicoes", editId), { equipe_carregamento: equipe });
-            await registrarHistorico("Edição de Equipe", `Carga ${editId} atualizada.`);
+            // Ação de Edição de Equipe
+            const dRef = doc(db, "expedicoes", editId);
+            const snap = await getDoc(dRef);
+            await updateDoc(dRef, { equipe_carregamento: equipe });
+            await registrarHistorico("Edição Equipe", `Equipe da Exp ${snap.data().codigo} alterada para: ${equipe.join(', ')}`);
         } else {
+            // Início de Carregamento
             if(ids.length === 0) return alert("Selecione as cargas!");
-            for (let id of ids) {
-                await updateDoc(doc(db, "expedicoes", id), {
+            for (let i = 0; i < ids.length; i++) {
+                await updateDoc(doc(db, "expedicoes", ids[i]), {
                     status: "EM CARREGAMENTO",
                     equipe_carregamento: equipe,
                     inicioCarregamento: serverTimestamp()
                 });
             }
+            await registrarHistorico("Início Carregamento", `Iniciado carregamento das Exps: ${codigos.join(', ')} com a equipe: ${equipe.join(', ')}`);
         }
         alert("Sucesso!");
         location.reload();
     } catch (e) { alert("Erro ao salvar."); }
 };
+
+window.finalizarCarga = async (id, cod) => {
+    if(confirm(`Finalizar carga ${cod}?`)) {
+        await updateDoc(doc(db, "expedicoes", id), { 
+            status: "CARREGADO/EM VIAGEM", 
+            fimCarregamento: serverTimestamp() 
+        });
+        await registrarHistorico("Finalização Carga", `Expedição ${cod} finalizada e marcada como EM VIAGEM.`);
+        alert("Carga Finalizada!");
+    }
+};
+
+document.getElementById('btnSalvarFinal').onclick = async () => {
+    if(itensOcorrencia.length === 0) return alert("Adicione ao menos um item!");
+    try {
+        const dadosOcorrencia = {
+            expID: cargaFoco.id,
+            expCod: cargaFoco.cod,
+            usuario: usuarioDados.nome,
+            data: serverTimestamp(),
+            itens: itensOcorrencia
+        };
+        await addDoc(collection(db, "ocorrencia_de_carregamento"), dadosOcorrencia);
+        
+        // Log no histórico
+        const resumoItens = itensOcorrencia.map(i => `${i.quantidade}x ${i.codigo}(${i.motivo})`).join('; ');
+        await registrarHistorico("Ocorrência", `Ocorrência registrada para Exp ${cargaFoco.cod}: ${resumoItens}`);
+        
+        alert("Ocorrência salva!");
+        fecharModal();
+    } catch (e) { alert("Erro ao salvar."); }
+};
+
+// --- Funções Auxiliares de UI (Permanecem iguais) ---
 
 window.prepararEdicao = async (id) => {
     const d = await getDoc(doc(db, "expedicoes", id));
@@ -140,8 +188,6 @@ window.prepararEdicao = async (id) => {
     document.getElementById('editId').value = id;
     document.getElementById('tituloForm').innerText = "✏️ EDITANDO EQUIPE: " + data.codigo;
     document.getElementById('btnSalvar').innerText = "ATUALIZAR EQUIPE";
-    
-    // MOSTRAR BOTÃO CANCELAR APENAS NA EDIÇÃO
     document.getElementById('btnCancelarForm').style.display = "block";
     
     document.querySelectorAll('input[name="membros"]').forEach(ck => {
@@ -191,7 +237,6 @@ window.adicionarItemLista = () => {
     document.getElementById('oc_grade').value = "";
     document.getElementById('oc_obs').value = "";
     document.querySelectorAll('input[name="sep_oc"]').forEach(c => c.checked = false);
-    
     renderizarItensOcorrencia();
 };
 
@@ -214,31 +259,9 @@ window.removerItemOc = (index) => {
     renderizarItensOcorrencia();
 };
 
-document.getElementById('btnSalvarFinal').onclick = async () => {
-    if(itensOcorrencia.length === 0) return alert("Adicione ao menos um item!");
-    try {
-        await addDoc(collection(db, "ocorrencia_de_carregamento"), {
-            expID: cargaFoco.id,
-            expCod: cargaFoco.cod,
-            usuario: usuarioDados.nome,
-            data: serverTimestamp(),
-            itens: itensOcorrencia
-        });
-        alert("Ocorrência salva!");
-        fecharModal();
-    } catch (e) { alert("Erro ao salvar."); }
-};
-
 window.fecharModal = () => {
     document.getElementById('modalOcorrencia').style.display = 'none';
     itensOcorrencia = [];
-};
-
-window.finalizarCarga = async (id, cod) => {
-    if(confirm(`Finalizar carga ${cod}?`)) {
-        await updateDoc(doc(db, "expedicoes", id), { status: "CARREGADO/EM VIAGEM", fimCarregamento: serverTimestamp() });
-        alert("Carga Finalizada!");
-    }
 };
 
 document.getElementById('btnSair').onclick = () => signOut(auth);
