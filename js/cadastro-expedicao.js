@@ -195,7 +195,27 @@ function getStatusClass(s) {
     return 'status-finalizado';
 }
 
-window.mudarStatus = async (id, status) => await updateDoc(doc(db, "expedicoes", id), { status });
+window.mudarStatus = async (id, novoStatus) => {
+    // Busca os dados atuais da expedição antes de mudar o status
+    const docRef = doc(db, "expedicoes", id);
+    const snap = await getDoc(docRef);
+    
+    if (snap.exists()) {
+        const dados = snap.data();
+
+        // VALIDAÇÃO: Se tentar finalizar e não tiver conferente, bloqueia.
+        if (novoStatus === 'CONFERÊNCIA FINALIZADA') {
+            if (!dados.conferente || dados.conferente === "" || dados.conferente === "Selecione...") {
+                alert("Erro: Você precisa editar a expedição e vincular um CONFERENTE antes de finalizar a conferência.");
+                return; // Interrompe a função
+            }
+        }
+
+        // Se passar pela validação ou for outro status (SEP), atualiza normalmente
+        await updateDoc(docRef, { status: novoStatus });
+    }
+};
+
 window.excluir = async (id) => { if(confirm("Excluir?")) await deleteDoc(doc(db, "expedicoes", id)); };
 document.getElementById('btnSair').onclick = () => signOut(auth);
 
