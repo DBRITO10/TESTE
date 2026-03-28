@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Separadores - Simonetti</title>
+    <style>
+        :root { --primary: #b71c1c; --bg-body: #fdf2f2; --white: #fff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: #333; }
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: var(--primary); margin: 0 0 15px 0; font-size: 18px; }
+        
+        .form-separador { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+        @media(max-width: 768px) { .form-separador { grid-template-columns: 1fr; } }
+        
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        .btn-salvar { background: #2e7d32; color: white; border: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; cursor: pointer; height: 45px; }
+        .btn-cancelar { background: #757575; color: white; border: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; }
+
+        .search-box { margin-bottom: 15px; }
+        
+        .table-wrapper { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: var(--primary); color: white; padding: 12px; font-size: 13px; text-align: left; }
+        tbody td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn-acao { border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="menu.html" style="color:white; text-decoration:none; font-size:20px;">⬅️</a>
+        <span>Gestão de Separadores</span>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2 id="tituloForm">➕ Cadastrar Novo Separador</h2>
+        <input type="hidden" id="editId">
+        <div class="form-separador">
+            <div>
+                <label>Nome Completo:</label>
+                <input type="text" id="sep_nome" placeholder="Ex: João Silva">
+            </div>
+            <div>
+                <label>CPF:</label>
+                <input type="text" id="sep_cpf" placeholder="000.000.000-00" maxlength="14">
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn-salvar" id="btnSalvar">SALVAR</button>
+                <button class="btn-cancelar" id="btnCancelar">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="inputBusca" placeholder="🔍 Buscar separador por nome ou CPF..." oninput="filtrarTabela()">
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>NOME</th>
+                    <th>CPF</th>
+                    <th style="text-align: center;">AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module" src="js/cadastro-separadores.js"></script>
+</body>
+</html>

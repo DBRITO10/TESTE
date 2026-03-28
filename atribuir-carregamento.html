@@ -4,125 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atribuir Carregamento - Simonetti</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
     <style>
         :root { --primary: #b71c1c; --bg-body: #fdf2f2; --white: #fff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: #333; }
-        
         header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-
         .container { padding: 20px; max-width: 1400px; margin: auto; }
-        
-        /* Dashboard de Resumo (KPIs) */
-        .dashboard-resumo { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
-        .kpi-card { background: var(--white); padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); flex: 1; min-width: 200px; }
-        .kpi-card span { display: block; font-size: 12px; color: #666; font-weight: bold; text-transform: uppercase; }
-        .kpi-card strong { font-size: 24px; color: var(--primary); }
-
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { color: var(--primary); margin: 0 0 15px 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-
+        .dashboard-resumo { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .kpi-card { background: var(--white); padding: 15px 25px; border-radius: 8px; border-left: 5px solid var(--primary); flex: 1; min-width: 200px; }
+        .kpi-card strong { font-size: 24px; color: var(--primary); display: block; }
+        
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media(min-width: 992px) { .form-grid { grid-template-columns: 1fr 1fr; } }
-
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; }
-        select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; font-size: 14px; }
-
-        /* Colunas de Equipe */
-        .equipe-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .col-equipe h4 { margin: 0 0 8px 0; font-size: 12px; color: white; background: var(--primary); padding: 6px; border-radius: 4px; text-align: center; }
-        .equipe-container { border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #fdfdfd; max-height: 200px; overflow-y: auto; }
-        .pessoa-item { display: flex; align-items: center; font-size: 13px; cursor: pointer; padding: 6px; border-bottom: 1px solid #eee; }
-        .pessoa-item:hover { background: #fff5f5; }
-        .pessoa-item input { margin-right: 10px; width: 16px; height: 16px; }
+        @media(min-width: 992px) { .form-grid { grid-template-columns: 1.5fr 1fr; } }
+        
+        .multi-select-container, .equipe-container { border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #fdfdfd; max-height: 180px; overflow-y: auto; }
+        
+        /* AJUSTE DO ALINHAMENTO À ESQUERDA */
+        .pessoa-item-lista { 
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-start; /* Garante que comece na esquerda */
+            gap: 12px; 
+            padding: 10px; 
+            border-bottom: 1px solid #eee; 
+            cursor: pointer; 
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .pessoa-item-lista:hover { background: #fff5f5; }
+        .pessoa-item-lista input[type="checkbox"] { 
+            width: 18px; 
+            height: 18px; 
+            margin: 0; 
+            cursor: pointer;
+            flex-shrink: 0; /* Impede o checkbox de espremer */
+        }
+        .pessoa-item-lista span {
+            text-align: left;
+            flex-grow: 1;
+        }
 
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-vincular { flex: 2; background: #2e7d32; color: white; border: none; padding: 14px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-cancelar { flex: 1; background: #757575; color: white; border: none; padding: 14px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; }
+        .btn-vincular { flex: 2; background: #2e7d32; color: white; border: none; padding: 14px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        
+        /* Botão cancelar inicia oculto no formulário principal */
+        .btn-cancelar { 
+            flex: 1; 
+            background: #757575; 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: none; 
+            text-transform: uppercase;
+        }
 
-        /* Toolbar Export */
-        .toolbar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; }
-        .btn-export { border: none; padding: 8px 15px; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        thead th { background: var(--primary); color: white; padding: 12px; font-size: 11px; text-transform: uppercase; }
+        tbody td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; text-align: center; }
+        .btn-acao { border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; margin: 2px; }
 
-        /* Tabela Responsiva - Nível Simonetti */
-        .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: white; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; } /* min-width garante rolagem no celular e visão total no PC */
-        thead th { background: var(--primary); color: white; padding: 12px 15px; font-size: 12px; text-transform: uppercase; text-align: center; border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
-        tbody td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 13px; text-align: center; white-space: nowrap; }
-        tbody tr:hover { background: #fff5f5; }
-
-        .badge-status { background: #e65100; color: white; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
-        .btn-acao { border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        /* Modal Estilo Simonetti */
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; }
+        .modal-content { background:white; padding:25px; border-radius:8px; width:90%; max-width:600px; border-left: 6px solid var(--primary); max-height: 95vh; overflow-y: auto; }
+        .modal-content input, .modal-content select, .modal-content textarea { width:100%; margin-bottom:10px; padding:12px; border:1px solid #ccc; border-radius:4px; box-sizing: border-box; }
+        .lista-itens-temp { background: #f1f1f1; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px dashed #999; }
+        .item-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #ddd; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="header-left">
+    <div style="display:flex; align-items:center; gap:15px;">
         <a href="menu.html" style="color:white; text-decoration:none; font-size:20px;">⬅️</a>
         <span>Bem-vindo, <strong id="userName">...</strong></span>
     </div>
-    <button class="btn-sair" id="btnSair">SAIR</button>
+    <button class="btn-vincular" style="background:rgba(255,255,255,0.2); width:auto; padding:5px 15px;" id="btnSair">SAIR</button>
 </header>
 
 <div class="container">
     <div class="dashboard-resumo">
-        <div class="kpi-card"><span>Total Expedições</span><strong id="kpiExpedicoes">0</strong></div>
-        <div class="kpi-card"><span>Total de Veículos</span><strong id="kpiCarros">0</strong></div>
+        <div class="kpi-card"><span>TOTAL EXPEDIÇÕES</span><strong id="kpiExpedicoes">0</strong></div>
+        <div class="kpi-card"><span>TOTAL DE VEÍCULOS</span><strong id="kpiCarros">0</strong></div>
     </div>
 
     <div class="card">
-        <h2 id="tituloForm">📝 ATRIBUIR EQUIPE DE CARREGAMENTO</h2>
+        <h2 id="tituloForm" style="color: var(--primary); font-size: 18px;">📝 ATRIBUIR EQUIPE (SELEÇÃO MÚLTIPLA)</h2>
         <input type="hidden" id="editId">
-        
         <div class="form-grid">
             <div>
-                <label>Selecione a Expedição (Data | Nº | Placa | Destino | Box):</label>
-                <select id="selectExpedicao"><option value="">Aguardando dados...</option></select>
+                <label style="font-weight: bold; font-size: 14px;">Expedições Disponíveis (Conferência Finalizada):</label>
+                <div id="listaExpedicoesMulti" class="multi-select-container" style="margin-top: 10px;"></div>
             </div>
-            <div class="equipe-wrapper">
-                <div class="col-equipe">
-                    <h4>TERCEIRO (Esquerda)</h4>
-                    <div class="equipe-container" id="listaTerceiro"></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div>
+                    <label style="background: var(--primary); color: white; display: block; text-align: center; padding: 5px; font-weight: bold;">TERCEIRO</label>
+                    <div id="listaTerceiro" class="equipe-container"></div>
                 </div>
-                <div class="col-equipe">
-                    <h4>MEI (Direita)</h4>
-                    <div class="equipe-container" id="listaMEI"></div>
+                <div>
+                    <label style="background: var(--primary); color: white; display: block; text-align: center; padding: 5px; font-weight: bold;">MEI</label>
+                    <div id="listaMEI" class="equipe-container"></div>
                 </div>
             </div>
         </div>
-
         <div class="btn-group">
-            <button class="btn-vincular" id="btnSalvar">INICIAR CARREGAMENTO</button>
-            <button class="btn-cancelar" id="btnCancelar">CANCELAR EDIÇÃO</button>
+            <button class="btn-vincular" id="btnSalvar">INICIAR CARREGAMENTO DAS SELECIONADAS</button>
+            <button class="btn-cancelar" id="btnCancelarForm">CANCELAR EDIÇÃO</button>
         </div>
-    </div>
-
-    <div class="toolbar">
-        <button onclick="exportarExcel()" class="btn-export" style="background:#2e7d32">📊 EXCEL</button>
-        <button onclick="exportarPDF()" class="btn-export" style="background:#c62828">📄 PDF</button>
     </div>
 
     <div class="table-wrapper">
-        <table id="tabelaMaster">
+        <table>
             <thead>
                 <tr>
-                    <th onclick="ordenar(0)">DATA ⇅</th>
-                    <th onclick="ordenar(1)">EXPEDIÇÃO ⇅</th>
-                    <th onclick="ordenar(2)">PLACA ⇅</th>
-                    <th onclick="ordenar(3)">TIPO ⇅</th>
-                    <th onclick="ordenar(4)">DESTINO ⇅</th>
-                    <th onclick="ordenar(5)">BOX ⇅</th>
-                    <th onclick="ordenar(6)">PESO ⇅</th>
-                    <th onclick="ordenar(7)">CONFERENTE ⇅</th>
-                    <th onclick="ordenar(8)">STATUS ⇅</th>
-                    <th onclick="ordenar(9)">EQUIPE ⇅</th>
-                    <th>AÇÕES</th>
+                    <th>DATA</th><th>EXPEDIÇÃO</th><th>PLACAS</th><th>TIPO VEÍCULO</th><th>DESTINO</th><th>BOX</th><th>STATUS</th><th>EQUIPE</th><th>AÇÕES</th>
                 </tr>
             </thead>
             <tbody id="corpoTabela"></tbody>
@@ -130,6 +129,43 @@
     </div>
 </div>
 
+<div id="modalOcorrencia" class="modal">
+    <div class="modal-content">
+        <h2 id="tituloModalOc" style="margin-top:0;">⚠️ Ocorrência: Exp</h2>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="oc_codigo" placeholder="Cód. Produto" list="dl_produtos" oninput="buscarProduto(this.value)">
+            <input type="number" id="oc_qtd" placeholder="Qtd" style="width:100px;">
+        </div>
+        <input type="text" id="oc_desc" placeholder="Descrição do Produto" readonly style="background:#f9f9f9">
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="oc_grade" placeholder="Grade" readonly style="background:#f9f9f9">
+            <select id="oc_motivo">
+                <option value="">Motivo...</option>
+                <option value="FALTA">FALTA</option>
+                <option value="SOBRA">SOBRA</option>
+                <option value="DANIFICADO">DANIFICADO</option>
+            </select>
+        </div>
+
+        <label style="font-size:12px; color:var(--primary); font-weight:bold; margin-bottom: 5px; display: block;">SEPARADOR(ES) RESPONSÁVEL(IS):</label>
+        <div id="containerCheckSeparadores" class="equipe-container" style="height:150px; margin-bottom:10px;"></div>
+
+        <textarea id="oc_obs" placeholder="Observações adicionais..."></textarea>
+        
+        <button class="btn-vincular" style="background:#1976d2; margin-bottom:10px; width: 100%;" onclick="adicionarItemLista()">+ ADICIONAR ITEM NA OCORRÊNCIA</button>
+
+        <div id="listaItensTemp" class="lista-itens-temp">
+            <i style="color:#777; font-size:12px;">Nenhum item adicionado...</i>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-vincular" id="btnSalvarFinal">FINALIZAR E SALVAR OCORRÊNCIA</button>
+            <button class="btn-cancelar" style="display:block;" onclick="fecharModal()">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
+<datalist id="dl_produtos"></datalist>
 <script type="module" src="js/atribuir-carregamento.js"></script>
 </body>
 </html>
