@@ -183,25 +183,38 @@ document.getElementById('btnFinalizar').onclick = async () => {
     const valAvaria = document.getElementById('selectAvaria').value;
     const loading = document.getElementById('loadingModal');
     loading.style.display = 'flex';
+    
     try {
+        // 1. CRIAR A VARIÁVEL PARA O RESUMO (Evita o erro de "not defined")
+        let resumoAvarias = ""; 
+
         if (valAvaria === 'sim') {
             const cards = document.querySelectorAll('.item-avaria-card');
             for (let card of cards) {
+                const codProd = card.querySelector('.p-cod').value;
+                const qtdProd = card.querySelector('.p-qtd').value;
+                const motProd = card.querySelector('.p-motivo').value;
+
                 await addDoc(collection(db, "avarias"), {
                     expedicaoId: cargaSelecionadaId,
-                    codigoProduto: card.querySelector('.p-cod').value,
+                    codigoProduto: codProd,
                     nomeProduto: card.querySelector('.p-nome').value.toUpperCase(),
                     fornecedor: card.querySelector('.p-forn').value,
-                    quantidade: card.querySelector('.p-qtd').value,
-                    motivo: card.querySelector('.p-motivo').value,
+                    quantidade: qtdProd,
+                    motivo: motProd,
                     descricao: card.querySelector('.p-obs').value.toUpperCase(),
-                    custoUnitario: parseFloat(card.querySelector('.p-custo').value) || 0, // Envia o custo para o banco
+                    custoUnitario: parseFloat(card.querySelector('.p-custo').value) || 0,
                     usuario: usuarioDados.nome,
                     central: usuarioDados.central,
                     dataRegistro: serverTimestamp()
                 });
+
+                // 2. ALIMENTAR O RESUMO PARA O LOG
+                resumoAvarias += `[Prod: ${codProd} Qtd: ${qtdProd} Mot: ${motProd}] `;
             }
         }
+
+        // Atualiza status da expedição
         await updateDoc(doc(db, "expedicoes", cargaSelecionadaId), {
             status: "FINALIZADO",
             dataRecebimento: serverTimestamp(),
@@ -209,19 +222,26 @@ document.getElementById('btnFinalizar').onclick = async () => {
             teveOcorrencia: (valAvaria === 'sim')
         });
 
-        // REGISTRO NO HISTÓRICO
+        // 3. REGISTRO NO HISTÓRICO (Agora a variável resumoAvarias existe)
         const logMsg = valAvaria === 'sim'
             ? `Baixa finalizada COM DIVERGÊNCIA. Itens: ${resumoAvarias}`
             : `Baixa finalizada SEM DIVERGÊNCIAS.`;
-        // Buscamos o código da carga para o log ficar bonito
-        const expCod = document.getElementById('detalheCarga').innerText.match(/EXP: (\d+)/)?.[1] || "";
+        
+        // Pequeno ajuste para pegar o código da carga com segurança
+        const infoTexto = document.getElementById('detalheCarga').innerText;
+        const expCod = infoTexto.includes("EXP:") ? infoTexto.split("EXP:")[1].split("\n")[0].trim() : "N/A";
+
         await registrarHistorico("Baixa de Carga", `Exp ${expCod}: ${logMsg}`);
         
         alert("Baixa finalizada!");
         document.getElementById('modalConferencia').style.display = 'none';
         carregarHistorico();
-    } catch (e) { alert("Erro ao salvar."); }
-    loading.style.display = 'none';
+    } catch (e) { 
+        console.error("Erro ao salvar:", e);
+        alert("Erro ao salvar baixa."); 
+    } finally {
+        loading.style.display = 'none';
+    }
 };
 
 async function carregarHistorico() {
