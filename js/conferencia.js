@@ -182,14 +182,38 @@ window.buscarPorDados = (input, id, tipo) => {
 document.getElementById('btnFinalizar').onclick = async () => {
     const valAvaria = document.getElementById('selectAvaria').value;
     const loading = document.getElementById('loadingModal');
-    loading.style.display = 'flex';
     
     try {
-        // 1. CRIAR A VARIÁVEL PARA O RESUMO (Evita o erro de "not defined")
         let resumoAvarias = ""; 
 
         if (valAvaria === 'sim') {
             const cards = document.querySelectorAll('.item-avaria-card');
+            
+            // --- VALIDAÇÃO DE CAMPOS ---
+            if (cards.length === 0) {
+                return alert("Adicione pelo menos um produto ou marque 'Não' em divergências.");
+            }
+
+            for (let card of cards) {
+                const codProd = card.querySelector('.p-cod').value.trim();
+                const nomeProd = card.querySelector('.p-nome').value.trim();
+                const qtdProd = card.querySelector('.p-qtd').value.trim();
+                const motProd = card.querySelector('.p-motivo').value.trim();
+
+                // Verifica se algum campo essencial está vazio
+                if (!codProd || !nomeProd || !qtdProd || !motProd) {
+                    card.style.border = "2px solid red"; // Destaca o card com erro
+                    alert("Preencha todos os campos obrigatórios (Código, Descrição, Qtd e Motivo) de todos os itens!");
+                    return; // Interrompe a execução aqui mesmo
+                } else {
+                    card.style.border = "none"; // Remove destaque se estiver ok
+                }
+            }
+            // --- FIM DA VALIDAÇÃO ---
+
+            // Se chegou aqui, todos os campos estão preenchidos. Agora sim mostramos o loading.
+            loading.style.display = 'flex';
+
             for (let card of cards) {
                 const codProd = card.querySelector('.p-cod').value;
                 const qtdProd = card.querySelector('.p-qtd').value;
@@ -209,9 +233,11 @@ document.getElementById('btnFinalizar').onclick = async () => {
                     dataRegistro: serverTimestamp()
                 });
 
-                // 2. ALIMENTAR O RESUMO PARA O LOG
                 resumoAvarias += `[Prod: ${codProd} Qtd: ${qtdProd} Mot: ${motProd}] `;
             }
+        } else {
+            // Se for 'não', apenas mostra o loading para finalizar a carga
+            loading.style.display = 'flex';
         }
 
         // Atualiza status da expedição
@@ -222,20 +248,17 @@ document.getElementById('btnFinalizar').onclick = async () => {
             teveOcorrencia: (valAvaria === 'sim')
         });
 
-        // 3. REGISTRO NO HISTÓRICO (Agora a variável resumoAvarias existe)
-        const logMsg = valAvaria === 'sim'
-            ? `Baixa finalizada COM DIVERGÊNCIA. Itens: ${resumoAvarias}`
-            : `Baixa finalizada SEM DIVERGÊNCIAS.`;
-        
-        // Pequeno ajuste para pegar o código da carga com segurança
+        // Registro no Histórico
         const infoTexto = document.getElementById('detalheCarga').innerText;
         const expCod = infoTexto.includes("EXP:") ? infoTexto.split("EXP:")[1].split("\n")[0].trim() : "N/A";
-
+        const logMsg = valAvaria === 'sim' ? `Baixa COM DIVERGÊNCIA: ${resumoAvarias}` : `Baixa SEM DIVERGÊNCIA.`;
+        
         await registrarHistorico("Baixa de Carga", `Exp ${expCod}: ${logMsg}`);
         
         alert("Baixa finalizada!");
         document.getElementById('modalConferencia').style.display = 'none';
         carregarHistorico();
+
     } catch (e) { 
         console.error("Erro ao salvar:", e);
         alert("Erro ao salvar baixa."); 
