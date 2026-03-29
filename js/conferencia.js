@@ -20,6 +20,18 @@ onAuthStateChanged(auth, async (user) => {
         window.location.href = "index.html";
     }
 });
+// FUNÇÃO DE HISTÓRICO PADRONIZADA
+async function registrarHistorico(acao, detalhe) {
+    try {
+        await addDoc(collection(db, "historico"), {
+            usuario: usuarioDados?.nome || "Sistema",
+            acao: acao,
+            detalhe: detalhe,
+            data: serverTimestamp(),
+            modulo: "Recebimento Central" // Identificador deste módulo
+        });
+    } catch (e) { console.error("Erro log:", e); }
+}
 
 async function carregarListaProdutos() {
     try {
@@ -196,6 +208,15 @@ document.getElementById('btnFinalizar').onclick = async () => {
             recebidoPor: usuarioDados.nome,
             teveOcorrencia: (valAvaria === 'sim')
         });
+
+        // REGISTRO NO HISTÓRICO
+        const logMsg = valAvaria === 'sim'
+            ? `Baixa finalizada COM DIVERGÊNCIA. Itens: ${resumoAvarias}`
+            : `Baixa finalizada SEM DIVERGÊNCIAS.`;
+        // Buscamos o código da carga para o log ficar bonito
+        const expCod = document.getElementById('detalheCarga').innerText.match(/EXP: (\d+)/)?.[1] || "";
+        await registrarHistorico("Baixa de Carga", `Exp ${expCod}: ${logMsg}`);
+        
         alert("Baixa finalizada!");
         document.getElementById('modalConferencia').style.display = 'none';
         carregarHistorico();
